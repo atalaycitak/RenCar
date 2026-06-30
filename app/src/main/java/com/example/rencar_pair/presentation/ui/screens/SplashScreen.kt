@@ -32,7 +32,7 @@ import org.koin.compose.koinInject
 @Composable
 fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
-    onNavigateToHomeMap: () -> Unit,
+    onNavigateToLicenseVerification: () -> Unit,
     modifier: Modifier = Modifier,
     dataStoreManager: DataStoreManager = koinInject()
 ) {
@@ -50,7 +50,7 @@ fun SplashScreen(
         try {
             val savedToken = dataStoreManager.authToken.firstOrNull()
             if (savedToken != null) {
-                onNavigateToHomeMap()
+                onNavigateToLicenseVerification()
             } else {
                 onNavigateToOnboarding()
             }

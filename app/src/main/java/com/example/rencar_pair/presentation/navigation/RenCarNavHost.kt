@@ -5,12 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import com.example.rencar_pair.presentation.ui.screens.HomeMapScreen
 import com.example.rencar_pair.presentation.ui.screens.LoginScreen
 import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
 import com.example.rencar_pair.presentation.ui.screens.RegisterScreen
 import com.example.rencar_pair.presentation.ui.screens.SplashScreen
+import com.example.rencar_pair.presentation.ui.screens.home.HomeRoute
+import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationRoute
 
 @Composable
 fun RenCarNavHost(
@@ -29,8 +29,8 @@ fun RenCarNavHost(
                         popUpTo(SplashRoute) { inclusive = true }
                     }
                 },
-                onNavigateToHomeMap = {
-                    navController.navigate(HomeMapRoute) {
+                onNavigateToLicenseVerification = {
+                    navController.navigate(LicenseCheckRoute) {
                         popUpTo(SplashRoute) { inclusive = true }
                     }
                 }
@@ -48,7 +48,7 @@ fun RenCarNavHost(
         composable<LoginRoute> {
             LoginScreen(
                 onNavigateToHomeMap = {
-                    navController.navigate(HomeMapRoute) {
+                    navController.navigate(LicenseCheckRoute) {
                         popUpTo(LoginRoute) { inclusive = true }
                         popUpTo(OnboardingRoute) { inclusive = true }
                     }
@@ -67,8 +67,18 @@ fun RenCarNavHost(
             )
         }
 
+        composable<LicenseCheckRoute> {
+            LicenseVerificationRoute(
+                onContinueToMap = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(LicenseCheckRoute) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable<HomeMapRoute> {
-            HomeMapScreen()
+            HomeRoute()
         }
     }
 }

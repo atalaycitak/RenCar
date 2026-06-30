@@ -15,4 +15,7 @@ data object LoginRoute
 data object RegisterRoute
 
 @Serializable
+data object LicenseCheckRoute
+
+@Serializable
 data object HomeMapRoute
