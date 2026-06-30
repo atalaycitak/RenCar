@@ -10,18 +10,30 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.rencar_pair.ui.theme.RenCarpairTheme
+import com.example.rencar_pair.di.appModule
+import com.example.rencar_pair.di.networkModule
+import com.example.rencar_pair.ui.theme.RenCarTheme
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.logger.Level
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        startKoin {
+            androidLogger(Level.ERROR)
+            androidContext(this@MainActivity)
+            modules(appModule, networkModule)
+        }
+
         enableEdgeToEdge()
         setContent {
-            RenCarpairTheme {
+            RenCarTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "RenCar",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -36,12 +48,4 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RenCarpairTheme {
-        Greeting("Android")
-    }
 }
