@@ -4,7 +4,7 @@ interface MviState
 
 interface MviIntent
 
-sealed class MviEffect {
+open class MviEffect {
     data class ShowSnackbar(val message: String) : MviEffect()
     data class Navigate(val route: String) : MviEffect()
     data object NavigateBack : MviEffect()
