@@ -1,40 +1,83 @@
 package com.example.rencar_pair.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.example.rencar_pair.presentation.ui.screens.LoginScreen
+import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
+import com.example.rencar_pair.presentation.ui.screens.RegisterScreen
 import com.example.rencar_pair.presentation.ui.screens.SplashScreen
 import com.example.rencar_pair.presentation.ui.screens.home.HomeRoute
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationRoute
 
 @Composable
-fun RenCarNavHost() {
-    val navController = rememberNavController()
-
+fun RenCarNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
     NavHost(
         navController = navController,
-        startDestination = RenCarRoute.Splash.value
+        startDestination = SplashRoute,
+        modifier = modifier
     ) {
-        composable(RenCarRoute.Splash.value) {
+        composable<SplashRoute> {
             SplashScreen(
-                onContinue = {
-                    navController.navigate(RenCarRoute.LicenseVerification.value) {
-                        popUpTo(RenCarRoute.Splash.value) { inclusive = true }
+                onNavigateToOnboarding = {
+                    navController.navigate(OnboardingRoute) {
+                        popUpTo(SplashRoute) { inclusive = true }
+                    }
+                },
+                onNavigateToLicenseVerification = {
+                    navController.navigate(LicenseCheckRoute) {
+                        popUpTo(SplashRoute) { inclusive = true }
                     }
                 }
             )
         }
-        composable(RenCarRoute.LicenseVerification.value) {
+
+        composable<OnboardingRoute> {
+            OnboardingScreen(
+                onNavigateToLogin = {
+                    navController.navigate(LoginRoute)
+                }
+            )
+        }
+
+        composable<LoginRoute> {
+            LoginScreen(
+                onNavigateToHomeMap = {
+                    navController.navigate(LicenseCheckRoute) {
+                        popUpTo(LoginRoute) { inclusive = true }
+                        popUpTo(OnboardingRoute) { inclusive = true }
+                    }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(RegisterRoute)
+                }
+            )
+        }
+
+        composable<RegisterRoute> {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable<LicenseCheckRoute> {
             LicenseVerificationRoute(
                 onContinueToMap = {
-                    navController.navigate(RenCarRoute.Home.value) {
-                        popUpTo(RenCarRoute.LicenseVerification.value) { inclusive = true }
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(LicenseCheckRoute) { inclusive = true }
                     }
                 }
             )
         }
-        composable(RenCarRoute.Home.value) {
+
+        composable<HomeMapRoute> {
             HomeRoute()
         }
     }
