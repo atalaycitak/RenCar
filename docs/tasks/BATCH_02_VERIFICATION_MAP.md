@@ -8,20 +8,20 @@ Ehliyet dogrulama ekranlarini kurmak, izinleri modellemek ve MapLibre tabanli ha
 
 ## Tasklar
 
-- [ ] OpenAPI semasinda OTP endpoint'i olmadigi icin OTP ekranini backlog olarak isaretle.
-- [ ] Ehliyet dogrulama giris ekranini uygula.
-- [ ] Ehliyet foto/on-yuz yukleme UI state'lerini ekle.
-- [ ] `POST /license/upload` icin multipart veya base64 request formatini dogrula.
-- [ ] `GET /license/status` ile dogrulama durumunu cek.
-- [ ] Dogrulama basarili/beklemede/hata durumlarini modelle.
-- [ ] Kamera ve konum izinleri icin permission helper yaz.
-- [ ] Harita ekraninin route ve state contract'ini olustur.
-- [ ] MapLibre dependency ve temel map wrapper'i ekle.
-- [ ] Fake arac lokasyonlari ve fiyat bilgilerini domain model'e ekle.
-- [ ] `GET /vehicles` response'unu map marker ve yakin arac paneline bagla.
-- [ ] Harita shell'i kur: arama kutusu, marker, yakin arac paneli.
-- [ ] Bottom navigation temelini ekle.
-- [ ] Dogrulama tamamlaninca harita ekranina gecis sagla.
+- [x] OpenAPI semasinda OTP endpoint'i olmadigi icin OTP ekranini backlog olarak isaretle.
+- [x] Ehliyet dogrulama giris ekranini uygula.
+- [x] Ehliyet foto/on-yuz yukleme UI state'lerini ekle.
+- [x] `POST /license/upload` icin multipart veya base64 request formatini dogrula.
+- [x] `GET /license/status` ile dogrulama durumunu cek.
+- [x] Dogrulama basarili/beklemede/hata durumlarini modelle.
+- [x] Kamera ve konum izinleri icin permission helper yaz.
+- [x] Harita ekraninin route ve state contract'ini olustur.
+- [x] MapLibre dependency ve temel map wrapper'i ekle.
+- [x] Fake arac lokasyonlari ve fiyat bilgilerini domain model'e ekle.
+- [x] `GET /vehicles` response'unu map marker ve yakin arac paneline bagla.
+- [x] Harita shell'i kur: arama kutusu, marker, yakin arac paneli.
+- [x] Bottom navigation temelini ekle.
+- [x] Dogrulama tamamlaninca harita ekranina gecis sagla.
 
 ## Kabul Kriterleri
 
