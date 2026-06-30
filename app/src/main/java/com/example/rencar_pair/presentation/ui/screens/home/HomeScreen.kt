@@ -38,10 +38,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
 import com.example.rencar_pair.presentation.ui.components.RenCarMap
 import org.koin.androidx.compose.koinViewModel
-import org.maplibre.android.annotations.MarkerOptions
-import org.maplibre.android.geometry.LatLng
 
 @Composable
 fun HomeRoute(
@@ -117,15 +116,14 @@ fun HomeScreen(
                     latitude = center?.latitude ?: 41.0082,
                     longitude = center?.longitude ?: 28.9784,
                     zoom = 13.0,
-                    onMapCreated = { map ->
-                        state.vehicles.forEach { vehicle ->
-                            map.addMarker(
-                                MarkerOptions()
-                                    .position(LatLng(vehicle.latitude, vehicle.longitude))
-                                    .title(vehicle.title)
-                                    .snippet("${vehicle.plate} - ${vehicle.pricePerDay.toInt()} TL/gun")
-                            )
-                        }
+                    markers = state.vehicles.map { vehicle ->
+                        RenCarMapMarker(
+                            id = vehicle.id,
+                            latitude = vehicle.latitude,
+                            longitude = vehicle.longitude,
+                            title = vehicle.title,
+                            snippet = "${vehicle.plate} - ${vehicle.pricePerDay.toInt()} TL/gun"
+                        )
                     }
                 )
 
