@@ -8,8 +8,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMapOptions
+
+data class RenCarMapMarker(
+    val id: String,
+    val latitude: Double,
+    val longitude: Double,
+    val title: String,
+    val snippet: String
+)
 
 @Composable
 fun RenCarMap(
@@ -18,6 +28,7 @@ fun RenCarMap(
     latitude: Double = 41.0082,
     longitude: Double = 28.9784,
     zoom: Double = 12.0,
+    markers: List<RenCarMapMarker> = emptyList(),
     onMapCreated: ((org.maplibre.android.maps.MapLibreMap) -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -66,6 +77,15 @@ fun RenCarMap(
                         zoom
                     )
                 )
+                mapboxMap.clear()
+                markers.forEach { marker ->
+                    mapboxMap.addMarker(
+                        MarkerOptions()
+                            .position(LatLng(marker.latitude, marker.longitude))
+                            .title(marker.title)
+                            .snippet(marker.snippet)
+                    )
+                }
             }
         }
     )

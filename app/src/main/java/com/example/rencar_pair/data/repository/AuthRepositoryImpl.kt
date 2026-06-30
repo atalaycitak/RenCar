@@ -20,13 +20,19 @@ class AuthRepositoryImpl(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    dataStore.saveAuthToken(body.token)
-                    dataStore.saveUserId(body.userId)
+                    val token = body.accessToken ?: body.token.orEmpty()
+                    if (token.isBlank()) {
+                        return NetworkResult.Error("Auth token missing")
+                    }
+                    val userId = body.user?.id ?: body.userId.orEmpty()
+                    val fullName = body.user?.fullName ?: body.fullName.orEmpty()
+                    dataStore.saveAuthToken(token)
+                    dataStore.saveUserId(userId)
                     NetworkResult.Success(
                         User(
-                            id = body.userId,
-                            fullName = body.fullName,
-                            token = body.token
+                            id = userId,
+                            fullName = fullName,
+                            token = token
                         )
                     )
                 } else {
@@ -54,13 +60,19 @@ class AuthRepositoryImpl(
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    dataStore.saveAuthToken(body.token)
-                    dataStore.saveUserId(body.userId)
+                    val token = body.accessToken ?: body.token.orEmpty()
+                    if (token.isBlank()) {
+                        return NetworkResult.Error("Auth token missing")
+                    }
+                    val userId = body.user?.id ?: body.userId.orEmpty()
+                    val resolvedFullName = body.user?.fullName ?: body.fullName.orEmpty()
+                    dataStore.saveAuthToken(token)
+                    dataStore.saveUserId(userId)
                     NetworkResult.Success(
                         User(
-                            id = body.userId,
-                            fullName = body.fullName,
-                            token = body.token
+                            id = userId,
+                            fullName = resolvedFullName,
+                            token = token
                         )
                     )
                 } else {

@@ -20,7 +20,7 @@ val networkModule = module {
     }
 
     single {
-        AuthInterceptor()
+        AuthInterceptor(get())
     }
 
     single {
