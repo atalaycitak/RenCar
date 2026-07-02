@@ -72,8 +72,9 @@ fun LicenseVerificationScreen(
     val backImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { onIntent(LicenseVerificationIntent.PickBackImage(it.toString())) }
     }
-    val canUpload = !state.isLoading &&
+    val canPickImage = !state.isLoading &&
         (state.status == LicenseStatus.NotUploaded || state.status == LicenseStatus.Rejected)
+    val canUpload = canPickImage
 
     Column(
         modifier = Modifier
@@ -113,15 +114,21 @@ fun LicenseVerificationScreen(
             LicenseSideButton(
                 text = "Ön yüz",
                 selected = state.hasFrontImage,
-                enabled = canUpload,
-                onClick = { frontImageLauncher.launch("image/*") },
+                onClick = {
+                    if (canPickImage) {
+                        frontImageLauncher.launch("image/*")
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
             LicenseSideButton(
                 text = "Arka yüz",
                 selected = state.hasBackImage,
-                enabled = canUpload,
-                onClick = { backImageLauncher.launch("image/*") },
+                onClick = {
+                    if (canPickImage) {
+                        backImageLauncher.launch("image/*")
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -158,7 +165,7 @@ fun LicenseVerificationScreen(
 private fun StatusCard(state: LicenseVerificationState) {
     val statusText = when (state.status) {
         LicenseStatus.NotUploaded -> "Ehliyet bekleniyor"
-        LicenseStatus.Pending -> "İnceleme bekleniyor"
+        LicenseStatus.Pending -> "Ehliyet bekleniyor"
         LicenseStatus.Approved -> "Ehliyet onaylandı"
         LicenseStatus.Rejected -> "Ehliyet reddedildi"
     }
@@ -192,15 +199,13 @@ private fun StatusCard(state: LicenseVerificationState) {
 private fun LicenseSideButton(
     text: String,
     selected: Boolean,
-    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(88.dp),
-        shape = RoundedCornerShape(8.dp),
-        enabled = enabled
+        shape = RoundedCornerShape(8.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(

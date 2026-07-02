@@ -108,6 +108,8 @@ class LicenseVerificationViewModel(
         _state.update {
             it.copy(
                 status = license.status,
+                frontImageUri = license.frontImageUrl ?: it.frontImageUri,
+                backImageUri = license.backImageUrl ?: it.backImageUri,
                 isLoading = false,
                 rejectReason = license.rejectReason,
                 errorMessage = if (navigateWhenApproved && license.status != LicenseStatus.Approved) {
