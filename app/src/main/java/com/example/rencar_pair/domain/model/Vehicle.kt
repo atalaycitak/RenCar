@@ -9,7 +9,9 @@ data class Vehicle(
     val pricePerDay: Double,
     val status: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val rangeKm: Int = 320,
+    val locationName: String = "Istanbul"
 ) {
     val title: String = "$brand $model"
 }

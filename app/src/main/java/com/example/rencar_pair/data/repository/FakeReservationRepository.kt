@@ -1,0 +1,27 @@
+package com.example.rencar_pair.data.repository
+
+import com.example.rencar_pair.data.remote.NetworkResult
+import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.repository.ReservationRepository
+
+class FakeReservationRepository : ReservationRepository {
+
+    private val rentals = mutableListOf<Rental>()
+
+    override suspend fun createRental(vehicleId: String, endDate: String): NetworkResult<Rental> {
+        val rental = Rental(
+            id = "local-${System.currentTimeMillis()}",
+            vehicleId = vehicleId,
+            startDate = "now",
+            endDate = endDate,
+            totalPrice = 0.0,
+            status = "ACTIVE"
+        )
+        rentals.add(0, rental)
+        return NetworkResult.Success(rental)
+    }
+
+    override suspend fun getRentals(): NetworkResult<List<Rental>> {
+        return NetworkResult.Success(rentals)
+    }
+}

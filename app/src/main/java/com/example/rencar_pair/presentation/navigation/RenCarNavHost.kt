@@ -5,12 +5,16 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.example.rencar_pair.presentation.ui.screens.LoginScreen
 import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
 import com.example.rencar_pair.presentation.ui.screens.RegisterScreen
 import com.example.rencar_pair.presentation.ui.screens.SplashScreen
+import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistRoute as DeliveryChecklistScreenRoute
 import com.example.rencar_pair.presentation.ui.screens.home.HomeRoute
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationRoute
+import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationRoute as ReservationScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailRoute as VehicleDetailScreenRoute
 
 @Composable
 fun RenCarNavHost(
@@ -78,7 +82,47 @@ fun RenCarNavHost(
         }
 
         composable<HomeMapRoute> {
-            HomeRoute()
+            HomeRoute(
+                onVehicleDetails = { vehicleId ->
+                    navController.navigate(VehicleDetailRoute(vehicleId))
+                }
+            )
+        }
+
+        composable<VehicleDetailRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<VehicleDetailRoute>()
+            VehicleDetailScreenRoute(
+                vehicleId = route.vehicleId,
+                onBack = { navController.popBackStack() },
+                onReserve = { vehicleId ->
+                    navController.navigate(ReservationRoute(vehicleId))
+                }
+            )
+        }
+
+        composable<ReservationRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<ReservationRoute>()
+            ReservationScreenRoute(
+                vehicleId = route.vehicleId,
+                onBack = { navController.popBackStack() },
+                onDeliveryChecklist = { rentalId, vehicleId ->
+                    navController.navigate(DeliveryChecklistRoute(rentalId, vehicleId))
+                }
+            )
+        }
+
+        composable<DeliveryChecklistRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<DeliveryChecklistRoute>()
+            DeliveryChecklistScreenRoute(
+                rentalId = route.rentalId,
+                vehicleId = route.vehicleId,
+                onBack = { navController.popBackStack() },
+                onDone = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(HomeMapRoute) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
