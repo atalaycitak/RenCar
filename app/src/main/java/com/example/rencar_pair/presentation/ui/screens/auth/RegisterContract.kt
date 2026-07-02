@@ -21,7 +21,7 @@ sealed interface RegisterIntent : MviIntent {
     data object OnRegisterClicked : RegisterIntent
 }
 
-sealed class RegisterEffect : MviEffect() {
+sealed class RegisterEffect : MviEffect {
     data object NavigateToLicenseVerification : RegisterEffect()
     data class ShowError(val message: String) : RegisterEffect()
 }

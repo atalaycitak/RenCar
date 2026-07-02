@@ -34,3 +34,12 @@ data class DeliveryChecklistRoute(
     val rentalId: String,
     val vehicleId: String
 )
+
+@Serializable
+data class ActiveRentalRoute(val rentalId: String)
+
+@Serializable
+data class TripSummaryRoute(val rentalId: String)
+
+@Serializable
+data object WalletRoute

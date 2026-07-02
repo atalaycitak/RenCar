@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import com.example.rencar_pair.data.local.DataStoreManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
@@ -54,7 +55,8 @@ fun SplashScreen(
             } else {
                 onNavigateToOnboarding()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("SplashScreen", "Failed to check saved token", e)
             onNavigateToOnboarding()
         }
     }

@@ -1,11 +1,13 @@
 package com.example.rencar_pair.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.presentation.ui.screens.LoginScreen
 import com.example.rencar_pair.presentation.ui.screens.VerifyOtpScreen
 import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
@@ -16,12 +18,25 @@ import com.example.rencar_pair.presentation.ui.screens.home.HomeRoute
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationRoute
 import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationRoute as ReservationScreenRoute
 import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailRoute as VehicleDetailScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalRoute as ActiveRentalScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryRoute as TripSummaryScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.wallet.WalletRoute as WalletScreenRoute
+import org.koin.compose.koinInject
 
 @Composable
 fun RenCarNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val dataStoreManager: DataStoreManager = koinInject()
+
+    LaunchedEffect(dataStoreManager) {
+        dataStoreManager.tokenExpired.collect {
+            navController.navigate(LoginRoute) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
     NavHost(
         navController = navController,
         startDestination = SplashRoute,
@@ -135,11 +150,39 @@ fun RenCarNavHost(
                 vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
                 onDone = {
+                    navController.navigate(ActiveRentalRoute(route.rentalId)) {
+                        popUpTo(HomeMapRoute) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable<ActiveRentalRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<ActiveRentalRoute>()
+            ActiveRentalScreenRoute(
+                rentalId = route.rentalId,
+                onNavigateToSummary = { rentalId ->
+                    navController.navigate(TripSummaryRoute(rentalId)) {
+                        popUpTo(ActiveRentalRoute(rentalId)) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable<TripSummaryRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<TripSummaryRoute>()
+            TripSummaryScreenRoute(
+                rentalId = route.rentalId,
+                onNavigateToHome = {
                     navController.navigate(HomeMapRoute) {
                         popUpTo(HomeMapRoute) { inclusive = true }
                     }
                 }
             )
+        }
+
+        composable<WalletRoute> {
+            WalletScreenRoute()
         }
     }
 }

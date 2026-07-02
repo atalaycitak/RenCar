@@ -24,4 +24,24 @@ class FakeReservationRepository : ReservationRepository {
     override suspend fun getRentals(): NetworkResult<List<Rental>> {
         return NetworkResult.Success(rentals)
     }
+
+    override suspend fun getRental(id: String): NetworkResult<Rental> {
+        val rental = rentals.find { it.id == id }
+        return if (rental != null) {
+            NetworkResult.Success(rental)
+        } else {
+            NetworkResult.Error("Rental not found")
+        }
+    }
+
+    override suspend fun returnRental(id: String): NetworkResult<Rental> {
+        val index = rentals.indexOfFirst { it.id == id }
+        return if (index != -1) {
+            val updated = rentals[index].copy(status = "RETURNED")
+            rentals[index] = updated
+            NetworkResult.Success(updated)
+        } else {
+            NetworkResult.Error("Rental not found")
+        }
+    }
 }

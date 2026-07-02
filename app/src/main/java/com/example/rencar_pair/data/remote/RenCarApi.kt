@@ -50,4 +50,10 @@ interface RenCarApi {
 
     @GET("api/rentals")
     suspend fun getRentals(): Response<List<RentalResponse>>
+
+    @GET("api/rentals/{id}")
+    suspend fun getRental(@Path("id") id: String): Response<RentalResponse>
+
+    @POST("api/rentals/{id}/return")
+    suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
 }

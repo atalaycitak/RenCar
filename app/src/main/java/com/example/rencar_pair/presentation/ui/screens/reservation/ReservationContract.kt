@@ -23,6 +23,6 @@ sealed interface ReservationIntent : MviIntent {
     data object ConfirmReservation : ReservationIntent
 }
 
-sealed class ReservationEffect : MviEffect() {
+sealed class ReservationEffect : MviEffect {
     data class NavigateToDelivery(val rentalId: String, val vehicleId: String) : ReservationEffect()
 }

@@ -49,6 +49,40 @@ class ReservationRepositoryImpl(
         }
     }
 
+    override suspend fun getRental(id: String): NetworkResult<Rental> {
+        return try {
+            val response = api.getRental(id)
+            if (response.isSuccessful) {
+                response.body()?.let { NetworkResult.Success(it.toDomain()) }
+                    ?: NetworkResult.Error("Empty response body")
+            } else {
+                NetworkResult.Error(
+                    message = response.errorBody()?.string() ?: "Failed to fetch rental",
+                    code = response.code()
+                )
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(e.message ?: "Network error")
+        }
+    }
+
+    override suspend fun returnRental(id: String): NetworkResult<Rental> {
+        return try {
+            val response = api.returnRental(id)
+            if (response.isSuccessful) {
+                response.body()?.let { NetworkResult.Success(it.toDomain()) }
+                    ?: NetworkResult.Error("Empty response body")
+            } else {
+                NetworkResult.Error(
+                    message = response.errorBody()?.string() ?: "Failed to return rental",
+                    code = response.code()
+                )
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(e.message ?: "Network error")
+        }
+    }
+
     private fun RentalResponse.toDomain(): Rental {
         return Rental(
             id = id,

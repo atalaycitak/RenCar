@@ -16,7 +16,7 @@ sealed interface VerifyOtpIntent : MviIntent {
     data object OnVerifyClicked : VerifyOtpIntent
 }
 
-sealed class VerifyOtpEffect : MviEffect() {
+sealed class VerifyOtpEffect : MviEffect {
     data object NavigateToHome : VerifyOtpEffect()
     data class ShowError(val message: String) : VerifyOtpEffect()
 }

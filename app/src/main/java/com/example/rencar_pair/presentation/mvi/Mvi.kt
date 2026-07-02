@@ -4,4 +4,4 @@ interface MviState
 
 interface MviIntent
 
-sealed class MviEffect
+interface MviEffect

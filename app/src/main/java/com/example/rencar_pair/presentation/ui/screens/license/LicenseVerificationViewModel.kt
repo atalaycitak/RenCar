@@ -70,7 +70,7 @@ class LicenseVerificationViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = uploadLicenseUseCase(front = "mock-front-image", back = "mock-back-image")) {
+            when (val result = uploadLicenseUseCase(frontPath = "mock-front-image", backPath = "mock-back-image")) {
                 is NetworkResult.Success -> applyLicense(result.data)
                 is NetworkResult.Error -> _state.update {
                     it.copy(isLoading = false, errorMessage = result.message)
