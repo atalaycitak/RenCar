@@ -147,7 +147,7 @@ fun LicenseVerificationScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading
         ) {
-            Text(text = "Durumu kontrol et ve devam et")
+            Text(text = continueButtonTextFor(state.status))
         }
     }
 }
@@ -213,9 +213,16 @@ private fun LicenseSideButton(
 private fun helperTextFor(status: LicenseStatus): String {
     return when (status) {
         LicenseStatus.NotUploaded -> "Ön ve arka yüz fotoğrafını seçip doğrulamayı başlatın."
-        LicenseStatus.Pending -> "Ehliyet admin onayı bekliyor. Swagger üzerinden onaylandıktan sonra durumu kontrol edip devam edin."
+        LicenseStatus.Pending -> "Başvurunuz güvenlik kontrolü için inceleniyor. Onaylandığında araç kiralama adımına devam edebilirsiniz."
         LicenseStatus.Approved -> "Ehliyet onaylandı. Devam ederek araç haritasına geçebilirsiniz."
         LicenseStatus.Rejected -> "Ehliyet reddedildi. Yeni fotoğraflar seçip tekrar doğrulama gönderebilirsiniz."
+    }
+}
+
+private fun continueButtonTextFor(status: LicenseStatus): String {
+    return when (status) {
+        LicenseStatus.Approved -> "Devam et"
+        else -> "Durumu kontrol et"
     }
 }
 
