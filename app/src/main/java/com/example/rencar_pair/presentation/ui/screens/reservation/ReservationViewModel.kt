@@ -2,7 +2,7 @@ package com.example.rencar_pair.presentation.ui.screens.reservation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.rencar_pair.data.remote.NetworkResult
+import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
 import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
 import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase

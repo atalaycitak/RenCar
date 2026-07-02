@@ -1,4 +1,4 @@
-package com.example.rencar_pair.data.remote
+package com.example.rencar_pair.domain
 
 sealed class NetworkResult<out T> {
     data class Success<T>(val data: T) : NetworkResult<T>()

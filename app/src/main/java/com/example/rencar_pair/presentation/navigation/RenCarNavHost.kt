@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.rencar_pair.presentation.ui.screens.LoginScreen
+import com.example.rencar_pair.presentation.ui.screens.VerifyOtpScreen
 import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
 import com.example.rencar_pair.presentation.ui.screens.RegisterScreen
 import com.example.rencar_pair.presentation.ui.screens.SplashScreen
@@ -51,14 +52,25 @@ fun RenCarNavHost(
 
         composable<LoginRoute> {
             LoginScreen(
+                onNavigateToVerifyOtp = { phone ->
+                    navController.navigate(VerifyOtpRoute(phone))
+                },
+                onNavigateToRegister = {
+                    navController.navigate(RegisterRoute)
+                }
+            )
+        }
+
+        composable<VerifyOtpRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<VerifyOtpRoute>()
+            // SavedStateHandle should automatically have 'phone' from the route
+            VerifyOtpScreen(
                 onNavigateToHomeMap = {
                     navController.navigate(LicenseCheckRoute) {
                         popUpTo(LoginRoute) { inclusive = true }
                         popUpTo(OnboardingRoute) { inclusive = true }
+                        popUpTo(VerifyOtpRoute::class.java.name) { inclusive = true }
                     }
-                },
-                onNavigateToRegister = {
-                    navController.navigate(RegisterRoute)
                 }
             )
         }
@@ -67,6 +79,11 @@ fun RenCarNavHost(
             RegisterScreen(
                 onNavigateToLogin = {
                     navController.popBackStack()
+                },
+                onNavigateToLicenseVerification = {
+                    navController.navigate(LicenseCheckRoute) {
+                        popUpTo(RegisterRoute) { inclusive = true }
+                    }
                 }
             )
         }

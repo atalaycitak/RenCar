@@ -3,7 +3,6 @@ package com.example.rencar_pair.presentation.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Message
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,31 +27,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
-import com.example.rencar_pair.presentation.ui.screens.auth.LoginEffect
-import com.example.rencar_pair.presentation.ui.screens.auth.LoginIntent
-import com.example.rencar_pair.presentation.ui.screens.auth.LoginViewModel
+import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpEffect
+import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpIntent
+import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun LoginScreen(
-    onNavigateToVerifyOtp: (String) -> Unit,
-    onNavigateToRegister: () -> Unit,
+fun VerifyOtpScreen(
+    onNavigateToHomeMap: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = koinViewModel()
+    viewModel: VerifyOtpViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is LoginEffect.NavigateToVerifyOtp -> onNavigateToVerifyOtp(effect.phone)
-                is LoginEffect.ShowError -> { }
+                is VerifyOtpEffect.NavigateToHome -> onNavigateToHomeMap()
+                is VerifyOtpEffect.ShowError -> { }
             }
         }
     }
@@ -68,7 +62,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Phone,
+                imageVector = Icons.Default.Message,
                 contentDescription = null,
                 modifier = Modifier.size(72.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -77,7 +71,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "RenCar'a Hoş Geldin",
+                text = "Doğrulama Kodu",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -87,7 +81,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Devam etmek için giriş yap",
+                text = "${state.phone} numarasına gönderilen kodu girin (Simülasyon: 123456)",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -95,15 +89,15 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             CustomTextField(
-                value = state.phone,
-                onValueChange = { viewModel.onIntent(LoginIntent.OnPhoneChanged(it)) },
-                label = "Telefon Numarası",
-                placeholder = "+905550000000",
+                value = state.code,
+                onValueChange = { viewModel.onIntent(VerifyOtpIntent.OnCodeChanged(it)) },
+                label = "OTP Kodu",
+                placeholder = "123456",
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
+                    keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
-                isError = state.errorMessage != null && state.phone.isBlank()
+                isError = state.errorMessage != null && state.code.isBlank()
             )
 
             AnimatedVisibility(
@@ -126,21 +120,9 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             PrimaryButton(
-                text = "Giriş Yap",
-                onClick = { viewModel.onIntent(LoginIntent.OnLoginClicked) },
+                text = "Doğrula",
+                onClick = { viewModel.onIntent(VerifyOtpIntent.OnVerifyClicked) },
                 enabled = !state.isLoading
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Hesabın yok mu? Kayıt Ol",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .clickable { onNavigateToRegister() }
             )
         }
 

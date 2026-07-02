@@ -15,11 +15,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
+import com.example.rencar_pair.presentation.ui.screens.auth.RegisterEffect
+import com.example.rencar_pair.presentation.ui.screens.auth.RegisterIntent
+import com.example.rencar_pair.presentation.ui.screens.auth.RegisterViewModel
+import org.koin.androidx.compose.koinViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,20 +39,29 @@ import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 @Composable
 fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
-    modifier: Modifier = Modifier
+    onNavigateToLicenseVerification: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: RegisterViewModel = koinViewModel()
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is RegisterEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
+                is RegisterEffect.ShowError -> { }
+            }
+        }
+    }
+
+    androidx.compose.foundation.layout.Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
         IconButton(
             onClick = onNavigateToLogin,
             modifier = Modifier.align(Alignment.Start)
@@ -79,57 +95,84 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         CustomTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
+            value = state.fullName,
+            onValueChange = { viewModel.onIntent(RegisterIntent.OnFullNameChanged(it)) },
             label = "Ad Soyad",
             placeholder = "Adınız Soyadınız",
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            isError = state.errorMessage != null && state.fullName.isBlank()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         CustomTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = state.email,
+            onValueChange = { viewModel.onIntent(RegisterIntent.OnEmailChanged(it)) },
             label = "E-posta",
             placeholder = "ornek@email.com",
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
-            )
+            ),
+            isError = state.errorMessage != null && state.email.isBlank()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         CustomTextField(
-            value = phone,
-            onValueChange = { phone = it },
+            value = state.phone,
+            onValueChange = { viewModel.onIntent(RegisterIntent.OnPhoneChanged(it)) },
             label = "Telefon",
-            placeholder = "5XX XXX XX XX",
+            placeholder = "+905550000000",
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Phone,
                 imeAction = ImeAction.Next
-            )
+            ),
+            isError = state.errorMessage != null && state.phone.isBlank()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         CustomTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = state.password,
+            onValueChange = { viewModel.onIntent(RegisterIntent.OnPasswordChanged(it)) },
             label = "Şifre",
             placeholder = "••••••••",
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
-            )
+            ),
+            isError = state.errorMessage != null && state.password.isBlank()
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        AnimatedVisibility(
+            visible = state.errorMessage != null,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            state.errorMessage?.let { error ->
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         PrimaryButton(
             text = "Kayıt Ol",
-            onClick = { }
+            onClick = { viewModel.onIntent(RegisterIntent.OnRegisterClicked) },
+            enabled = !state.isLoading
         )
     }
+    
+    LoadingOverlay(isLoading = state.isLoading)
+  }
 }

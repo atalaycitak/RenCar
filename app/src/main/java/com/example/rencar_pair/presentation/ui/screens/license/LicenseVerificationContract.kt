@@ -1,6 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.license
 
 import com.example.rencar_pair.domain.model.LicenseStatus
+import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
@@ -20,6 +21,6 @@ sealed interface LicenseVerificationIntent : MviIntent {
     data object Upload : LicenseVerificationIntent
 }
 
-sealed interface LicenseVerificationEffect {
-    data object ContinueToMap : LicenseVerificationEffect
+sealed class LicenseVerificationEffect : MviEffect() {
+    data object ContinueToMap : LicenseVerificationEffect()
 }

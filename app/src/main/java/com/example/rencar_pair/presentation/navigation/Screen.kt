@@ -12,6 +12,9 @@ data object OnboardingRoute
 data object LoginRoute
 
 @Serializable
+data class VerifyOtpRoute(val phone: String)
+
+@Serializable
 data object RegisterRoute
 
 @Serializable

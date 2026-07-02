@@ -4,8 +4,20 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LoginRequest(
-    val email: String,
-    val password: String
+    val phone: String
+)
+
+@Serializable
+data class OtpRequiredResponseDto(
+    val message: String,
+    val phone: String,
+    val expiresAt: String
+)
+
+@Serializable
+data class VerifyOtpRequest(
+    val phone: String,
+    val code: String
 )
 
 @Serializable
@@ -18,11 +30,8 @@ data class RegisterRequest(
 
 @Serializable
 data class AuthResponse(
-    val token: String? = null,
     val accessToken: String? = null,
     val refreshToken: String? = null,
-    val userId: String? = null,
-    val fullName: String? = null,
     val user: AuthUserResponse? = null
 )
 

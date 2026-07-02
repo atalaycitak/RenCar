@@ -2,15 +2,15 @@ package com.example.rencar_pair.presentation.ui.screens.license
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.rencar_pair.data.remote.NetworkResult
+import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.DriverLicense
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,8 +22,8 @@ class LicenseVerificationViewModel(
     private val _state = MutableStateFlow(LicenseVerificationState())
     val state = _state.asStateFlow()
 
-    private val _effect = MutableSharedFlow<LicenseVerificationEffect>()
-    val effect = _effect.asSharedFlow()
+    private val _effect = Channel<LicenseVerificationEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
 
     init {
         onIntent(LicenseVerificationIntent.LoadStatus)
@@ -44,7 +44,7 @@ class LicenseVerificationViewModel(
 
     fun continueToMap() {
         viewModelScope.launch {
-            _effect.emit(LicenseVerificationEffect.ContinueToMap)
+            _effect.send(LicenseVerificationEffect.ContinueToMap)
         }
     }
 
