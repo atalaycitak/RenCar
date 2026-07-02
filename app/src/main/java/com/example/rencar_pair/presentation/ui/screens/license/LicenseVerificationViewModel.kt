@@ -6,6 +6,7 @@ import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.DriverLicense
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
+import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
 
 class LicenseVerificationViewModel(
     private val getLicenseStatusUseCase: GetLicenseStatusUseCase,
-    private val uploadLicenseUseCase: UploadLicenseUseCase
+    private val uploadLicenseUseCase: UploadLicenseUseCase,
+    private val refreshSessionUseCase: RefreshSessionUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LicenseVerificationState())
@@ -32,17 +34,18 @@ class LicenseVerificationViewModel(
     fun onIntent(intent: LicenseVerificationIntent) {
         when (intent) {
             LicenseVerificationIntent.LoadStatus -> loadStatus()
-            LicenseVerificationIntent.PickFrontImage -> _state.update {
-                it.copy(hasFrontImage = true, errorMessage = null)
+            is LicenseVerificationIntent.PickFrontImage -> _state.update {
+                it.copy(frontImageUri = intent.uri, errorMessage = null)
             }
-            LicenseVerificationIntent.PickBackImage -> _state.update {
-                it.copy(hasBackImage = true, errorMessage = null)
+            is LicenseVerificationIntent.PickBackImage -> _state.update {
+                it.copy(backImageUri = intent.uri, errorMessage = null)
             }
             LicenseVerificationIntent.Upload -> upload()
+            LicenseVerificationIntent.Continue -> refreshStatusAndContinue()
         }
     }
 
-    fun continueToMap() {
+    private fun continueToMap() {
         viewModelScope.launch {
             _effect.send(LicenseVerificationEffect.ContinueToMap)
         }
@@ -61,6 +64,19 @@ class LicenseVerificationViewModel(
         }
     }
 
+    private fun refreshStatusAndContinue() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = getLicenseStatusUseCase()) {
+                is NetworkResult.Success -> applyLicense(result.data, navigateWhenApproved = true)
+                is NetworkResult.Error -> _state.update {
+                    it.copy(isLoading = false, errorMessage = result.message)
+                }
+                NetworkResult.Loading -> Unit
+            }
+        }
+    }
+
     private fun upload() {
         val current = state.value
         if (!current.hasFrontImage || !current.hasBackImage) {
@@ -70,7 +86,10 @@ class LicenseVerificationViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = uploadLicenseUseCase(frontPath = "mock-front-image", backPath = "mock-back-image")) {
+            when (val result = uploadLicenseUseCase(
+                frontPath = current.frontImageUri.orEmpty(),
+                backPath = current.backImageUri.orEmpty()
+            )) {
                 is NetworkResult.Success -> applyLicense(result.data)
                 is NetworkResult.Error -> _state.update {
                     it.copy(isLoading = false, errorMessage = result.message)
@@ -80,17 +99,32 @@ class LicenseVerificationViewModel(
         }
     }
 
-    private fun applyLicense(license: DriverLicense) {
+    private fun applyLicense(
+        license: DriverLicense,
+        navigateWhenApproved: Boolean = false
+    ) {
         _state.update {
             it.copy(
                 status = license.status,
                 isLoading = false,
                 rejectReason = license.rejectReason,
-                errorMessage = null
+                errorMessage = if (navigateWhenApproved && license.status != LicenseStatus.Approved) {
+                    "Ehliyet onayi tamamlanmadan devam edemezsiniz."
+                } else {
+                    null
+                }
             )
         }
-        if (license.status == LicenseStatus.Approved || license.status == LicenseStatus.Pending) {
-            continueToMap()
+        if (navigateWhenApproved && license.status == LicenseStatus.Approved) {
+            viewModelScope.launch {
+                when (val refreshResult = refreshSessionUseCase()) {
+                    is NetworkResult.Success -> continueToMap()
+                    is NetworkResult.Error -> _state.update {
+                        it.copy(errorMessage = refreshResult.message)
+                    }
+                    NetworkResult.Loading -> Unit
+                }
+            }
         }
     }
 }

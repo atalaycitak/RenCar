@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +39,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun VerifyOtpScreen(
     onNavigateToHomeMap: () -> Unit,
+    onNavigateToLicenseVerification: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: VerifyOtpViewModel = koinViewModel()
 ) {
@@ -48,6 +49,7 @@ fun VerifyOtpScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is VerifyOtpEffect.NavigateToHome -> onNavigateToHomeMap()
+                is VerifyOtpEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
                 is VerifyOtpEffect.ShowError -> { }
             }
         }
@@ -62,7 +64,7 @@ fun VerifyOtpScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Message,
+                imageVector = Icons.AutoMirrored.Filled.Message,
                 contentDescription = null,
                 modifier = Modifier.size(72.dp),
                 tint = MaterialTheme.colorScheme.primary

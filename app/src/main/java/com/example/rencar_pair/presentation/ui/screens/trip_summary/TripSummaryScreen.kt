@@ -52,6 +52,13 @@ fun TripSummaryScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
 
+        Text(
+            text = "Odeme kartlari ve islem sonucu lokal demo state uzerinden calisir; Swagger'da payment endpoint'i yok.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Receipt Card
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -61,7 +68,7 @@ fun TripSummaryScreen(
             Column(modifier = Modifier.padding(16.dp)) {
                 ReceiptRow(label = "Araç Bedeli", value = "₺${state.rental?.totalPrice ?: 0.0}")
                 ReceiptRow(label = "İndirim", value = "-₺0.00", valueColor = Color(0xFF10B981))
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -91,10 +98,11 @@ fun TripSummaryScreen(
             } else {
                 items(state.savedCards, key = { it.cardToken }) { card ->
                     PaymentCardItem(
-                    card = card,
-                    isSelected = state.selectedCardToken == card.cardToken,
-                    onClick = { onIntent(TripSummaryIntent.SelectCard(card.cardToken)) }
-                )
+                        card = card,
+                        isSelected = state.selectedCardToken == card.cardToken,
+                        onClick = { onIntent(TripSummaryIntent.SelectCard(card.cardToken)) }
+                    )
+                }
             }
         }
 

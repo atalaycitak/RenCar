@@ -1,5 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.license
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,7 +51,7 @@ fun LicenseVerificationRoute(
     LicenseVerificationScreen(
         state = state,
         onIntent = viewModel::onIntent,
-        onContinue = viewModel::continueToMap
+        onContinue = { viewModel.onIntent(LicenseVerificationIntent.Continue) }
     )
 }
 
@@ -59,6 +61,13 @@ fun LicenseVerificationScreen(
     onIntent: (LicenseVerificationIntent) -> Unit,
     onContinue: () -> Unit
 ) {
+    val frontImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { onIntent(LicenseVerificationIntent.PickFrontImage(it.toString())) }
+    }
+    val backImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { onIntent(LicenseVerificationIntent.PickBackImage(it.toString())) }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -84,13 +93,13 @@ fun LicenseVerificationScreen(
             LicenseSideButton(
                 text = "On yuz",
                 selected = state.hasFrontImage,
-                onClick = { onIntent(LicenseVerificationIntent.PickFrontImage) },
+                onClick = { frontImageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f)
             )
             LicenseSideButton(
                 text = "Arka yuz",
                 selected = state.hasBackImage,
-                onClick = { onIntent(LicenseVerificationIntent.PickBackImage) },
+                onClick = { backImageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -113,9 +122,10 @@ fun LicenseVerificationScreen(
 
         OutlinedButton(
             onClick = onContinue,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading
         ) {
-            Text(text = "Haritaya gec")
+            Text(text = "Devam et")
         }
     }
 }

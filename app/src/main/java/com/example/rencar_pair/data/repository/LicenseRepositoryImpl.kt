@@ -1,5 +1,7 @@
 package com.example.rencar_pair.data.repository
 
+import android.content.Context
+import android.net.Uri
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.LicenseStatusResponse
@@ -8,11 +10,14 @@ import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.domain.repository.LicenseRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class LicenseRepositoryImpl(
-    private val api: RenCarApi
+    private val api: RenCarApi,
+    private val context: Context
 ) : LicenseRepository {
 
     override suspend fun getStatus(): NetworkResult<DriverLicense> {
@@ -33,17 +38,15 @@ class LicenseRepositoryImpl(
 
     override suspend fun upload(frontPath: String, backPath: String): NetworkResult<DriverLicense> {
         return try {
-            val front = File(frontPath)
-            val back = File(backPath)
             val frontPart = MultipartBody.Part.createFormData(
-                "front", 
-                front.name, 
-                front.asRequestBody("image/*".toMediaTypeOrNull())
+                "front",
+                resolveFileName(frontPath, "front-license.jpg"),
+                createImageRequestBody(frontPath)
             )
             val backPart = MultipartBody.Part.createFormData(
-                "back", 
-                back.name, 
-                back.asRequestBody("image/*".toMediaTypeOrNull())
+                "back",
+                resolveFileName(backPath, "back-license.jpg"),
+                createImageRequestBody(backPath)
             )
             val response = api.uploadLicense(frontPart, backPart)
             if (response.isSuccessful) {
@@ -59,7 +62,7 @@ class LicenseRepositoryImpl(
     private fun LicenseStatusResponse.toDomain(): DriverLicense {
         return DriverLicense(
             status = when (status.uppercase()) {
-                "PENDING" -> LicenseStatus.Pending
+                "PENDING", "UNDER_REVIEW" -> LicenseStatus.Pending
                 "APPROVED" -> LicenseStatus.Approved
                 "REJECTED" -> LicenseStatus.Rejected
                 else -> LicenseStatus.NotUploaded
@@ -68,5 +71,29 @@ class LicenseRepositoryImpl(
             backImageUrl = backImageUrl,
             rejectReason = rejectReason
         )
+    }
+
+    private fun createImageRequestBody(source: String): RequestBody {
+        return if (source.startsWith("content://")) {
+            val uri = Uri.parse(source)
+            val mediaType = (context.contentResolver.getType(uri) ?: "image/*").toMediaTypeOrNull()
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: throw IllegalArgumentException("Image file cannot be read")
+            bytes.toRequestBody(mediaType)
+        } else {
+            val file = File(source)
+            if (!file.exists()) {
+                throw IllegalArgumentException("Image file not found")
+            }
+            file.asRequestBody("image/*".toMediaTypeOrNull())
+        }
+    }
+
+    private fun resolveFileName(source: String, fallback: String): String {
+        return if (source.startsWith("content://")) {
+            fallback
+        } else {
+            File(source).name.ifBlank { fallback }
+        }
     }
 }

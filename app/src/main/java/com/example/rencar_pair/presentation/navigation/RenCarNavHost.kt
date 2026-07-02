@@ -81,6 +81,13 @@ fun RenCarNavHost(
             // SavedStateHandle should automatically have 'phone' from the route
             VerifyOtpScreen(
                 onNavigateToHomeMap = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(LoginRoute) { inclusive = true }
+                        popUpTo(OnboardingRoute) { inclusive = true }
+                        popUpTo(VerifyOtpRoute::class.java.name) { inclusive = true }
+                    }
+                },
+                onNavigateToLicenseVerification = {
                     navController.navigate(LicenseCheckRoute) {
                         popUpTo(LoginRoute) { inclusive = true }
                         popUpTo(OnboardingRoute) { inclusive = true }

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rencar_pair.domain.NetworkResult
+import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +52,11 @@ class VerifyOtpViewModel(
             when (val result = verifyOtpUseCase(currentState.phone, currentState.code)) {
                 is NetworkResult.Success -> {
                     _state.value = _state.value.copy(isLoading = false)
-                    _effect.send(VerifyOtpEffect.NavigateToHome)
+                    if (result.data.role == UserRole.Customer) {
+                        _effect.send(VerifyOtpEffect.NavigateToHome)
+                    } else {
+                        _effect.send(VerifyOtpEffect.NavigateToLicenseVerification)
+                    }
                 }
                 is NetworkResult.Error -> {
                     _state.value = _state.value.copy(

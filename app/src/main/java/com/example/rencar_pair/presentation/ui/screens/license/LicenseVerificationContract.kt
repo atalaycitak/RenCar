@@ -7,18 +7,22 @@ import com.example.rencar_pair.presentation.mvi.MviState
 
 data class LicenseVerificationState(
     val status: LicenseStatus = LicenseStatus.NotUploaded,
-    val hasFrontImage: Boolean = false,
-    val hasBackImage: Boolean = false,
+    val frontImageUri: String? = null,
+    val backImageUri: String? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val rejectReason: String? = null
-) : MviState
+) : MviState {
+    val hasFrontImage: Boolean = frontImageUri != null
+    val hasBackImage: Boolean = backImageUri != null
+}
 
 sealed interface LicenseVerificationIntent : MviIntent {
     data object LoadStatus : LicenseVerificationIntent
-    data object PickFrontImage : LicenseVerificationIntent
-    data object PickBackImage : LicenseVerificationIntent
+    data class PickFrontImage(val uri: String) : LicenseVerificationIntent
+    data class PickBackImage(val uri: String) : LicenseVerificationIntent
     data object Upload : LicenseVerificationIntent
+    data object Continue : LicenseVerificationIntent
 }
 
 sealed class LicenseVerificationEffect : MviEffect {
