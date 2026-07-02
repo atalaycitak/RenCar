@@ -54,6 +54,13 @@ fun WalletScreen(
                 .padding(padding)
                 .padding(24.dp)
         ) {
+            Text(
+                text = "Cuzdan verileri su an lokal demo state ile tutulur; Swagger'da wallet endpoint'i yok.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Blue50),

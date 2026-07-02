@@ -92,23 +92,49 @@ private class FakeVehicleRepositoryForTest : VehicleRepository {
 
 private class FakeReservationRepositoryForTest : ReservationRepository {
     var createdVehicleId: String? = null
+    private var rental: Rental? = null
 
     override suspend fun createRental(vehicleId: String, endDate: String): NetworkResult<Rental> {
         createdVehicleId = vehicleId
+        rental = Rental(
+            id = "rental-1",
+            vehicleId = vehicleId,
+            startDate = "now",
+            endDate = endDate,
+            totalPrice = 1230.0,
+            status = "ACTIVE"
+        )
+        return NetworkResult.Success(rental!!)
+    }
+
+    override suspend fun getRentals(): NetworkResult<List<Rental>> {
+        return NetworkResult.Success(listOfNotNull(rental))
+    }
+
+    override suspend fun getRental(id: String): NetworkResult<Rental> {
         return NetworkResult.Success(
-            Rental(
-                id = "rental-1",
-                vehicleId = vehicleId,
+            rental ?: Rental(
+                id = id,
+                vehicleId = "vehicle-1",
                 startDate = "now",
-                endDate = endDate,
+                endDate = "later",
                 totalPrice = 1230.0,
                 status = "ACTIVE"
             )
         )
     }
 
-    override suspend fun getRentals(): NetworkResult<List<Rental>> {
-        return NetworkResult.Success(emptyList())
+    override suspend fun returnRental(id: String): NetworkResult<Rental> {
+        val completed = (rental ?: Rental(
+            id = id,
+            vehicleId = "vehicle-1",
+            startDate = "now",
+            endDate = "later",
+            totalPrice = 1230.0,
+            status = "ACTIVE"
+        )).copy(status = "COMPLETED")
+        rental = completed
+        return NetworkResult.Success(completed)
     }
 }
 

@@ -14,12 +14,16 @@ import com.example.rencar_pair.domain.repository.WalletRepository
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
 import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
 import com.example.rencar_pair.domain.usecase.GetAvailableVehiclesUseCase
+import com.example.rencar_pair.domain.usecase.GetCurrentUserUseCase
 import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
 import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase
 import com.example.rencar_pair.domain.usecase.LoginUseCase
+import com.example.rencar_pair.domain.usecase.LogoutUseCase
+import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
 import com.example.rencar_pair.domain.usecase.RegisterUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
+import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalViewModel
 import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.RegisterViewModel
@@ -27,7 +31,9 @@ import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpViewModel
 import com.example.rencar_pair.presentation.ui.screens.home.HomeViewModel
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationViewModel
 import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationViewModel
+import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryViewModel
 import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailViewModel
+import com.example.rencar_pair.presentation.ui.screens.wallet.WalletViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -37,7 +43,7 @@ val appModule = module {
     single { DataStoreManager(androidContext()) }
 
     single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
-    single<LicenseRepository> { LicenseRepositoryImpl(get()) }
+    single<LicenseRepository> { LicenseRepositoryImpl(get(), androidContext()) }
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
 
@@ -47,6 +53,9 @@ val appModule = module {
     factory { LoginUseCase(get()) }
     factory { VerifyOtpUseCase(get()) }
     factory { RegisterUseCase(get()) }
+    factory { RefreshSessionUseCase(get()) }
+    factory { GetCurrentUserUseCase(get()) }
+    factory { LogoutUseCase(get()) }
     factory { GetLicenseStatusUseCase(get()) }
     factory { UploadLicenseUseCase(get()) }
     factory { GetAvailableVehiclesUseCase(get()) }
@@ -72,7 +81,7 @@ val appModule = module {
     viewModelOf(::VehicleDetailViewModel)
     viewModelOf(::ReservationViewModel)
     viewModelOf(::DeliveryChecklistViewModel)
-    viewModelOf(com.example.rencar_pair.presentation.ui.screens.active_rental::ActiveRentalViewModel)
-    viewModelOf(com.example.rencar_pair.presentation.ui.screens.trip_summary::TripSummaryViewModel)
-    viewModelOf(com.example.rencar_pair.presentation.ui.screens.wallet::WalletViewModel)
+    viewModelOf(::ActiveRentalViewModel)
+    viewModelOf(::TripSummaryViewModel)
+    viewModelOf(::WalletViewModel)
 }

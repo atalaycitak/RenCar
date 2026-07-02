@@ -17,6 +17,10 @@ class AuthInterceptor(
         cachedToken = null
     }
 
+    fun updateCachedToken(token: String) {
+        cachedToken = token
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
@@ -26,10 +30,6 @@ class AuthInterceptor(
 
         val builder = original.newBuilder()
             .header("Accept", "application/json")
-
-        if (original.header("Content-Type") == null) {
-            builder.header("Content-Type", "application/json")
-        }
 
         if (!token.isNullOrBlank() && !original.url.encodedPath.contains("/auth/")) {
             builder.header("Authorization", "Bearer $token")
