@@ -31,8 +31,10 @@ class LicenseRepositoryImpl(
         }
     }
 
-    override suspend fun upload(front: File, back: File): NetworkResult<DriverLicense> {
+    override suspend fun upload(frontPath: String, backPath: String): NetworkResult<DriverLicense> {
         return try {
+            val front = File(frontPath)
+            val back = File(backPath)
             val frontPart = MultipartBody.Part.createFormData(
                 "front", 
                 front.name, 

@@ -2,6 +2,7 @@ package com.example.rencar_pair.di
 
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.AuthInterceptor
+import com.example.rencar_pair.data.remote.TokenExpiredAuthenticator
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -24,9 +25,14 @@ val networkModule = module {
     }
 
     single {
+        TokenExpiredAuthenticator(get(), get())
+    }
+
+    single {
         OkHttpClient.Builder()
             .addInterceptor(get<HttpLoggingInterceptor>())
             .addInterceptor(get<AuthInterceptor>())
+            .authenticator(get<TokenExpiredAuthenticator>())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)

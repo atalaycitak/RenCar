@@ -15,12 +15,15 @@ class VehicleRepositoryImpl(
             val response = api.getVehicles()
             if (response.isSuccessful) {
                 val vehicles = response.body().orEmpty().map { it.toDomain() }
-                NetworkResult.Success(vehicles.ifEmpty { sampleVehicles })
+                NetworkResult.Success(vehicles)
             } else {
-                NetworkResult.Success(sampleVehicles)
+                NetworkResult.Error(
+                    message = response.errorBody()?.string() ?: "Failed to fetch vehicles",
+                    code = response.code()
+                )
             }
         } catch (e: Exception) {
-            NetworkResult.Success(sampleVehicles)
+            NetworkResult.Error(e.message ?: "Network error")
         }
     }
 
@@ -29,12 +32,15 @@ class VehicleRepositoryImpl(
             val response = api.getVehicle(id)
             if (response.isSuccessful) {
                 response.body()?.let { NetworkResult.Success(it.toDomain()) }
-                    ?: fallbackVehicle(id)
+                    ?: NetworkResult.Error("Empty response body")
             } else {
-                fallbackVehicle(id)
+                NetworkResult.Error(
+                    message = response.errorBody()?.string() ?: "Failed to fetch vehicle detail",
+                    code = response.code()
+                )
             }
         } catch (e: Exception) {
-            fallbackVehicle(id)
+            NetworkResult.Error(e.message ?: "Network error")
         }
     }
 
@@ -48,64 +54,7 @@ class VehicleRepositoryImpl(
             pricePerDay = pricePerDay,
             status = status,
             latitude = latitude,
-            longitude = longitude,
-            rangeKm = estimateRange(type),
-            locationName = "Istanbul"
+            longitude = longitude
         )
     }
-
-    private fun fallbackVehicle(id: String): NetworkResult<Vehicle> {
-        val vehicle = sampleVehicles.firstOrNull { it.id == id } ?: sampleVehicles.first()
-        return NetworkResult.Success(vehicle)
-    }
-
-    private fun estimateRange(type: String): Int {
-        return when (type.uppercase()) {
-            "SUV", "MINIVAN" -> 420
-            "SEDAN" -> 380
-            else -> 320
-        }
-    }
-
-    private val sampleVehicles = listOf(
-        Vehicle(
-            id = "sample-1",
-            plate = "34 RNC 001",
-            brand = "Renault",
-            model = "Clio",
-            type = "HATCHBACK",
-            pricePerDay = 450.0,
-            status = "AVAILABLE",
-            latitude = 41.0082,
-            longitude = 28.9784,
-            rangeKm = 330,
-            locationName = "Sultanahmet"
-        ),
-        Vehicle(
-            id = "sample-2",
-            plate = "34 RNC 002",
-            brand = "Fiat",
-            model = "Egea",
-            type = "SEDAN",
-            pricePerDay = 520.0,
-            status = "AVAILABLE",
-            latitude = 41.0151,
-            longitude = 28.9799,
-            rangeKm = 410,
-            locationName = "Karakoy"
-        ),
-        Vehicle(
-            id = "sample-3",
-            plate = "34 RNC 003",
-            brand = "Volkswagen",
-            model = "Polo",
-            type = "HATCHBACK",
-            pricePerDay = 610.0,
-            status = "AVAILABLE",
-            latitude = 41.0049,
-            longitude = 28.9654,
-            rangeKm = 300,
-            locationName = "Beyoglu"
-        )
-    )
 }

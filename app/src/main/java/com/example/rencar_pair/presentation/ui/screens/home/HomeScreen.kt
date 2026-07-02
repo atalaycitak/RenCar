@@ -183,9 +183,16 @@ private fun VehiclePanel(
         }
         if (state.isLoading) {
             CircularProgressIndicator()
+        } else if (state.vehicles.isEmpty()) {
+            Text(
+                text = "Yakinda arac bulunamadi. Lutfen daha sonra tekrar deneyin.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(state.vehicles) { vehicle ->
+                items(state.vehicles, key = { it.id }) { vehicle ->
                     VehicleRow(
                         vehicle = vehicle,
                         selected = vehicle.id == state.selectedVehicle?.id,

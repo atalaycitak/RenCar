@@ -7,8 +7,10 @@ import com.example.rencar_pair.data.repository.ReservationRepositoryImpl
 import com.example.rencar_pair.data.repository.VehicleRepositoryImpl
 import com.example.rencar_pair.domain.repository.AuthRepository
 import com.example.rencar_pair.domain.repository.LicenseRepository
+import com.example.rencar_pair.domain.repository.PaymentRepository
 import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
+import com.example.rencar_pair.domain.repository.WalletRepository
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
 import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
 import com.example.rencar_pair.domain.usecase.GetAvailableVehiclesUseCase
@@ -39,6 +41,9 @@ val appModule = module {
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
 
+    single<PaymentRepository> { com.example.rencar_pair.data.repository.PaymentRepositoryImpl() }
+    single<WalletRepository> { com.example.rencar_pair.data.repository.WalletRepositoryImpl() }
+
     factory { LoginUseCase(get()) }
     factory { VerifyOtpUseCase(get()) }
     factory { RegisterUseCase(get()) }
@@ -48,6 +53,16 @@ val appModule = module {
     factory { GetVehicleDetailUseCase(get()) }
     factory { CalculateReservationQuoteUseCase() }
     factory { CreateRentalUseCase(get()) }
+    
+    // Rental UseCases
+    factory { com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase(get()) }
+    factory { com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase(get()) }
+    
+    // Payment/Wallet UseCases
+    factory { com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase(get()) }
+    factory { com.example.rencar_pair.domain.usecase.payment.GetWalletBalanceUseCase(get()) }
+    factory { com.example.rencar_pair.domain.usecase.payment.TopUpWalletUseCase(get()) }
+    factory { com.example.rencar_pair.domain.usecase.payment.ProcessPaymentUseCase(get()) }
 
     viewModelOf(::LoginViewModel)
     viewModelOf(::VerifyOtpViewModel)
@@ -57,4 +72,7 @@ val appModule = module {
     viewModelOf(::VehicleDetailViewModel)
     viewModelOf(::ReservationViewModel)
     viewModelOf(::DeliveryChecklistViewModel)
+    viewModelOf(com.example.rencar_pair.presentation.ui.screens.active_rental::ActiveRentalViewModel)
+    viewModelOf(com.example.rencar_pair.presentation.ui.screens.trip_summary::TripSummaryViewModel)
+    viewModelOf(com.example.rencar_pair.presentation.ui.screens.wallet::WalletViewModel)
 }

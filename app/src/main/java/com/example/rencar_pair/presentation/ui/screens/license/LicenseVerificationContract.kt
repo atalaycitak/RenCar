@@ -21,6 +21,6 @@ sealed interface LicenseVerificationIntent : MviIntent {
     data object Upload : LicenseVerificationIntent
 }
 
-sealed class LicenseVerificationEffect : MviEffect() {
+sealed class LicenseVerificationEffect : MviEffect {
     data object ContinueToMap : LicenseVerificationEffect()
 }
