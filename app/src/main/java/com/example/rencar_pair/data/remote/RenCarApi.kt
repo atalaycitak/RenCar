@@ -31,100 +31,100 @@ import retrofit2.http.POST
 
 interface RenCarApi {
 
-    @POST("api/auth/login")
+    @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<OtpRequiredResponseDto>
 
-    @POST("api/auth/verify-otp")
+    @POST("auth/verify-otp")
     suspend fun verifyOtp(@Body request: VerifyOtpRequest): Response<AuthResponse>
 
-    @POST("api/auth/register")
+    @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
-    @POST("api/auth/refresh")
+    @POST("auth/refresh")
     suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<AuthResponse>
 
-    @POST("api/auth/logout")
+    @POST("auth/logout")
     suspend fun logout(): Response<MessageResponse>
 
-    @GET("api/auth/me")
+    @GET("auth/me")
     suspend fun getMe(): Response<AuthUserResponse>
 
     @Multipart
-    @POST("api/license/upload")
+    @POST("license/upload")
     suspend fun uploadLicense(
         @Part front: MultipartBody.Part,
         @Part back: MultipartBody.Part
     ): Response<LicenseStatusResponse>
 
-    @GET("api/license/status")
+    @GET("license/status")
     suspend fun getLicenseStatus(): Response<LicenseStatusResponse>
 
-    @GET("api/vehicles")
+    @GET("vehicles")
     suspend fun getVehicles(): Response<List<VehicleResponse>>
 
-    @GET("api/vehicles/{id}")
+    @GET("vehicles/{id}")
     suspend fun getVehicle(@Path("id") id: String): Response<VehicleResponse>
 
-    @POST("api/rentals")
+    @POST("rentals")
     suspend fun createRental(@Body request: CreateRentalRequest): Response<RentalResponse>
 
-    @GET("api/rentals")
+    @GET("rentals")
     suspend fun getRentals(): Response<List<RentalResponse>>
 
-    @GET("api/rentals/{id}")
+    @GET("rentals/{id}")
     suspend fun getRental(@Path("id") id: String): Response<RentalResponse>
 
-    @POST("api/rentals/{id}/return")
+    @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
 
-    @GET("api/health")
+    @GET("health")
     suspend fun health(): Response<Unit>
 
-    @GET("api/customer/ping")
+    @GET("customer/ping")
     suspend fun customerPing(): Response<Unit>
 
-    @GET("api/admin/ping")
+    @GET("admin/ping")
     suspend fun adminPing(): Response<Unit>
 
-    @GET("api/admin/licenses")
+    @GET("admin/licenses")
     suspend fun getAdminLicenses(): Response<List<AdminLicenseResponse>>
 
-    @GET("api/admin/licenses/{id}")
+    @GET("admin/licenses/{id}")
     suspend fun getAdminLicense(@Path("id") id: String): Response<AdminLicenseResponse>
 
-    @PATCH("api/admin/licenses/{id}/approve")
+    @PATCH("admin/licenses/{id}/approve")
     suspend fun approveLicense(@Path("id") id: String): Response<AdminLicenseResponse>
 
-    @PATCH("api/admin/licenses/{id}/reject")
+    @PATCH("admin/licenses/{id}/reject")
     suspend fun rejectLicense(
         @Path("id") id: String,
         @Body request: RejectLicenseRequest
     ): Response<AdminLicenseResponse>
 
-    @GET("api/admin/vehicles")
+    @GET("admin/vehicles")
     suspend fun getAdminVehicles(): Response<List<VehicleResponse>>
 
-    @POST("api/admin/vehicles")
+    @POST("admin/vehicles")
     suspend fun createAdminVehicle(@Body request: CreateVehicleRequest): Response<VehicleResponse>
 
-    @GET("api/admin/vehicles/{id}")
+    @GET("admin/vehicles/{id}")
     suspend fun getAdminVehicle(@Path("id") id: String): Response<VehicleResponse>
 
-    @PATCH("api/admin/vehicles/{id}")
+    @PATCH("admin/vehicles/{id}")
     suspend fun updateAdminVehicle(
         @Path("id") id: String,
         @Body request: UpdateVehicleRequest
     ): Response<VehicleResponse>
 
-    @DELETE("api/admin/vehicles/{id}")
+    @DELETE("admin/vehicles/{id}")
     suspend fun deleteAdminVehicle(@Path("id") id: String): Response<Unit>
 
-    @GET("api/admin/rentals")
+    @GET("admin/rentals")
     suspend fun getAdminRentals(): Response<List<AdminRentalResponse>>
 
-    @GET("api/admin/rentals/{id}")
+    @GET("admin/rentals/{id}")
     suspend fun getAdminRental(@Path("id") id: String): Response<AdminRentalResponse>
 
-    @GET("api/admin/locations")
+    @GET("admin/locations")
     suspend fun getAdminLocations(): Response<List<VehiclePositionResponse>>
 }
