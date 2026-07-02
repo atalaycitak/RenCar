@@ -77,12 +77,12 @@ fun LicenseVerificationScreen(
     ) {
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Ehliyet dogrulama",
+            text = "Ehliyet doğrulama",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Arac kiralamaya baslamadan once ehliyet durumunu kontrol ediyoruz.",
+            text = "Araç kiralamaya başlamadan önce ehliyet durumunu kontrol ediyoruz.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
         )
@@ -91,13 +91,13 @@ fun LicenseVerificationScreen(
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             LicenseSideButton(
-                text = "On yuz",
+                text = "Ön yüz",
                 selected = state.hasFrontImage,
                 onClick = { frontImageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f)
             )
             LicenseSideButton(
-                text = "Arka yuz",
+                text = "Arka yüz",
                 selected = state.hasBackImage,
                 onClick = { backImageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f)
@@ -116,7 +116,7 @@ fun LicenseVerificationScreen(
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
-                Text(text = "Dogrulamayi baslat")
+                Text(text = "Doğrulamayı başlat")
             }
         }
 
@@ -134,8 +134,8 @@ fun LicenseVerificationScreen(
 private fun StatusCard(state: LicenseVerificationState) {
     val statusText = when (state.status) {
         LicenseStatus.NotUploaded -> "Ehliyet bekleniyor"
-        LicenseStatus.Pending -> "Inceleme bekleniyor"
-        LicenseStatus.Approved -> "Ehliyet onaylandi"
+        LicenseStatus.Pending -> "İnceleme bekleniyor"
+        LicenseStatus.Approved -> "Ehliyet onaylandı"
         LicenseStatus.Rejected -> "Ehliyet reddedildi"
     }
 

@@ -80,7 +80,7 @@ class LicenseVerificationViewModel(
     private fun upload() {
         val current = state.value
         if (!current.hasFrontImage || !current.hasBackImage) {
-            _state.update { it.copy(errorMessage = "Ehliyetin on ve arka yuzu gerekli.") }
+            _state.update { it.copy(errorMessage = "Ehliyetin ön ve arka yüzü gerekli.") }
             return
         }
 
@@ -109,7 +109,7 @@ class LicenseVerificationViewModel(
                 isLoading = false,
                 rejectReason = license.rejectReason,
                 errorMessage = if (navigateWhenApproved && license.status != LicenseStatus.Approved) {
-                    "Ehliyet onayi tamamlanmadan devam edemezsiniz."
+                    "Ehliyet onayı tamamlanmadan devam edemezsiniz."
                 } else {
                     null
                 }

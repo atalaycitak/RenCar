@@ -6,7 +6,7 @@ import com.example.rencar_pair.domain.repository.AuthRepository
 class LoginUseCase(private val authRepository: AuthRepository) {
     suspend operator fun invoke(phone: String): NetworkResult<String> {
         if (phone.isBlank()) {
-            return NetworkResult.Error("Phone number cannot be empty")
+            return NetworkResult.Error("Telefon numarası boş olamaz")
         }
         return authRepository.login(phone)
     }

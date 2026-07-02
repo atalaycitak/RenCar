@@ -62,7 +62,7 @@ fun DeliveryChecklistScreen(
     onDone: () -> Unit
 ) {
     Scaffold(
-        topBar = { RenCarTopBar(onBackClick = onBack, title = "Teslim checklist") }
+        topBar = { RenCarTopBar(onBackClick = onBack, title = "Teslim kontrolü") }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -83,7 +83,7 @@ fun DeliveryChecklistScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = if (state.isCompleted) "Teslim tamamlandi" else "Teslim onayi bekliyor",
+                        text = if (state.isCompleted) "Teslim tamamlandı" else "Teslim onayı bekliyor",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(text = "Kiralama: ${state.rentalId}")
@@ -92,34 +92,34 @@ fun DeliveryChecklistScreen(
 
             ChecklistRow(
                 icon = Icons.Default.DirectionsCar,
-                title = "Arac durumu",
-                description = "Dis hasar, yakit/sarj ve temizlik kontrol edildi.",
+                title = "Araç durumu",
+                description = "Dış hasar, yakıt/şarj ve temizlik kontrol edildi.",
                 checked = state.vehicleConditionChecked,
                 onToggle = { onIntent(DeliveryChecklistIntent.ToggleVehicleCondition) }
             )
             ChecklistRow(
                 icon = Icons.Default.PhotoCamera,
-                title = "Fotograf kaydi",
-                description = "Arac teslim fotograflari kullanici tarafinda onaylandi.",
+                title = "Fotoğraf kaydı",
+                description = "Araç teslim fotoğrafları kullanıcı tarafından onaylandı.",
                 checked = state.photosChecked,
                 onToggle = { onIntent(DeliveryChecklistIntent.TogglePhotos) }
             )
             ChecklistRow(
                 icon = Icons.Default.Key,
-                title = "Anahtar ve kapilar",
-                description = "Kapilar ve anahtar teslimi kontrol edildi.",
+                title = "Anahtar ve kapılar",
+                description = "Kapılar ve anahtar teslimi kontrol edildi.",
                 checked = state.doorsAndKeyChecked,
                 onToggle = { onIntent(DeliveryChecklistIntent.ToggleDoorsAndKey) }
             )
 
             Text(
-                text = "Not: Teslim checklist adimlari su an local state ile tutulur; backend bu adimlar icin ayri endpoint sunmuyor.",
+                text = "Not: Teslim kontrol adımları şu an local state ile tutulur; backend bu adımlar için ayrı endpoint sunmuyor.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             PrimaryButton(
-                text = if (state.isCompleted) "Haritaya don" else "Checklist'i tamamla",
+                text = if (state.isCompleted) "Haritaya dön" else "Kontrolü tamamla",
                 onClick = {
                     if (state.isCompleted) {
                         onDone()

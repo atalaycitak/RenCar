@@ -12,16 +12,16 @@ class RegisterUseCase(private val authRepository: AuthRepository) {
         password: String
     ): NetworkResult<User> {
         if (fullName.isBlank()) {
-            return NetworkResult.Error("Full name cannot be empty")
+            return NetworkResult.Error("Ad soyad boş olamaz")
         }
         if (email.isBlank() || !email.contains("@")) {
-            return NetworkResult.Error("Invalid email format")
+            return NetworkResult.Error("Geçerli bir e-posta girin")
         }
         if (phone.isBlank()) {
-            return NetworkResult.Error("Phone number cannot be empty")
+            return NetworkResult.Error("Telefon numarası boş olamaz")
         }
         if (password.length < 6) {
-            return NetworkResult.Error("Password must be at least 6 characters")
+            return NetworkResult.Error("Şifre en az 6 karakter olmalı")
         }
         return authRepository.register(fullName, email, phone, password)
     }
