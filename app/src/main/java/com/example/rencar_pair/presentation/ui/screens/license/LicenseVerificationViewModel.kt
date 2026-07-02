@@ -35,10 +35,18 @@ class LicenseVerificationViewModel(
         when (intent) {
             LicenseVerificationIntent.LoadStatus -> loadStatus()
             is LicenseVerificationIntent.PickFrontImage -> _state.update {
-                it.copy(frontImageUri = intent.uri, errorMessage = null)
+                it.copy(
+                    status = statusAfterNewImagePick(it.status),
+                    frontImageUri = intent.uri,
+                    errorMessage = null
+                )
             }
             is LicenseVerificationIntent.PickBackImage -> _state.update {
-                it.copy(backImageUri = intent.uri, errorMessage = null)
+                it.copy(
+                    status = statusAfterNewImagePick(it.status),
+                    backImageUri = intent.uri,
+                    errorMessage = null
+                )
             }
             LicenseVerificationIntent.Upload -> upload()
             LicenseVerificationIntent.Continue -> refreshStatusAndContinue()
@@ -48,6 +56,14 @@ class LicenseVerificationViewModel(
     private fun continueToMap() {
         viewModelScope.launch {
             _effect.send(LicenseVerificationEffect.ContinueToMap)
+        }
+    }
+
+    private fun statusAfterNewImagePick(status: LicenseStatus): LicenseStatus {
+        return when (status) {
+            LicenseStatus.Rejected,
+            LicenseStatus.Pending -> LicenseStatus.NotUploaded
+            else -> status
         }
     }
 
@@ -108,8 +124,6 @@ class LicenseVerificationViewModel(
         _state.update {
             it.copy(
                 status = license.status,
-                frontImageUri = license.frontImageUrl ?: it.frontImageUri,
-                backImageUri = license.backImageUrl ?: it.backImageUri,
                 isLoading = false,
                 rejectReason = license.rejectReason,
                 errorMessage = if (navigateWhenApproved && license.status != LicenseStatus.Approved) {
