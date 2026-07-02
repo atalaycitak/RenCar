@@ -1,6 +1,6 @@
 package com.example.rencar_pair.domain.usecase
 
-import com.example.rencar_pair.data.remote.NetworkResult
+import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.domain.repository.AuthRepository
 

@@ -1,6 +1,6 @@
 package com.example.rencar_pair.data.repository
 
-import com.example.rencar_pair.data.remote.NetworkResult
+import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
 import com.example.rencar_pair.domain.model.Vehicle

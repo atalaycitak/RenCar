@@ -17,8 +17,11 @@ import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase
 import com.example.rencar_pair.domain.usecase.LoginUseCase
 import com.example.rencar_pair.domain.usecase.RegisterUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
+import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
 import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginViewModel
+import com.example.rencar_pair.presentation.ui.screens.auth.RegisterViewModel
+import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpViewModel
 import com.example.rencar_pair.presentation.ui.screens.home.HomeViewModel
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationViewModel
 import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationViewModel
@@ -37,6 +40,7 @@ val appModule = module {
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
 
     factory { LoginUseCase(get()) }
+    factory { VerifyOtpUseCase(get()) }
     factory { RegisterUseCase(get()) }
     factory { GetLicenseStatusUseCase(get()) }
     factory { UploadLicenseUseCase(get()) }
@@ -46,6 +50,8 @@ val appModule = module {
     factory { CreateRentalUseCase(get()) }
 
     viewModelOf(::LoginViewModel)
+    viewModelOf(::VerifyOtpViewModel)
+    viewModelOf(::RegisterViewModel)
     viewModelOf(::LicenseVerificationViewModel)
     viewModelOf(::HomeViewModel)
     viewModelOf(::VehicleDetailViewModel)
