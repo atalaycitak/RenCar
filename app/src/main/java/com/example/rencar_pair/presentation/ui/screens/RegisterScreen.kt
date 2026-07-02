@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,12 +19,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -99,7 +102,11 @@ fun RegisterScreen(
                 onValueChange = { viewModel.onIntent(RegisterIntent.OnFullNameChanged(it)) },
                 label = "Ad Soyad",
                 placeholder = "Adınız Soyadınız",
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
                 isError = state.errorMessage != null && state.fullName.isBlank()
             )
 
@@ -111,13 +118,19 @@ fun RegisterScreen(
                 label = "E-posta",
                 placeholder = "ornek@email.com",
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
+                    keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
                 isError = state.errorMessage != null && state.email.isBlank()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            EmailSymbolShortcutRow(
+                onAppend = { symbol ->
+                    viewModel.onIntent(RegisterIntent.OnEmailChanged(state.email + symbol))
+                }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             CustomTextField(
                 value = state.phone,
@@ -174,5 +187,22 @@ fun RegisterScreen(
         }
 
         LoadingOverlay(isLoading = state.isLoading)
+    }
+}
+
+@Composable
+private fun EmailSymbolShortcutRow(
+    onAppend: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        TextButton(onClick = { onAppend("@") }) {
+            Text(text = "@")
+        }
+        TextButton(onClick = { onAppend("_") }) {
+            Text(text = "_")
+        }
     }
 }

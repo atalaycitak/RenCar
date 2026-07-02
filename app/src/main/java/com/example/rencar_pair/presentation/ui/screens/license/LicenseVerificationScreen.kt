@@ -130,24 +130,26 @@ fun LicenseVerificationScreen(
             Text(text = it, color = MaterialTheme.colorScheme.error)
         }
 
-        Button(
-            onClick = { onIntent(LicenseVerificationIntent.Upload) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = canUpload
-        ) {
-            if (state.isLoading) {
-                CircularProgressIndicator()
-            } else {
-                Text(text = uploadButtonTextFor(state.status))
+        if (canUpload) {
+            Button(
+                onClick = { onIntent(LicenseVerificationIntent.Upload) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = true
+            ) {
+                Text(text = "Doğrulamayı başlat")
             }
-        }
-
-        OutlinedButton(
-            onClick = onContinue,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading
-        ) {
-            Text(text = continueButtonTextFor(state.status))
+        } else {
+            Button(
+                onClick = onContinue,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading
+            ) {
+                if (state.isLoading) {
+                    CircularProgressIndicator()
+                } else {
+                    Text(text = continueButtonTextFor(state.status))
+                }
+            }
         }
     }
 }
@@ -223,14 +225,5 @@ private fun continueButtonTextFor(status: LicenseStatus): String {
     return when (status) {
         LicenseStatus.Approved -> "Devam et"
         else -> "Durumu kontrol et"
-    }
-}
-
-private fun uploadButtonTextFor(status: LicenseStatus): String {
-    return when (status) {
-        LicenseStatus.NotUploaded,
-        LicenseStatus.Rejected -> "Doğrulamayı başlat"
-        LicenseStatus.Pending -> "İnceleme bekleniyor"
-        LicenseStatus.Approved -> "Ehliyet onaylandı"
     }
 }
