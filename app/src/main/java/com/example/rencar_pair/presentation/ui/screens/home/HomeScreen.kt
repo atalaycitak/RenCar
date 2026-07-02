@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,19 +45,22 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HomeRoute(
+    onVehicleDetails: (String) -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     HomeScreen(
         state = state,
-        onIntent = viewModel::onIntent
+        onIntent = viewModel::onIntent,
+        onVehicleDetails = onVehicleDetails
     )
 }
 
 @Composable
 fun HomeScreen(
     state: HomeState,
-    onIntent: (HomeIntent) -> Unit
+    onIntent: (HomeIntent) -> Unit,
+    onVehicleDetails: (String) -> Unit
 ) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -138,7 +142,8 @@ fun HomeScreen(
 
             VehiclePanel(
                 state = state,
-                onSelect = { onIntent(HomeIntent.SelectVehicle(it)) }
+                onSelect = { onIntent(HomeIntent.SelectVehicle(it)) },
+                onVehicleDetails = onVehicleDetails
             )
         }
     }
@@ -162,7 +167,8 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
 @Composable
 private fun VehiclePanel(
     state: HomeState,
-    onSelect: (String) -> Unit
+    onSelect: (String) -> Unit,
+    onVehicleDetails: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.padding(16.dp),
@@ -183,7 +189,8 @@ private fun VehiclePanel(
                     VehicleRow(
                         vehicle = vehicle,
                         selected = vehicle.id == state.selectedVehicle?.id,
-                        onClick = { onSelect(vehicle.id) }
+                        onClick = { onSelect(vehicle.id) },
+                        onDetailsClick = { onVehicleDetails(vehicle.id) }
                     )
                 }
             }
@@ -195,7 +202,8 @@ private fun VehiclePanel(
 private fun VehicleRow(
     vehicle: Vehicle,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDetailsClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -217,9 +225,14 @@ private fun VehicleRow(
         ) {
             Column {
                 Text(text = vehicle.title, style = MaterialTheme.typography.titleMedium)
-                Text(text = vehicle.plate, style = MaterialTheme.typography.bodyMedium)
+                Text(text = "${vehicle.plate} - ${vehicle.rangeKm} km", style = MaterialTheme.typography.bodyMedium)
             }
-            Text(text = "${vehicle.pricePerDay.toInt()} TL/gun")
+            Column(horizontalAlignment = Alignment.End) {
+                Text(text = "${vehicle.pricePerDay.toInt()} TL/gun")
+                TextButton(onClick = onDetailsClick) {
+                    Text(text = "Detay")
+                }
+            }
         }
     }
 }
