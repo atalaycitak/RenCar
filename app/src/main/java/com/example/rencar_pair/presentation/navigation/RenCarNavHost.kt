@@ -116,6 +116,11 @@ fun RenCarNavHost(
                     navController.navigate(HomeMapRoute) {
                         popUpTo(LicenseCheckRoute) { inclusive = true }
                     }
+                },
+                onBackToLogin = {
+                    navController.navigate(LoginRoute) {
+                        popUpTo(LicenseCheckRoute) { inclusive = true }
+                    }
                 }
             )
         }
