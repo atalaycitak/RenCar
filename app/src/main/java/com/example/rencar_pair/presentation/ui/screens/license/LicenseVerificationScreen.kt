@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -72,8 +73,9 @@ fun LicenseVerificationScreen(
     val backImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { onIntent(LicenseVerificationIntent.PickBackImage(it.toString())) }
     }
-    val canUpload = !state.isLoading &&
-        (state.status == LicenseStatus.NotUploaded || state.status == LicenseStatus.Rejected)
+    val hasBothImages = state.hasFrontImage && state.hasBackImage
+    val phase = licenseUiPhaseFor(state.status, hasBothImages)
+    val canPickImage = !state.isLoading && phase.canPickImage
 
     Column(
         modifier = Modifier
@@ -101,10 +103,10 @@ fun LicenseVerificationScreen(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
         )
 
-        StatusCard(state)
+        StatusCard(state = state, phase = phase)
 
         Text(
-            text = helperTextFor(state.status),
+            text = helperTextFor(phase),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
         )
@@ -113,15 +115,21 @@ fun LicenseVerificationScreen(
             LicenseSideButton(
                 text = "Ön yüz",
                 selected = state.hasFrontImage,
-                enabled = canUpload,
-                onClick = { frontImageLauncher.launch("image/*") },
+                onClick = {
+                    if (canPickImage) {
+                        frontImageLauncher.launch("image/*")
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
             LicenseSideButton(
                 text = "Arka yüz",
                 selected = state.hasBackImage,
-                enabled = canUpload,
-                onClick = { backImageLauncher.launch("image/*") },
+                onClick = {
+                    if (canPickImage) {
+                        backImageLauncher.launch("image/*")
+                    }
+                },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -131,36 +139,32 @@ fun LicenseVerificationScreen(
         }
 
         Button(
-            onClick = { onIntent(LicenseVerificationIntent.Upload) },
+            onClick = {
+                when (phase) {
+                    LicenseUiPhase.ReadyToSubmit -> onIntent(LicenseVerificationIntent.Upload)
+                    LicenseUiPhase.Reviewing,
+                    LicenseUiPhase.Approved -> onContinue()
+                    LicenseUiPhase.NeedsPhotos,
+                    LicenseUiPhase.Rejected -> Unit
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
-            enabled = canUpload
+            enabled = !state.isLoading && phase.primaryEnabled
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
-                Text(text = uploadButtonTextFor(state.status))
+                Text(text = primaryButtonTextFor(phase))
             }
-        }
-
-        OutlinedButton(
-            onClick = onContinue,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading
-        ) {
-            Text(text = "Durumu kontrol et ve devam et")
         }
     }
 }
 
 @Composable
-private fun StatusCard(state: LicenseVerificationState) {
-    val statusText = when (state.status) {
-        LicenseStatus.NotUploaded -> "Ehliyet bekleniyor"
-        LicenseStatus.Pending -> "İnceleme bekleniyor"
-        LicenseStatus.Approved -> "Ehliyet onaylandı"
-        LicenseStatus.Rejected -> "Ehliyet reddedildi"
-    }
-
+private fun StatusCard(
+    state: LicenseVerificationState,
+    phase: LicenseUiPhase
+) {
     Card(
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -172,12 +176,16 @@ private fun StatusCard(state: LicenseVerificationState) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (state.status == LicenseStatus.Approved) Icons.Default.CheckCircle else Icons.Default.Badge,
+                imageVector = if (phase == LicenseUiPhase.Approved) {
+                    Icons.Default.CheckCircle
+                } else {
+                    Icons.Default.Badge
+                },
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
             Column {
-                Text(text = statusText, style = MaterialTheme.typography.titleMedium)
+                Text(text = statusTextFor(phase), style = MaterialTheme.typography.titleMedium)
                 state.rejectReason?.let {
                     Text(text = it, color = MaterialTheme.colorScheme.error)
                 }
@@ -190,40 +198,90 @@ private fun StatusCard(state: LicenseVerificationState) {
 private fun LicenseSideButton(
     text: String,
     selected: Boolean,
-    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(88.dp),
-        shape = RoundedCornerShape(8.dp),
-        enabled = enabled
+        modifier = modifier.height(96.dp),
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Icon(
                 imageVector = if (selected) Icons.Default.CheckCircle else Icons.Default.Badge,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
             )
             Text(text = text)
         }
     }
 }
 
-private fun helperTextFor(status: LicenseStatus): String {
+private enum class LicenseUiPhase(
+    val canPickImage: Boolean,
+    val primaryEnabled: Boolean
+) {
+    NeedsPhotos(canPickImage = true, primaryEnabled = false),
+    ReadyToSubmit(canPickImage = true, primaryEnabled = true),
+    Reviewing(canPickImage = false, primaryEnabled = true),
+    Approved(canPickImage = false, primaryEnabled = true),
+    Rejected(canPickImage = true, primaryEnabled = false)
+}
+
+private fun licenseUiPhaseFor(
+    status: LicenseStatus,
+    hasBothImages: Boolean
+): LicenseUiPhase {
     return when (status) {
-        LicenseStatus.NotUploaded -> "Ön ve arka yüz fotoğrafını seçip doğrulamayı başlatın."
-        LicenseStatus.Pending -> "Ehliyet admin onayı bekliyor. Swagger üzerinden onaylandıktan sonra durumu kontrol edip devam edin."
-        LicenseStatus.Approved -> "Ehliyet onaylandı. Devam ederek araç haritasına geçebilirsiniz."
-        LicenseStatus.Rejected -> "Ehliyet reddedildi. Yeni fotoğraflar seçip tekrar doğrulama gönderebilirsiniz."
+        LicenseStatus.Approved -> LicenseUiPhase.Approved
+        LicenseStatus.Pending -> if (hasBothImages) {
+            LicenseUiPhase.Reviewing
+        } else {
+            LicenseUiPhase.NeedsPhotos
+        }
+        LicenseStatus.Rejected -> LicenseUiPhase.Rejected
+        LicenseStatus.NotUploaded -> if (hasBothImages) {
+            LicenseUiPhase.ReadyToSubmit
+        } else {
+            LicenseUiPhase.NeedsPhotos
+        }
     }
 }
 
-private fun uploadButtonTextFor(status: LicenseStatus): String {
-    return when (status) {
-        LicenseStatus.NotUploaded,
-        LicenseStatus.Rejected -> "Doğrulamayı başlat"
-        LicenseStatus.Pending -> "İnceleme bekleniyor"
-        LicenseStatus.Approved -> "Ehliyet onaylandı"
+private fun statusTextFor(phase: LicenseUiPhase): String {
+    return when (phase) {
+        LicenseUiPhase.NeedsPhotos -> "Ehliyet bekleniyor"
+        LicenseUiPhase.ReadyToSubmit -> "Fotoğraflar hazır"
+        LicenseUiPhase.Reviewing -> "Başvurunuz inceleniyor"
+        LicenseUiPhase.Approved -> "Ehliyet onaylandı"
+        LicenseUiPhase.Rejected -> "Ehliyet reddedildi"
+    }
+}
+
+private fun helperTextFor(phase: LicenseUiPhase): String {
+    return when (phase) {
+        LicenseUiPhase.NeedsPhotos -> "Ön ve arka yüz fotoğrafını seçip doğrulamayı başlatın."
+        LicenseUiPhase.ReadyToSubmit -> "Fotoğraflar seçildi. Başvuruyu göndermek için doğrulamayı başlatın."
+        LicenseUiPhase.Reviewing -> "Başvurunuz güvenlik kontrolü için inceleniyor. Onaylandığında araç kiralama adımına devam edebilirsiniz."
+        LicenseUiPhase.Approved -> "Devam ederek araç haritasına geçebilirsiniz."
+        LicenseUiPhase.Rejected -> "Yeni fotoğraflar seçip tekrar doğrulama gönderebilirsiniz."
+    }
+}
+
+private fun primaryButtonTextFor(phase: LicenseUiPhase): String {
+    return when (phase) {
+        LicenseUiPhase.NeedsPhotos,
+        LicenseUiPhase.ReadyToSubmit,
+        LicenseUiPhase.Rejected -> "Doğrulamayı başlat"
+        LicenseUiPhase.Reviewing -> "Durumu kontrol et"
+        LicenseUiPhase.Approved -> "Devam et"
     }
 }
