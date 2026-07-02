@@ -1,4 +1,4 @@
-# RenCar API ve MapLibre Entegrasyon Notlari
+# RenCar API ve MapLibre Entegrasyon Notları
 
 ## Kaynaklar
 
@@ -6,11 +6,11 @@
 - API Docs: `https://rencar.halitkalayci.com/api/docs`
 - OpenAPI JSON: `https://rencar.halitkalayci.com/api/docs-json`
 - Retrofit base URL: `https://rencar.halitkalayci.com/`
-- API path prefix: `/api`
+- Retrofit endpoint path'leri OpenAPI şemasındaki gibi `/auth/...`, `/license/...`, `/vehicles/...` şeklinde yazılır.
 
 ## Harita Karari
 
-Mobil harita icin MapLibre Native Android kullanilacak. Harita feature'i `core/map` icinde ince bir adapter ile soyutlanmali; feature ekranlari dogrudan MapLibre tiplerine baglanmamalidir.
+Mobil harita için MapLibre Native Android kullanılacak. Harita feature'ı `core/map` içinde ince bir adapter ile soyutlanmalı; feature ekranları doğrudan MapLibre tiplerine bağlanmamalıdır.
 
 Onerilen sinir:
 
@@ -22,16 +22,17 @@ data/vehicle -> API vehicle response mapper
 
 ## API Durumu
 
-OpenAPI semasina gore mevcut musteri akislarinda email/parola auth var. Tasarimda telefon/OTP gorunse de OTP endpoint'i yok. Bu nedenle MVP:
+OpenAPI şemasına göre mevcut müşteri auth akışı kayıt ve parolasız telefon/OTP girişinden oluşur. Bu nedenle MVP:
 
-- kayit icin `POST /auth/register`
-- giris icin `POST /auth/login`
-- oturum yenileme icin `POST /auth/refresh`
-- profil icin `GET /auth/me`
+- kayıt için `POST /auth/register`
+- giriş 1. adım için `POST /auth/login`
+- giriş 2. adım için `POST /auth/verify-otp`
+- oturum yenileme için `POST /auth/refresh`
+- profil için `GET /auth/me`
 
-kullanmalidir.
+kullanmalıdır.
 
-Telefon alani `RegisterDto.phone` uzerinden kayit bilgisidir. Telefonla OTP girisi, backend endpoint'i eklenene kadar backlog'da tutulur.
+`LoginDto` yalnızca `phone` alır ve token dönmez; OTP doğrulaması `VerifyOtpDto(phone, code)` ile yapılır. Swagger simülasyonunda varsayılan OTP kodu `123456` olarak görünür.
 
 ## Endpoint Gruplari
 
@@ -40,6 +41,7 @@ Auth:
 ```text
 POST /auth/register
 POST /auth/login
+POST /auth/verify-otp
 POST /auth/refresh
 POST /auth/logout
 GET /auth/me
@@ -52,7 +54,7 @@ POST /license/upload
 GET /license/status
 ```
 
-Arac:
+Araç:
 
 ```text
 GET /vehicles
@@ -93,8 +95,8 @@ Token yonetimi:
 
 ## MVP Notlari
 
-- Cuzdan ve odeme icin OpenAPI semasinda endpoint bulunmuyor; bu akislarda UI ve fake repository korunur.
-- Arac lokasyonlari `VehicleResponseDto.latitude` ve `VehicleResponseDto.longitude` alanlarindan map marker'a cevrilir.
-- `GET /admin/locations` musteri uygulamasinda dogrudan kullanilmaz.
+- Cüzdan ve ödeme için OpenAPI şemasında endpoint bulunmuyor; bu akışlarda UI ve fake repository korunur.
+- Araç lokasyonları `VehicleResponseDto.latitude` ve `VehicleResponseDto.longitude` alanlarından map marker'a çevrilir.
+- `GET /admin/locations` müşteri uygulamasında doğrudan kullanılmaz.
 - Kiralama baslatmak icin `CreateRentalDto.vehicleId` ve `endDate` yeterlidir.
 - Kiralama iade akisi `POST /rentals/{id}/return` ile tamamlanir.

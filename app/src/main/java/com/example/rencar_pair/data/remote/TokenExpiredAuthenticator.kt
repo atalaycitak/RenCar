@@ -42,7 +42,7 @@ class TokenExpiredAuthenticator(
             val body = json.encodeToString(RefreshTokenRequest(refreshToken))
                 .toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("https://rencar.halitkalayci.com/api/auth/refresh")
+                .url("https://rencar.halitkalayci.com/auth/refresh")
                 .post(body)
                 .header("Accept", "application/json")
                 .build()

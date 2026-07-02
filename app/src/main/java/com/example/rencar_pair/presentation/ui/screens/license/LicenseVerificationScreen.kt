@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
@@ -20,22 +21,24 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.LicenseStatus
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LicenseVerificationRoute(
     onContinueToMap: () -> Unit,
+    onBackToLogin: () -> Unit,
     viewModel: LicenseVerificationViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -51,7 +54,8 @@ fun LicenseVerificationRoute(
     LicenseVerificationScreen(
         state = state,
         onIntent = viewModel::onIntent,
-        onContinue = { viewModel.onIntent(LicenseVerificationIntent.Continue) }
+        onContinue = { viewModel.onIntent(LicenseVerificationIntent.Continue) },
+        onBackToLogin = onBackToLogin
     )
 }
 
@@ -59,7 +63,8 @@ fun LicenseVerificationRoute(
 fun LicenseVerificationScreen(
     state: LicenseVerificationState,
     onIntent: (LicenseVerificationIntent) -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onBackToLogin: () -> Unit
 ) {
     val frontImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { onIntent(LicenseVerificationIntent.PickFrontImage(it.toString())) }
@@ -67,6 +72,8 @@ fun LicenseVerificationScreen(
     val backImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { onIntent(LicenseVerificationIntent.PickBackImage(it.toString())) }
     }
+    val canUpload = !state.isLoading &&
+        (state.status == LicenseStatus.NotUploaded || state.status == LicenseStatus.Rejected)
 
     Column(
         modifier = Modifier
@@ -75,30 +82,45 @@ fun LicenseVerificationScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        IconButton(onClick = onBackToLogin) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Giriş ekranına dön"
+            )
+        }
+
         Text(
-            text = "Ehliyet dogrulama",
+            text = "Ehliyet doğrulama",
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Arac kiralamaya baslamadan once ehliyet durumunu kontrol ediyoruz.",
+            text = "Araç kiralamaya başlamadan önce ehliyet durumunu kontrol ediyoruz.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
         )
 
         StatusCard(state)
 
+        Text(
+            text = helperTextFor(state.status),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+        )
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             LicenseSideButton(
-                text = "On yuz",
+                text = "Ön yüz",
                 selected = state.hasFrontImage,
+                enabled = canUpload,
                 onClick = { frontImageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f)
             )
             LicenseSideButton(
-                text = "Arka yuz",
+                text = "Arka yüz",
                 selected = state.hasBackImage,
+                enabled = canUpload,
                 onClick = { backImageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f)
             )
@@ -111,12 +133,12 @@ fun LicenseVerificationScreen(
         Button(
             onClick = { onIntent(LicenseVerificationIntent.Upload) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading
+            enabled = canUpload
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator()
             } else {
-                Text(text = "Dogrulamayi baslat")
+                Text(text = uploadButtonTextFor(state.status))
             }
         }
 
@@ -125,7 +147,7 @@ fun LicenseVerificationScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading
         ) {
-            Text(text = "Devam et")
+            Text(text = "Durumu kontrol et ve devam et")
         }
     }
 }
@@ -134,8 +156,8 @@ fun LicenseVerificationScreen(
 private fun StatusCard(state: LicenseVerificationState) {
     val statusText = when (state.status) {
         LicenseStatus.NotUploaded -> "Ehliyet bekleniyor"
-        LicenseStatus.Pending -> "Inceleme bekleniyor"
-        LicenseStatus.Approved -> "Ehliyet onaylandi"
+        LicenseStatus.Pending -> "İnceleme bekleniyor"
+        LicenseStatus.Approved -> "Ehliyet onaylandı"
         LicenseStatus.Rejected -> "Ehliyet reddedildi"
     }
 
@@ -168,13 +190,15 @@ private fun StatusCard(state: LicenseVerificationState) {
 private fun LicenseSideButton(
     text: String,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(88.dp),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        enabled = enabled
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
@@ -183,5 +207,23 @@ private fun LicenseSideButton(
             )
             Text(text = text)
         }
+    }
+}
+
+private fun helperTextFor(status: LicenseStatus): String {
+    return when (status) {
+        LicenseStatus.NotUploaded -> "Ön ve arka yüz fotoğrafını seçip doğrulamayı başlatın."
+        LicenseStatus.Pending -> "Ehliyet admin onayı bekliyor. Swagger üzerinden onaylandıktan sonra durumu kontrol edip devam edin."
+        LicenseStatus.Approved -> "Ehliyet onaylandı. Devam ederek araç haritasına geçebilirsiniz."
+        LicenseStatus.Rejected -> "Ehliyet reddedildi. Yeni fotoğraflar seçip tekrar doğrulama gönderebilirsiniz."
+    }
+}
+
+private fun uploadButtonTextFor(status: LicenseStatus): String {
+    return when (status) {
+        LicenseStatus.NotUploaded,
+        LicenseStatus.Rejected -> "Doğrulamayı başlat"
+        LicenseStatus.Pending -> "İnceleme bekleniyor"
+        LicenseStatus.Approved -> "Ehliyet onaylandı"
     }
 }

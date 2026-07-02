@@ -10,11 +10,11 @@ Buradaki MVP, "Minimum Viable Product" kapsamidir. Compose tabanli yeni bir Andr
 
 ## Neden MVI
 
-- Tasarim cok adimli akislar iceriyor: onboarding, giris, dogrulama, ehliyet dogrulama, arac secimi, rezervasyon, teslim, aktif kiralama, odeme, cuzdan, kiralamalar ve profil.
+- Tasarım çok adımlı akışlar içeriyor: onboarding, giriş, doğrulama, ehliyet doğrulama, araç seçimi, rezervasyon, teslim, aktif kiralama, ödeme, cüzdan, kiralamalar ve profil.
 - Her ekran icin tek bir `UiState` tanimi loading, content, error, empty ve permission durumlarini netlestirir.
 - `Intent -> ViewModel -> UseCase -> Repository -> State/Effect` akisi ekip icinde gorev paylasimini kolaylastirir.
 - Compose, `StateFlow` ve immutable state modeli ile MVI'ya dogal sekilde uyar.
-- Unit testlerde reducer, use case ve ViewModel davranislari ayri ayri dogrulanabilir.
+- Unit testlerde reducer, use case ve ViewModel davranışları ayrı ayrı doğrulanabilir.
 
 ## Teknoloji Iskeleti
 
@@ -34,12 +34,12 @@ Buradaki MVP, "Minimum Viable Product" kapsamidir. Compose tabanli yeni bir Andr
 ## Entegrasyon Kaynaklari
 
 - MapLibre: `https://maplibre.org/`
-- API dokumani: `https://rencar.halitkalayci.com/api/docs`
+- API dokümanı: `https://rencar.halitkalayci.com/api/docs`
 - OpenAPI JSON: `https://rencar.halitkalayci.com/api/docs-json`
 - Retrofit base URL: `https://rencar.halitkalayci.com/`
-- API path prefix: `/api`
+- Retrofit endpoint path'leri OpenAPI şemasındaki gibi `/auth/...`, `/license/...`, `/vehicles/...` şeklinde yazılmalıdır.
 
-Mevcut API email/parola ile register ve login sagliyor. Tasarimda telefon/OTP gorunuyor; ancak OpenAPI semasinda OTP endpoint'i bulunmadigi icin MVP entegrasyonu email/parola uzerinden ilerlemelidir. Telefon alani `register` request'inde profil bilgisi olarak kullanilabilir. OTP, backend endpoint'i eklendiginde ayri feature olarak ele alinmalidir.
+Mevcut API kayıt için email/parola/ad soyad/telefon alır. Giriş akışı parolasızdır: `POST /auth/login` yalnızca telefon numarası ile OTP ister, `POST /auth/verify-otp` telefon ve 6 haneli kodu doğrulayarak access/refresh token döner. Swagger simülasyonunda varsayılan OTP kodu `123456` olarak görünür.
 
 ## Modul Stratejisi
 
@@ -153,15 +153,15 @@ class ExampleViewModel(
 MVP, tasarimdaki tum ana akislari calisir prototip kalitesinde kapsar:
 
 - Onboarding ve tema destegi
-- Email/parola ile kayit ve giris
-- Telefon alanini profil/kayit bilgisi olarak toplama
-- Ehliyet dogrulama ekranlari
+- Email/parola/telefon ile kayıt
+- Telefon ve OTP ile giriş
+- Ehliyet doğrulama ekranları
 - MapLibre harita uzerinde yakin arac listesi
-- Arac detay ve rezervasyon onayi
-- Arac teslim kontrol adimlari
+- Araç detay ve rezervasyon onayı
+- Araç teslim kontrol adımları
 - Aktif kiralama takip ekrani
 - Yolculuk tamamlandi ve odeme ozeti
-- Cuzdan, odeme yontemleri ve islem listesi
+- Cüzdan, ödeme yöntemleri ve işlem listesi
 - Kiralamalar gecmisi
 - Profil ve ayarlar
 
@@ -175,6 +175,7 @@ MVP icin kullanilacak musteri endpointleri:
 GET /health
 POST /auth/register
 POST /auth/login
+POST /auth/verify-otp
 POST /auth/refresh
 POST /auth/logout
 GET /auth/me
@@ -194,7 +195,8 @@ DTO eslesmeleri:
 
 ```text
 RegisterDto -> email, password, fullName, phone
-LoginDto -> email, password
+LoginDto -> phone
+VerifyOtpDto -> phone, code
 AuthResponseDto -> accessToken, refreshToken, user
 LicenseResponseDto -> id, status, image urls, rejectReason
 VehicleResponseDto -> id, plate, brand, model, type, pricePerDay, status, latitude, longitude
@@ -225,7 +227,7 @@ profile
 Alt navigasyon MVP'de su tablari tasir:
 
 - Harita
-- Cuzdan
+- Cüzdan
 - Kiralamalar
 - Profil
 
@@ -235,7 +237,7 @@ Alt navigasyon MVP'de su tablari tasir:
 - ViewModel icinde Compose state yerine `StateFlow` kullanilmalidir.
 - Tek seferlik olaylar navigation, toast, snackbar ve permission request icin `SharedFlow` tabanli `Effect` akisi uzerinden verilmelidir.
 - Screen composable sadece state render eder ve user action'i intent olarak yukari yollar.
-- Repository response modelleri dogrudan UI'a verilmemelidir; domain veya UI model'e map edilmelidir.
+- Repository response modelleri doğrudan UI'a verilmemelidir; domain veya UI model'e map edilmelidir.
 
 ## Tasarim Sistemi
 
@@ -263,7 +265,14 @@ PaymentMethod
 WalletTransaction
 ```
 
-## Katki Kimligi Kurali
+## Dil ve Karakter Standardı
+
+- Uygulama içinde kullanıcıya görünen tüm metinler doğru Türkçe karakterlerle yazılmalıdır.
+- `Arac`, `Dogrulama`, `Cuzdan`, `Odeme`, `Giris`, `Kayit` gibi sadeleştirilmiş yazımlar yerine `Araç`, `Doğrulama`, `Cüzdan`, `Ödeme`, `Giriş`, `Kayıt` kullanılmalıdır.
+- Markdown dokümanları ve Kotlin kaynakları UTF-8 olarak tutulmalıdır.
+- Backend henüz desteklemediği akışlarda fake/local state kullanılabilir; kullanıcıya görünen açıklama metni yine düzgün Türkçe olmalıdır.
+
+## Katkı Kimliği Kuralı
 
 - Commit author email: `csezeze@gmail.com`
 - Commit mesajlari sade ve proje odakli olmalidir.

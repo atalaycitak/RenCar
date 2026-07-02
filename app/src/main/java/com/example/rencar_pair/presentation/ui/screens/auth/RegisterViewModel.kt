@@ -42,7 +42,12 @@ class RegisterViewModel(
     private fun register() {
         val currentState = _state.value
 
-        if (currentState.fullName.isBlank() || currentState.email.isBlank() || currentState.phone.isBlank() || currentState.password.isBlank()) {
+        if (
+            currentState.fullName.isBlank() ||
+            currentState.email.isBlank() ||
+            currentState.phone.isBlank() ||
+            currentState.password.isBlank()
+        ) {
             _state.value = currentState.copy(errorMessage = "Lütfen tüm alanları doldurun")
             return
         }
@@ -50,7 +55,14 @@ class RegisterViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            when (val result = registerUseCase(currentState.fullName, currentState.email, currentState.phone, currentState.password)) {
+            when (
+                val result = registerUseCase(
+                    currentState.fullName,
+                    currentState.email,
+                    currentState.phone,
+                    currentState.password
+                )
+            ) {
                 is NetworkResult.Success -> {
                     _state.value = _state.value.copy(isLoading = false)
                     _effect.send(RegisterEffect.NavigateToLicenseVerification)

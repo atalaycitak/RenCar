@@ -31,7 +31,7 @@ class AuthRepositoryImpl(
                 }
             } else {
                 if (response.code() == 401) {
-                    return NetworkResult.Error("Register olmadan login olamazsiniz.", response.code())
+                    return NetworkResult.Error("Kayıt olmadan giriş yapamazsınız.", response.code())
                 }
                 NetworkResult.Error(
                     message = response.errorBody()?.string() ?: "Unknown error",
@@ -122,7 +122,7 @@ class AuthRepositoryImpl(
             val response = api.logout()
             dataStore.clear()
             if (response.isSuccessful) {
-                NetworkResult.Success(response.body()?.message ?: "Cikis yapildi")
+                NetworkResult.Success(response.body()?.message ?: "Çıkış yapıldı")
             } else {
                 NetworkResult.Error(
                     message = response.errorBody()?.string() ?: "Logout failed",

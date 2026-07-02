@@ -36,7 +36,7 @@ class WalletRepositoryImpl : WalletRepository {
     override suspend fun topUp(amount: Double, cardToken: String): NetworkResult<WalletInfo> {
         delay(1200)
         if (amount <= 0) {
-            return NetworkResult.Error("Gecersiz tutar")
+            return NetworkResult.Error("Geçersiz tutar")
         }
         currentBalance += amount
         transactions.add(

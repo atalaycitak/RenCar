@@ -80,16 +80,18 @@ class LicenseVerificationViewModel(
     private fun upload() {
         val current = state.value
         if (!current.hasFrontImage || !current.hasBackImage) {
-            _state.update { it.copy(errorMessage = "Ehliyetin on ve arka yuzu gerekli.") }
+            _state.update { it.copy(errorMessage = "Ehliyetin ön ve arka yüzü gerekli.") }
             return
         }
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = uploadLicenseUseCase(
-                frontPath = current.frontImageUri.orEmpty(),
-                backPath = current.backImageUri.orEmpty()
-            )) {
+            when (
+                val result = uploadLicenseUseCase(
+                    frontPath = current.frontImageUri.orEmpty(),
+                    backPath = current.backImageUri.orEmpty()
+                )
+            ) {
                 is NetworkResult.Success -> applyLicense(result.data)
                 is NetworkResult.Error -> _state.update {
                     it.copy(isLoading = false, errorMessage = result.message)
@@ -109,7 +111,7 @@ class LicenseVerificationViewModel(
                 isLoading = false,
                 rejectReason = license.rejectReason,
                 errorMessage = if (navigateWhenApproved && license.status != LicenseStatus.Approved) {
-                    "Ehliyet onayi tamamlanmadan devam edemezsiniz."
+                    "Ehliyet onayı tamamlanmadan devam edemezsiniz."
                 } else {
                     null
                 }
