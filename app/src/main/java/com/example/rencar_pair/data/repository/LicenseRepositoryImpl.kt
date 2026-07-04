@@ -5,6 +5,7 @@ import android.net.Uri
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.LicenseStatusResponse
+import com.example.rencar_pair.data.remote.dto.LicenseUploadResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.DriverLicense
 import com.example.rencar_pair.domain.model.LicenseStatus
@@ -49,16 +50,30 @@ class LicenseRepositoryImpl(
 
     private fun LicenseStatusResponse.toDomain(): DriverLicense {
         return DriverLicense(
-            status = when (status.uppercase()) {
-                "PENDING", "UNDER_REVIEW" -> LicenseStatus.Pending
-                "APPROVED" -> LicenseStatus.Approved
-                "REJECTED" -> LicenseStatus.Rejected
-                else -> LicenseStatus.NotUploaded
-            },
+            status = statusStringToEnum(status),
             frontImageUrl = frontImageUrl,
             backImageUrl = backImageUrl,
             rejectReason = rejectReason
         )
+    }
+
+    private fun LicenseUploadResponse.toDomain(): DriverLicense {
+        return DriverLicense(
+            status = statusStringToEnum(status),
+            frontImageUrl = frontImageUrl,
+            backImageUrl = backImageUrl,
+            rejectReason = rejectReason
+        )
+    }
+
+    private fun statusStringToEnum(status: String): LicenseStatus {
+        return when (status.uppercase()) {
+            "PENDING", "UNDER_REVIEW" -> LicenseStatus.Pending
+            "APPROVED" -> LicenseStatus.Approved
+            "REJECTED" -> LicenseStatus.Rejected
+            "NOT_SUBMITTED" -> LicenseStatus.NotUploaded
+            else -> LicenseStatus.NotUploaded
+        }
     }
 
     private fun createImageRequestBody(source: String): RequestBody {
