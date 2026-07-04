@@ -29,6 +29,7 @@ import retrofit2.http.PATCH
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface RenCarApi {
 
@@ -61,7 +62,11 @@ interface RenCarApi {
     suspend fun getLicenseStatus(): Response<LicenseStatusResponse>
 
     @GET("vehicles")
-    suspend fun getVehicles(): Response<List<VehicleResponse>>
+    suspend fun getVehicles(
+        @Query("type") type: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("limit") limit: Int? = null
+    ): Response<List<VehicleResponse>>
 
     @GET("vehicles/{id}")
     suspend fun getVehicle(@Path("id") id: String): Response<VehicleResponse>
@@ -88,7 +93,9 @@ interface RenCarApi {
     suspend fun adminPing(): Response<Unit>
 
     @GET("admin/licenses")
-    suspend fun getAdminLicenses(): Response<List<AdminLicenseResponse>>
+    suspend fun getAdminLicenses(
+        @Query("status") status: String? = null
+    ): Response<List<AdminLicenseResponse>>
 
     @GET("admin/licenses/{id}")
     suspend fun getAdminLicense(@Path("id") id: String): Response<AdminLicenseResponse>
@@ -103,7 +110,12 @@ interface RenCarApi {
     ): Response<AdminLicenseResponse>
 
     @GET("admin/vehicles")
-    suspend fun getAdminVehicles(): Response<List<VehicleResponse>>
+    suspend fun getAdminVehicles(
+        @Query("type") type: String? = null,
+        @Query("status") status: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("limit") limit: Int? = null
+    ): Response<List<VehicleResponse>>
 
     @POST("admin/vehicles")
     suspend fun createAdminVehicle(@Body request: CreateVehicleRequest): Response<VehicleResponse>
@@ -121,7 +133,13 @@ interface RenCarApi {
     suspend fun deleteAdminVehicle(@Path("id") id: String): Response<Unit>
 
     @GET("admin/rentals")
-    suspend fun getAdminRentals(): Response<List<AdminRentalResponse>>
+    suspend fun getAdminRentals(
+        @Query("status") status: String? = null,
+        @Query("userId") userId: String? = null,
+        @Query("vehicleId") vehicleId: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("limit") limit: Int? = null
+    ): Response<List<AdminRentalResponse>>
 
     @GET("admin/rentals/{id}")
     suspend fun getAdminRental(@Path("id") id: String): Response<AdminRentalResponse>
