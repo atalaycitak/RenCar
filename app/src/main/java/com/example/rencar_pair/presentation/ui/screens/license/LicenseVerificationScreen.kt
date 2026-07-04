@@ -29,11 +29,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.LicenseStatus
+import com.example.rencar_pair.presentation.ui.components.RenCarCameraPreview
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -67,12 +71,23 @@ fun LicenseVerificationScreen(
     onContinue: () -> Unit,
     onBackToLogin: () -> Unit
 ) {
-    val frontImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { onIntent(LicenseVerificationIntent.PickFrontImage(it.toString())) }
+    var cameraType by remember { mutableStateOf<String?>(null) } // "FRONT" or "BACK"
+
+    if (cameraType != null) {
+        RenCarCameraPreview(
+            onPhotoCaptured = { uri ->
+                if (cameraType == "FRONT") {
+                    onIntent(LicenseVerificationIntent.PickFrontImage(uri))
+                } else {
+                    onIntent(LicenseVerificationIntent.PickBackImage(uri))
+                }
+                cameraType = null
+            },
+            onCancel = { cameraType = null }
+        )
+        return
     }
-    val backImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { onIntent(LicenseVerificationIntent.PickBackImage(it.toString())) }
-    }
+
     val hasBothImages = state.hasFrontImage && state.hasBackImage
     val phase = licenseUiPhaseFor(state.status, hasBothImages)
     val canPickImage = !state.isLoading && phase.canPickImage
@@ -117,7 +132,7 @@ fun LicenseVerificationScreen(
                 selected = state.hasFrontImage,
                 onClick = {
                     if (canPickImage) {
-                        frontImageLauncher.launch("image/*")
+                        cameraType = "FRONT"
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -127,7 +142,7 @@ fun LicenseVerificationScreen(
                 selected = state.hasBackImage,
                 onClick = {
                     if (canPickImage) {
-                        backImageLauncher.launch("image/*")
+                        cameraType = "BACK"
                     }
                 },
                 modifier = Modifier.weight(1f)
