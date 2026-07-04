@@ -32,7 +32,7 @@ fun RenCarNavHost(
 
     LaunchedEffect(dataStoreManager) {
         dataStoreManager.tokenExpired.collect {
-            navController.navigate(LoginRoute) {
+            navController.navigate(LoginRoute(sessionExpired = true)) {
                 popUpTo<SplashRoute> { inclusive = true }
             }
         }
@@ -61,13 +61,15 @@ fun RenCarNavHost(
         composable<OnboardingRoute> {
             OnboardingScreen(
                 onNavigateToLogin = {
-                    navController.navigate(LoginRoute)
+                    navController.navigate(LoginRoute())
                 }
             )
         }
 
-        composable<LoginRoute> {
+        composable<LoginRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<LoginRoute>()
             LoginScreen(
+                sessionExpired = route.sessionExpired,
                 onNavigateToVerifyOtp = { phone ->
                     navController.navigate(VerifyOtpRoute(phone))
                 },
@@ -117,7 +119,7 @@ fun RenCarNavHost(
                     }
                 },
                 onBackToLogin = {
-                    navController.navigate(LoginRoute) {
+                    navController.navigate(LoginRoute()) {
                         popUpTo(LicenseCheckRoute) { inclusive = true }
                     }
                 }

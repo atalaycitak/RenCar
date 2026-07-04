@@ -9,7 +9,7 @@ data object SplashRoute
 data object OnboardingRoute
 
 @Serializable
-data object LoginRoute
+data class LoginRoute(val sessionExpired: Boolean = false)
 
 @Serializable
 data class VerifyOtpRoute(val phone: String)
