@@ -46,6 +46,8 @@ import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
 import com.example.rencar_pair.presentation.ui.components.RenCarMap
 import com.example.rencar_pair.presentation.ui.components.VehicleDetailBottomSheet
+import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
+import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.FloatingActionButton
 import org.koin.androidx.compose.koinViewModel
@@ -53,13 +55,17 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeRoute(
     onVehicleDetails: (String) -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     HomeScreen(
         state = state,
         onIntent = viewModel::onIntent,
-        onVehicleDetails = onVehicleDetails
+        onVehicleDetails = onVehicleDetails,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToProfile = onNavigateToProfile
     )
 }
 
@@ -67,7 +73,9 @@ fun HomeRoute(
 fun HomeScreen(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
-    onVehicleDetails: (String) -> Unit
+    onVehicleDetails: (String) -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToProfile: () -> Unit
 ) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -104,14 +112,16 @@ fun HomeScreen(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = {},
-                    icon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                    label = { Text(text = "Harita") }
-                )
-            }
+            RenCarBottomNavigation(
+                currentRoute = BottomNavRoute.HOME,
+                onNavigate = { route ->
+                    when (route) {
+                        BottomNavRoute.HISTORY -> onNavigateToHistory()
+                        BottomNavRoute.PROFILE -> onNavigateToProfile()
+                        else -> {}
+                    }
+                }
+            )
         }
     ) { padding ->
         Column(
@@ -280,8 +290,8 @@ private fun VehicleRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(text = vehicle.title, style = MaterialTheme.typography.titleMedium)
-                Text(text = "${vehicle.plate} - ${vehicle.rangeKm} km", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "${vehicle.brand} ${vehicle.model}", style = MaterialTheme.typography.titleMedium)
+                Text(text = "${vehicle.plate} - ${vehicle.type}", style = MaterialTheme.typography.bodyMedium)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(text = "${vehicle.pricePerDay.toInt()} TL/gün")

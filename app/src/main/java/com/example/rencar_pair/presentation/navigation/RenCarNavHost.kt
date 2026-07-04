@@ -21,6 +21,8 @@ import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailRout
 import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalRoute as ActiveRentalScreenRoute
 import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryRoute as TripSummaryScreenRoute
 import com.example.rencar_pair.presentation.ui.screens.wallet.WalletRoute as WalletScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryRoute as TripHistoryScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.profile.ProfileRoute as ProfileScreenRoute
 import org.koin.compose.koinInject
 
 @Composable
@@ -130,6 +132,18 @@ fun RenCarNavHost(
             HomeRoute(
                 onVehicleDetails = { vehicleId ->
                     navController.navigate(VehicleDetailRoute(vehicleId))
+                },
+                onNavigateToHistory = {
+                    navController.navigate(TripHistoryListRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(ProfileRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -196,6 +210,45 @@ fun RenCarNavHost(
 
         composable<WalletRoute> {
             WalletScreenRoute()
+        }
+
+        composable<TripHistoryListRoute> {
+            TripHistoryScreenRoute(
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(ProfileRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable<ProfileRoute> {
+            ProfileScreenRoute(
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToHistory = {
+                    navController.navigate(TripHistoryListRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(LoginRoute()) {
+                        popUpTo<SplashRoute> { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

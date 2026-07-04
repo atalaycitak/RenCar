@@ -43,3 +43,9 @@ data class TripSummaryRoute(val rentalId: String)
 
 @Serializable
 data object WalletRoute
+
+@Serializable
+data object TripHistoryListRoute
+
+@Serializable
+data object ProfileRoute

@@ -27,6 +27,7 @@ import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
 import com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase
 import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
+import com.example.rencar_pair.domain.usecase.rental.GetMyRentalsUseCase
 import com.example.rencar_pair.domain.usecase.payment.GetWalletBalanceUseCase
 import com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase
 import com.example.rencar_pair.domain.usecase.payment.GetSavedCardsUseCase
@@ -43,6 +44,8 @@ import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationVi
 import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryViewModel
 import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailViewModel
 import com.example.rencar_pair.presentation.ui.screens.wallet.WalletViewModel
+import com.example.rencar_pair.presentation.ui.screens.profile.ProfileViewModel
+import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import org.koin.android.ext.koin.androidContext
@@ -80,6 +83,7 @@ val appModule = module {
 
     factory { GetActiveRentalUseCase(get()) }
     factory { FinishRentalUseCase(get()) }
+    factory { GetMyRentalsUseCase(get()) }
 
     factory { GetWalletInfoUseCase(get()) }
     factory { GetWalletBalanceUseCase(get()) }
@@ -98,4 +102,6 @@ val appModule = module {
     viewModelOf(::ActiveRentalViewModel)
     viewModelOf(::TripSummaryViewModel)
     viewModelOf(::WalletViewModel)
+    viewModelOf(::ProfileViewModel)
+    viewModelOf(::TripHistoryViewModel)
 }
