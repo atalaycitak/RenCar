@@ -70,6 +70,8 @@ dependencies {
 
     implementation(libs.maplibre.android.sdk)
 
+    implementation(libs.play.services.location)
+
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.compose.material.icons.extended)
 

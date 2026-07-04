@@ -30,7 +30,10 @@ fun RenCarMap(
     latitude: Double = 41.0082,
     longitude: Double = 28.9784,
     zoom: Double = 12.0,
+    userLatitude: Double? = null,
+    userLongitude: Double? = null,
     markers: List<RenCarMapMarker> = emptyList(),
+    onMarkerClick: ((String) -> Unit)? = null,
     onMapCreated: ((org.maplibre.android.maps.MapLibreMap) -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -74,13 +77,46 @@ fun RenCarMap(
         update = { map ->
             map.getMapAsync { mapboxMap ->
                 mapboxMap.clear()
+                
+                val markerIdMap = mutableMapOf<org.maplibre.android.annotations.Marker, String>()
+                
                 markers.forEach { marker ->
-                    mapboxMap.addMarker(
+                    val addedMarker = mapboxMap.addMarker(
                         MarkerOptions()
                             .position(LatLng(marker.latitude, marker.longitude))
                             .title(marker.title)
                             .snippet(marker.snippet)
                     )
+                    markerIdMap[addedMarker] = marker.id
+                }
+
+                // If user location is available, add a special marker
+                if (userLatitude != null && userLongitude != null) {
+                    mapboxMap.addMarker(
+                        MarkerOptions()
+                            .position(LatLng(userLatitude, userLongitude))
+                            .title("Sizin Konumunuz")
+                    )
+                    
+                    // Animate camera to user location if it changed recently
+                    // (For simplicity in this component, we just set the camera)
+                    mapboxMap.animateCamera(
+                        org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
+                            LatLng(userLatitude, userLongitude), zoom
+                        ),
+                        1000
+                    )
+                }
+
+                mapboxMap.setOnMarkerClickListener { clickedMarker ->
+                    val id = markerIdMap[clickedMarker]
+                    if (id != null) {
+                        onMarkerClick?.invoke(id)
+                        true // Prevent default InfoWindow
+                    } else {
+                        // User location marker clicked, allow default behavior (InfoWindow)
+                        false
+                    }
                 }
             }
         }
