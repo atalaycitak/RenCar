@@ -10,6 +10,7 @@ import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.User
+import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.firstOrNull
 
@@ -99,7 +100,8 @@ class AuthRepositoryImpl(
                         User(
                             id = userId,
                             fullName = body.user?.fullName.orEmpty(),
-                            token = token
+                            token = token,
+                            role = UserRole.fromApiString(body.user?.role)
                         )
                     )
                 }

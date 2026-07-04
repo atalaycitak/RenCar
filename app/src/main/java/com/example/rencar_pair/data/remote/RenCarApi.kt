@@ -7,6 +7,7 @@ import com.example.rencar_pair.data.remote.dto.CreateRentalRequest
 import com.example.rencar_pair.data.remote.dto.CreateVehicleRequest
 import com.example.rencar_pair.data.remote.dto.LoginRequest
 import com.example.rencar_pair.data.remote.dto.LicenseStatusResponse
+import com.example.rencar_pair.data.remote.dto.LicenseUploadResponse
 import com.example.rencar_pair.data.remote.dto.MessageResponse
 import com.example.rencar_pair.data.remote.dto.OtpRequiredResponseDto
 import com.example.rencar_pair.data.remote.dto.RefreshTokenRequest
@@ -54,7 +55,7 @@ interface RenCarApi {
     suspend fun uploadLicense(
         @Part front: MultipartBody.Part,
         @Part back: MultipartBody.Part
-    ): Response<LicenseStatusResponse>
+    ): Response<LicenseUploadResponse>
 
     @GET("license/status")
     suspend fun getLicenseStatus(): Response<LicenseStatusResponse>

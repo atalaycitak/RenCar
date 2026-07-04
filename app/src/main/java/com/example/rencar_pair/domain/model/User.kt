@@ -13,5 +13,21 @@ data class User(
 enum class UserRole {
     Pending,
     Customer,
-    Admin
+    Admin;
+
+    companion object {
+        /**
+         * Maps the API's UPPER_CASE role strings (e.g. "PENDING", "CUSTOMER", "ADMIN")
+         * to the corresponding [UserRole] enum value.
+         * Returns [Pending] as a safe fallback for any unknown value.
+         */
+        fun fromApiString(value: String?): UserRole {
+            return when (value?.uppercase()) {
+                "CUSTOMER" -> Customer
+                "ADMIN" -> Admin
+                "PENDING" -> Pending
+                else -> Pending
+            }
+        }
+    }
 }
