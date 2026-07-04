@@ -1,5 +1,7 @@
 package com.example.rencar_pair.data.repository
 
+import java.time.Instant
+
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.CreateRentalRequest
@@ -45,8 +47,8 @@ class ReservationRepositoryImpl(
             id = id,
             userId = userId,
             vehicleId = vehicleId,
-            startDate = startDate,
-            endDate = endDate,
+            startDate = try { Instant.parse(startDate) } catch (e: Exception) { Instant.now() },
+            endDate = try { Instant.parse(endDate) } catch (e: Exception) { Instant.now() },
             totalPrice = totalPrice,
             status = status
         )
