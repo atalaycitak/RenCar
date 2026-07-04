@@ -4,12 +4,14 @@ import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.data.location.DefaultLocationTracker
 import com.example.rencar_pair.data.repository.AuthRepositoryImpl
 import com.example.rencar_pair.data.repository.LicenseRepositoryImpl
+import com.example.rencar_pair.data.repository.DefaultRentalRepository
 import com.example.rencar_pair.data.repository.ReservationRepositoryImpl
 import com.example.rencar_pair.data.repository.VehicleRepositoryImpl
 import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.repository.AuthRepository
 import com.example.rencar_pair.domain.repository.LicenseRepository
 import com.example.rencar_pair.domain.repository.PaymentRepository
+import com.example.rencar_pair.domain.repository.RentalRepository
 import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.repository.WalletRepository
@@ -28,6 +30,7 @@ import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
 import com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase
 import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
 import com.example.rencar_pair.domain.usecase.rental.GetMyRentalsUseCase
+import com.example.rencar_pair.domain.usecase.rental.ReturnVehicleUseCase
 import com.example.rencar_pair.domain.usecase.payment.GetWalletBalanceUseCase
 import com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase
 import com.example.rencar_pair.domain.usecase.payment.GetSavedCardsUseCase
@@ -46,6 +49,7 @@ import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailView
 import com.example.rencar_pair.presentation.ui.screens.wallet.WalletViewModel
 import com.example.rencar_pair.presentation.ui.screens.profile.ProfileViewModel
 import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryViewModel
+import com.example.rencar_pair.presentation.ui.screens.return_vehicle.ReturnVehicleViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import org.koin.android.ext.koin.androidContext
@@ -60,6 +64,8 @@ val appModule = module {
     single<LicenseRepository> { LicenseRepositoryImpl(get(), androidContext()) }
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
+
+    single<RentalRepository> { DefaultRentalRepository() }
 
     single<PaymentRepository> { com.example.rencar_pair.data.repository.PaymentRepositoryImpl() }
     single<WalletRepository> { com.example.rencar_pair.data.repository.WalletRepositoryImpl() }
@@ -84,6 +90,7 @@ val appModule = module {
     factory { GetActiveRentalUseCase(get()) }
     factory { FinishRentalUseCase(get()) }
     factory { GetMyRentalsUseCase(get()) }
+    factory { ReturnVehicleUseCase(get()) }
 
     factory { GetWalletInfoUseCase(get()) }
     factory { GetWalletBalanceUseCase(get()) }
@@ -104,4 +111,5 @@ val appModule = module {
     viewModelOf(::WalletViewModel)
     viewModelOf(::ProfileViewModel)
     viewModelOf(::TripHistoryViewModel)
+    viewModelOf(::ReturnVehicleViewModel)
 }

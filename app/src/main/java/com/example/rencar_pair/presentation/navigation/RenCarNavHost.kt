@@ -23,6 +23,7 @@ import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryR
 import com.example.rencar_pair.presentation.ui.screens.wallet.WalletRoute as WalletScreenRoute
 import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryRoute as TripHistoryScreenRoute
 import com.example.rencar_pair.presentation.ui.screens.profile.ProfileRoute as ProfileScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.return_vehicle.ReturnVehicleRoute as ReturnVehicleScreenRoute
 import org.koin.compose.koinInject
 
 @Composable
@@ -246,6 +247,20 @@ fun RenCarNavHost(
                 onNavigateToLogin = {
                     navController.navigate(LoginRoute()) {
                         popUpTo<SplashRoute> { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable<ReturnVehicleRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<ReturnVehicleRoute>()
+            ReturnVehicleScreenRoute(
+                rentalId = route.rentalId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
                     }
                 }
             )

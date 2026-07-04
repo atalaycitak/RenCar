@@ -12,6 +12,9 @@ data object OnboardingRoute
 data class LoginRoute(val sessionExpired: Boolean = false)
 
 @Serializable
+data class ReturnVehicleRoute(val rentalId: String)
+
+@Serializable
 data class VerifyOtpRoute(val phone: String)
 
 @Serializable
