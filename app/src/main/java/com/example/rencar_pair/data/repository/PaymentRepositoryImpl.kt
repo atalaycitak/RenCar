@@ -5,8 +5,11 @@ import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
 import com.example.rencar_pair.domain.repository.PaymentRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class PaymentRepositoryImpl : PaymentRepository {
+    private val mutex = Mutex()
     private val fakeCards = mutableListOf(
         PaymentMethod(
             cardToken = "tok_12345",
@@ -57,12 +60,12 @@ class PaymentRepositoryImpl : PaymentRepository {
             binNumber = cardNumber.take(6),
             cardAssociation = if (cardNumber.startsWith("4")) "VISA" else "MASTER_CARD"
         )
-        fakeCards.add(newCard)
+        mutex.withLock { fakeCards.add(newCard) }
         return NetworkResult.Success(newCard)
     }
 
     override suspend fun getSavedCards(): NetworkResult<List<PaymentMethod>> {
         delay(800)
-        return NetworkResult.Success(fakeCards)
+        return mutex.withLock { NetworkResult.Success(fakeCards.toList()) }
     }
 }

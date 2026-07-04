@@ -1,7 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.trip_summary
 
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.repository.PaymentRepository
+import com.example.rencar_pair.domain.usecase.payment.GetSavedCardsUseCase
 import com.example.rencar_pair.domain.usecase.payment.ProcessPaymentUseCase
 import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
@@ -9,7 +9,7 @@ import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 class TripSummaryViewModel(
     private val getActiveRentalUseCase: GetActiveRentalUseCase,
     private val processPaymentUseCase: ProcessPaymentUseCase,
-    private val paymentRepository: PaymentRepository
+    private val getSavedCardsUseCase: GetSavedCardsUseCase
 ) : BaseMviViewModel<TripSummaryState, TripSummaryIntent, TripSummaryEffect>(
     TripSummaryState()
 ) {
@@ -41,7 +41,7 @@ class TripSummaryViewModel(
 
     private fun loadCards() {
         launchCoroutine {
-            when (val result = paymentRepository.getSavedCards()) {
+            when (val result = getSavedCardsUseCase()) {
                 is NetworkResult.Success -> {
                     val cards = result.data
                     updateState {

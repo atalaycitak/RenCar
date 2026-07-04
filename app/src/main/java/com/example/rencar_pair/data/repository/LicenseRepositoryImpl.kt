@@ -25,14 +25,7 @@ class LicenseRepositoryImpl(
         return safeApiCall(
             call = { api.getLicenseStatus() },
             transform = { it.toDomain() }
-        ).let { result ->
-            when (result) {
-                is NetworkResult.Success -> result
-                is NetworkResult.Error -> NetworkResult.Success(
-                    DriverLicense(LicenseStatus.NotUploaded)
-                )
-            }
-        }
+        )
     }
 
     override suspend fun upload(frontPath: String, backPath: String): NetworkResult<DriverLicense> {
