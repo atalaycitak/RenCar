@@ -1,0 +1,26 @@
+Calculating task graph as configuration cache cannot be reused because JVM has changed.
+
+1 problem was found storing the configuration cache.
+- Task `:app:compileDebugJavaWithJavac` of type `org.gradle.api.tasks.compile.JavaCompile`: error writing value of type 'org.gradle.api.internal.provider.TransformBackedProvider'
+
+See the complete report at file:///Users/atalaycitak/Developer/RenCar-pair/build/reports/configuration-cache/csguor5dy2unmlhoxmpilx797/5xwhvt4ydoeyildg9iouxlnw8/configuration-cache-report.html
+
+[Incubating] Problems report is available at: file:///Users/atalaycitak/Developer/RenCar-pair/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Configuration cache state could not be cached: field `generatedModuleFile` of `com.android.build.gradle.tasks.JdkImageInput` bean found in field `compilerArgumentProviders` of `org.gradle.api.tasks.compile.CompileOptions_Decorated` bean found in field `capturedArgs` of `java.lang.invoke.SerializedLambda` bean found in field `spec` of `org.gradle.api.internal.tasks.execution.SelfDescribingSpec` bean found in doNotCacheIf specs of task `:app:compileDebugJavaWithJavac` of type `org.gradle.api.tasks.compile.JavaCompile`: error writing value of type 'org.gradle.api.internal.provider.TransformBackedProvider'
+> Could not resolve all files for configuration ':app:androidJdkImage'.
+   > Failed to transform core-for-system-modules.jar to match attributes {artifactType=_internal_android_jdk_image, org.gradle.libraryelements=jar, org.gradle.usage=java-runtime}.
+      > Execution failed for JdkImageTransform: /Users/atalaycitak/Library/Android/sdk/platforms/android-36.1/core-for-system-modules.jar.
+         > jlink executable /Users/atalaycitak/.antigravity-ide/extensions/redhat.java-1.55.0-darwin-arm64/jre/21.0.11-macosx-aarch64/bin/jlink does not exist.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 871ms
+Configuration cache entry discarded due to serialization error.
