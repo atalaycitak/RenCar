@@ -1,5 +1,7 @@
 package com.example.rencar_pair.data.repository
 
+import java.time.Instant
+
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.repository.ReservationRepository
@@ -13,8 +15,8 @@ class FakeReservationRepository : ReservationRepository {
             id = "local-${System.currentTimeMillis()}",
             userId = "",
             vehicleId = vehicleId,
-            startDate = "now",
-            endDate = endDate,
+            startDate = Instant.now(),
+            endDate = try { Instant.parse(endDate) } catch (e: Exception) { Instant.now().plusSeconds(86400) },
             totalPrice = 0.0,
             status = "ACTIVE"
         )
