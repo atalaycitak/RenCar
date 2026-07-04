@@ -49,7 +49,6 @@ fun RegisterScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is RegisterEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
-                is RegisterEffect.ShowError -> { }
             }
         }
     }

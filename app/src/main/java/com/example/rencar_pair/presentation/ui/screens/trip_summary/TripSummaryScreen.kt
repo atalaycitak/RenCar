@@ -50,24 +50,41 @@ fun TripSummaryScreen(
             fontWeight = FontWeight.Bold,
             color = Neutral10
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Receipt Card
+        state.errorMessage?.let {
+            Text(
+                text = it,
+                color = Error50,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                ReceiptRow(label = "Araç Bedeli", value = "₺${state.rental?.totalPrice ?: 0.0}")
+                ReceiptRow(
+                    label = "Araç Bedeli",
+                    value = "₺${"%.2f".format(state.rental?.totalPrice ?: 0.0)}"
+                )
                 ReceiptRow(label = "İndirim", value = "-₺0.00", valueColor = Color(0xFF10B981))
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Toplam Tutar", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("₺${state.rental?.totalPrice ?: 0.0}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "₺${"%.2f".format(state.rental?.totalPrice ?: 0.0)}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
                 }
             }
         }
@@ -91,10 +108,11 @@ fun TripSummaryScreen(
             } else {
                 items(state.savedCards, key = { it.cardToken }) { card ->
                     PaymentCardItem(
-                    card = card,
-                    isSelected = state.selectedCardToken == card.cardToken,
-                    onClick = { onIntent(TripSummaryIntent.SelectCard(card.cardToken)) }
-                )
+                        card = card,
+                        isSelected = state.selectedCardToken == card.cardToken,
+                        onClick = { onIntent(TripSummaryIntent.SelectCard(card.cardToken)) }
+                    )
+                }
             }
         }
 
@@ -141,17 +159,19 @@ fun PaymentCardItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(card.cardAssociation, fontWeight = FontWeight.Bold, color = Blue50, modifier = Modifier.width(60.dp))
+        Text(
+            card.cardAssociation,
+            fontWeight = FontWeight.Bold,
+            color = Blue50,
+            modifier = Modifier.width(60.dp)
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(card.cardAlias, fontWeight = FontWeight.Medium)
             Text("**** **** **** ${card.binNumber}", color = Color.Gray, fontSize = 12.sp)
         }
         Spacer(modifier = Modifier.weight(1f))
-        RadioButton(
-            selected = isSelected,
-            onClick = onClick
-        )
+        RadioButton(selected = isSelected, onClick = onClick)
     }
 }
 
@@ -163,6 +183,7 @@ fun TripSummaryRoute(
     viewModel: TripSummaryViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(rentalId) {
         viewModel.onIntent(TripSummaryIntent.LoadSummary(rentalId))
@@ -172,16 +193,24 @@ fun TripSummaryRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 TripSummaryEffect.NavigateToHome -> onNavigateToHome()
-                is TripSummaryEffect.ShowError -> {}
-                is TripSummaryEffect.ShowPaymentSuccess -> {}
+                is TripSummaryEffect.ShowPaymentSuccess -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+                is TripSummaryEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
 
-    TripSummaryScreen(
-        state = state,
-        onIntent = viewModel::onIntent,
-        onNavigateToHome = onNavigateToHome,
-        onShowMessage = {}
-    )
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
+        TripSummaryScreen(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onNavigateToHome = onNavigateToHome,
+            onShowMessage = {}
+        )
+    }
 }

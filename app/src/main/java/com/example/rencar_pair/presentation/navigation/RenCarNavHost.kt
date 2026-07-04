@@ -37,6 +37,7 @@ fun RenCarNavHost(
             }
         }
     }
+
     NavHost(
         navController = navController,
         startDestination = SplashRoute,
@@ -76,15 +77,13 @@ fun RenCarNavHost(
             )
         }
 
-        composable<VerifyOtpRoute> { backStackEntry ->
-            val route = backStackEntry.toRoute<VerifyOtpRoute>()
-            // SavedStateHandle should automatically have 'phone' from the route
+        composable<VerifyOtpRoute> {
             VerifyOtpScreen(
                 onNavigateToHomeMap = {
                     navController.navigate(LicenseCheckRoute) {
-                        popUpTo(LoginRoute) { inclusive = true }
-                        popUpTo(OnboardingRoute) { inclusive = true }
-                        popUpTo(VerifyOtpRoute::class.java.name) { inclusive = true }
+                        popUpTo<LoginRoute> { inclusive = true }
+                        popUpTo<OnboardingRoute> { inclusive = true }
+                        popUpTo<VerifyOtpRoute> { inclusive = true }
                     }
                 }
             )
@@ -97,7 +96,7 @@ fun RenCarNavHost(
                 },
                 onNavigateToLicenseVerification = {
                     navController.navigate(LicenseCheckRoute) {
-                        popUpTo(RegisterRoute) { inclusive = true }
+                        popUpTo<RegisterRoute> { inclusive = true }
                     }
                 }
             )
@@ -107,7 +106,7 @@ fun RenCarNavHost(
             LicenseVerificationRoute(
                 onContinueToMap = {
                     navController.navigate(HomeMapRoute) {
-                        popUpTo(LicenseCheckRoute) { inclusive = true }
+                        popUpTo<LicenseCheckRoute> { inclusive = true }
                     }
                 }
             )
@@ -151,7 +150,7 @@ fun RenCarNavHost(
                 onBack = { navController.popBackStack() },
                 onDone = {
                     navController.navigate(ActiveRentalRoute(route.rentalId)) {
-                        popUpTo(HomeMapRoute) { inclusive = false }
+                        popUpTo<HomeMapRoute>()
                     }
                 }
             )
@@ -163,7 +162,7 @@ fun RenCarNavHost(
                 rentalId = route.rentalId,
                 onNavigateToSummary = { rentalId ->
                     navController.navigate(TripSummaryRoute(rentalId)) {
-                        popUpTo(ActiveRentalRoute(rentalId)) { inclusive = true }
+                        popUpTo<ActiveRentalRoute> { inclusive = true }
                     }
                 }
             )
@@ -175,7 +174,7 @@ fun RenCarNavHost(
                 rentalId = route.rentalId,
                 onNavigateToHome = {
                     navController.navigate(HomeMapRoute) {
-                        popUpTo(HomeMapRoute) { inclusive = true }
+                        popUpTo<HomeMapRoute> { inclusive = true }
                     }
                 }
             )

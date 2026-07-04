@@ -25,9 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import android.util.Log
-import com.example.rencar_pair.data.local.DataStoreManager
+import com.example.rencar_pair.domain.repository.AuthRepository
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.firstOrNull
 import org.koin.compose.koinInject
 
 @Composable
@@ -35,7 +34,7 @@ fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
     onNavigateToLicenseVerification: () -> Unit,
     modifier: Modifier = Modifier,
-    dataStoreManager: DataStoreManager = koinInject()
+    authRepository: AuthRepository = koinInject()
 ) {
     var startAnimation by remember { mutableStateOf(false) }
     val alphaAnim by animateFloatAsState(
@@ -49,7 +48,7 @@ fun SplashScreen(
         delay(2000)
 
         try {
-            val savedToken = dataStoreManager.authToken.firstOrNull()
+            val savedToken = authRepository.getSavedToken()
             if (savedToken != null) {
                 onNavigateToLicenseVerification()
             } else {

@@ -3,72 +3,60 @@ package com.example.rencar_pair.data.repository
 import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
+import com.example.rencar_pair.data.remote.TokenHolder
 import com.example.rencar_pair.data.remote.dto.LoginRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
+import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.firstOrNull
 
 class AuthRepositoryImpl(
     private val api: RenCarApi,
-    private val dataStore: DataStoreManager
+    private val dataStore: DataStoreManager,
+    private val tokenHolder: TokenHolder
 ) : AuthRepository {
 
     override suspend fun login(phone: String): NetworkResult<String> {
-        return try {
-            val response = api.login(LoginRequest(phone))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
-                    NetworkResult.Success(body.message)
-                } else {
-                    NetworkResult.Error("Empty response body")
-                }
-            } else {
-                NetworkResult.Error(
-                    message = response.errorBody()?.string() ?: "Unknown error",
-                    code = response.code()
-                )
-            }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Network error")
-        }
+        return safeApiCall(
+            call = { api.login(LoginRequest(phone)) },
+            transform = { it.message }
+        )
     }
 
     override suspend fun verifyOtp(phone: String, code: String): NetworkResult<User> {
-        return try {
-            val response = api.verifyOtp(VerifyOtpRequest(phone, code))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
-                    val token = body.accessToken.orEmpty()
-                    if (token.isBlank()) {
-                        return NetworkResult.Error("Auth token missing")
-                    }
-                    val userId = body.user?.id.orEmpty()
-                    val fullName = body.user?.fullName.orEmpty()
-                    dataStore.saveAuthToken(token)
-                    body.refreshToken?.let { dataStore.saveRefreshToken(it) }
-                    dataStore.saveUserId(userId)
+        val rawResult = safeApiCall(
+            call = { api.verifyOtp(VerifyOtpRequest(phone, code)) }
+        )
+
+        if (rawResult is NetworkResult.Success) {
+            val body = rawResult.data
+            val token = body.accessToken.orEmpty()
+            tokenHolder.token = token
+            dataStore.saveAuthToken(token)
+            body.refreshToken?.let { dataStore.saveRefreshToken(it) }
+            val userId = body.user?.id.orEmpty()
+            dataStore.saveUserId(userId)
+        }
+
+        return when (rawResult) {
+            is NetworkResult.Success -> {
+                val body = rawResult.data
+                val token = body.accessToken.orEmpty()
+                if (token.isBlank()) {
+                    NetworkResult.Error("Auth token missing")
+                } else {
                     NetworkResult.Success(
                         User(
-                            id = userId,
-                            fullName = fullName,
+                            id = body.user?.id.orEmpty(),
+                            fullName = body.user?.fullName.orEmpty(),
                             token = token
                         )
                     )
-                } else {
-                    NetworkResult.Error("Empty response body")
                 }
-            } else {
-                NetworkResult.Error(
-                    message = response.errorBody()?.string() ?: "Unknown error",
-                    code = response.code()
-                )
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Network error")
+            is NetworkResult.Error -> rawResult
         }
     }
 
@@ -78,46 +66,46 @@ class AuthRepositoryImpl(
         phone: String,
         password: String
     ): NetworkResult<User> {
-        return try {
-            val response = api.register(RegisterRequest(fullName, email, phone, password))
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
-                    val token = body.accessToken.orEmpty()
-                    if (token.isBlank()) {
-                        return NetworkResult.Error("Auth token missing")
-                    }
-                    val userId = body.user?.id.orEmpty()
-                    val resolvedFullName = body.user?.fullName.orEmpty()
-                    dataStore.saveAuthToken(token)
-                    body.refreshToken?.let { dataStore.saveRefreshToken(it) }
-                    dataStore.saveUserId(userId)
+        val rawResult = safeApiCall(
+            call = { api.register(RegisterRequest(fullName, email, phone, password)) }
+        )
+
+        if (rawResult is NetworkResult.Success) {
+            val body = rawResult.data
+            val token = body.accessToken.orEmpty()
+            tokenHolder.token = token
+            dataStore.saveAuthToken(token)
+            body.refreshToken?.let { dataStore.saveRefreshToken(it) }
+            val userId = body.user?.id.orEmpty()
+            dataStore.saveUserId(userId)
+        }
+
+        return when (rawResult) {
+            is NetworkResult.Success -> {
+                val body = rawResult.data
+                val token = body.accessToken.orEmpty()
+                if (token.isBlank()) {
+                    NetworkResult.Error("Auth token missing")
+                } else {
                     NetworkResult.Success(
                         User(
-                            id = userId,
-                            fullName = resolvedFullName,
+                            id = body.user?.id.orEmpty(),
+                            fullName = body.user?.fullName.orEmpty(),
                             token = token
                         )
                     )
-                } else {
-                    NetworkResult.Error("Empty response body")
                 }
-            } else {
-                NetworkResult.Error(
-                    message = response.errorBody()?.string() ?: "Unknown error",
-                    code = response.code()
-                )
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Network error")
+            is NetworkResult.Error -> rawResult
         }
     }
 
     override suspend fun getSavedToken(): String? {
-        return dataStore.authToken.firstOrNull()
+        return tokenHolder.token ?: dataStore.authToken.firstOrNull()
     }
 
     override suspend fun clearSession() {
+        tokenHolder.token = null
         dataStore.clear()
     }
 }

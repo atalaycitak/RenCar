@@ -1,59 +1,40 @@
 package com.example.rencar_pair.presentation.ui.screens.auth
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.usecase.LoginUseCase
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
+import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase
-) : ViewModel() {
+) : BaseMviViewModel<LoginState, LoginIntent, LoginEffect>(LoginState()) {
 
-    private val _state = MutableStateFlow(LoginState())
-    val state: StateFlow<LoginState> = _state.asStateFlow()
-
-    private val _effect = Channel<LoginEffect>(Channel.BUFFERED)
-    val effect = _effect.receiveAsFlow()
-
-    fun onIntent(intent: LoginIntent) {
+    override fun onIntent(intent: LoginIntent) {
         when (intent) {
-            is LoginIntent.OnPhoneChanged -> {
-                _state.value = _state.value.copy(phone = intent.phone, errorMessage = null)
+            is LoginIntent.OnPhoneChanged -> updateState {
+                it.copy(phone = intent.phone, errorMessage = null)
             }
             is LoginIntent.OnLoginClicked -> login()
         }
     }
 
     private fun login() {
-        val currentState = _state.value
+        val phone = currentState().phone
 
-        if (currentState.phone.isBlank()) {
-            _state.value = currentState.copy(errorMessage = "Telefon numarası gerekli")
+        if (phone.isBlank()) {
+            updateState { it.copy(errorMessage = "Telefon numarası gerekli") }
             return
         }
 
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, errorMessage = null)
+        launchCoroutine {
+            updateState { it.copy(isLoading = true, errorMessage = null) }
 
-            when (val result = loginUseCase(currentState.phone)) {
+            when (val result = loginUseCase(phone)) {
                 is NetworkResult.Success -> {
-                    _state.value = _state.value.copy(isLoading = false)
-                    _effect.send(LoginEffect.NavigateToVerifyOtp(currentState.phone))
+                    updateState { it.copy(isLoading = false) }
+                    emitEffect(LoginEffect.NavigateToVerifyOtp(phone))
                 }
                 is NetworkResult.Error -> {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
-                }
-                is NetworkResult.Loading -> {
-                    _state.value = _state.value.copy(isLoading = true)
+                    updateState { it.copy(isLoading = false, errorMessage = result.message) }
                 }
             }
         }

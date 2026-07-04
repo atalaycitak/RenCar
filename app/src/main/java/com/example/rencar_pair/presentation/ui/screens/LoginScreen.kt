@@ -54,7 +54,6 @@ fun LoginScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToVerifyOtp -> onNavigateToVerifyOtp(effect.phone)
-                is LoginEffect.ShowError -> { }
             }
         }
     }

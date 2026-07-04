@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,12 +116,8 @@ fun HomeScreen(
                     .height(360.dp)
             ) {
                 val center = state.selectedVehicle
-                RenCarMap(
-                    modifier = Modifier.fillMaxSize(),
-                    latitude = center?.latitude ?: 41.0082,
-                    longitude = center?.longitude ?: 28.9784,
-                    zoom = 13.0,
-                    markers = state.vehicles.map { vehicle ->
+                val mapMarkers = remember(state.vehicles) {
+                    state.vehicles.map { vehicle ->
                         RenCarMapMarker(
                             id = vehicle.id,
                             latitude = vehicle.latitude,
@@ -129,6 +126,13 @@ fun HomeScreen(
                             snippet = "${vehicle.plate} - ${vehicle.pricePerDay.toInt()} TL/gun"
                         )
                     }
+                }
+                RenCarMap(
+                    modifier = Modifier.fillMaxSize(),
+                    latitude = center?.latitude ?: 41.0082,
+                    longitude = center?.longitude ?: 28.9784,
+                    zoom = 13.0,
+                    markers = mapMarkers
                 )
 
                 if (!state.locationPermissionGranted) {

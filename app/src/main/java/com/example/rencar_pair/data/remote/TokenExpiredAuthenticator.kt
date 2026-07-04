@@ -1,24 +1,28 @@
 package com.example.rencar_pair.data.remote
 
 import com.example.rencar_pair.data.local.DataStoreManager
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 
 class TokenExpiredAuthenticator(
-    private val dataStoreManager: DataStoreManager,
-    private val authInterceptor: AuthInterceptor
+    private val tokenHolder: TokenHolder,
+    private val dataStoreManager: DataStoreManager
 ) : Authenticator {
+
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     override fun authenticate(route: Route?, response: Response): Request? {
         if (response.code == 401) {
-            authInterceptor.clearCachedToken()
-            runBlocking {
+            tokenHolder.token = null
+            scope.launch {
                 dataStoreManager.clear()
+                dataStoreManager.notifyTokenExpired()
             }
-            dataStoreManager.notifyTokenExpired()
         }
         return null
     }

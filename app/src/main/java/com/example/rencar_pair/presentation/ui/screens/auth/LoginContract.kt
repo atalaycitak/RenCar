@@ -17,5 +17,4 @@ sealed interface LoginIntent : MviIntent {
 
 sealed class LoginEffect : MviEffect {
     data class NavigateToVerifyOtp(val phone: String) : LoginEffect()
-    data class ShowError(val message: String) : LoginEffect()
 }

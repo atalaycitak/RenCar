@@ -3,6 +3,7 @@ package com.example.rencar_pair.data.repository
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
+import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.repository.VehicleRepository
 
@@ -11,37 +12,17 @@ class VehicleRepositoryImpl(
 ) : VehicleRepository {
 
     override suspend fun getAvailableVehicles(): NetworkResult<List<Vehicle>> {
-        return try {
-            val response = api.getVehicles()
-            if (response.isSuccessful) {
-                val vehicles = response.body().orEmpty().map { it.toDomain() }
-                NetworkResult.Success(vehicles)
-            } else {
-                NetworkResult.Error(
-                    message = response.errorBody()?.string() ?: "Failed to fetch vehicles",
-                    code = response.code()
-                )
-            }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Network error")
-        }
+        return safeApiCall(
+            call = { api.getVehicles() },
+            transform = { list -> list.orEmpty().map { it.toDomain() } }
+        )
     }
 
     override suspend fun getVehicleDetail(id: String): NetworkResult<Vehicle> {
-        return try {
-            val response = api.getVehicle(id)
-            if (response.isSuccessful) {
-                response.body()?.let { NetworkResult.Success(it.toDomain()) }
-                    ?: NetworkResult.Error("Empty response body")
-            } else {
-                NetworkResult.Error(
-                    message = response.errorBody()?.string() ?: "Failed to fetch vehicle detail",
-                    code = response.code()
-                )
-            }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Network error")
-        }
+        return safeApiCall(
+            call = { api.getVehicle(id) },
+            transform = { it.toDomain() }
+        )
     }
 
     private fun VehicleResponse.toDomain(): Vehicle {

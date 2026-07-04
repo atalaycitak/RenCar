@@ -44,7 +44,6 @@ class HomeViewModel(
                 is NetworkResult.Error -> _state.update {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }
-                NetworkResult.Loading -> Unit
             }
         }
     }

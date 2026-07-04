@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.WalletTransaction
+import com.example.rencar_pair.domain.model.WalletTransactionType
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.Blue50
@@ -54,6 +55,15 @@ fun WalletScreen(
                 .padding(padding)
                 .padding(24.dp)
         ) {
+            state.errorMessage?.let {
+                Text(
+                    text = it,
+                    color = Error50,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Blue50),
@@ -101,10 +111,14 @@ fun WalletScreen(
                 val transactions = state.walletInfo?.transactions ?: emptyList()
                 if (transactions.isEmpty()) {
                     item {
-                        Text("Henüz bir işlem bulunmuyor.", color = Color.Gray, modifier = Modifier.padding(top = 16.dp))
+                        Text(
+                            "Henüz bir işlem bulunmuyor.",
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
                     }
                 } else {
-                    items(transactions) { tx ->
+                    items(transactions, key = { it.id }) { tx ->
                         TransactionItem(tx)
                     }
                 }
@@ -153,7 +167,7 @@ fun WalletScreen(
 fun TransactionItem(tx: WalletTransaction) {
     val formatter = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()) }
     val dateStr = remember(tx.date) { formatter.format(Date(tx.date)) }
-    val isTopUp = tx.type.name == "TOP_UP"
+    val isTopUp = tx.type == WalletTransactionType.TOP_UP
 
     Row(
         modifier = Modifier
@@ -167,7 +181,7 @@ fun TransactionItem(tx: WalletTransaction) {
             Text(dateStr, color = Color.Gray, fontSize = 12.sp)
         }
         val amountStr = if (isTopUp) "+₺${tx.amount}" else "-₺${tx.amount}"
-        val amountColor = if (isTopUp) Error50 else Color.Black
+        val amountColor = if (isTopUp) Color(0xFF10B981) else Color.Black
         Text(amountStr, color = amountColor, fontWeight = FontWeight.Bold)
     }
 }
@@ -178,18 +192,27 @@ fun WalletRoute(
     viewModel: WalletViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is WalletEffect.ShowError -> {}
-                is WalletEffect.ShowMessage -> {}
+                is WalletEffect.ShowMessage -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+                is WalletEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
 
-    WalletScreen(
-        state = state,
-        onIntent = viewModel::onIntent
-    )
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
+        WalletScreen(
+            state = state,
+            onIntent = viewModel::onIntent
+        )
+    }
 }

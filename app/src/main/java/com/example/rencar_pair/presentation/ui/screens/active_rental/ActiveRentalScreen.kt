@@ -39,7 +39,18 @@ fun ActiveRentalScreen(
             color = Neutral10
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        state.errorMessage?.let {
+            Text(
+                text = it,
+                color = Error50,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -119,7 +130,7 @@ fun ActiveRentalRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is ActiveRentalEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
-                is ActiveRentalEffect.ShowError -> {}
+                is ActiveRentalEffect.ShowError -> { /* error shown via state.errorMessage */ }
             }
         }
     }
