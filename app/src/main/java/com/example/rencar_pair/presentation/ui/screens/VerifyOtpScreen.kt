@@ -50,7 +50,6 @@ fun VerifyOtpScreen(
             when (effect) {
                 is VerifyOtpEffect.NavigateToHome -> onNavigateToHomeMap()
                 is VerifyOtpEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
-                is VerifyOtpEffect.ShowError -> Unit
             }
         }
     }

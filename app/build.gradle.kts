@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.openapi.generator)
 }
 
 android {
@@ -35,6 +36,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    sourceSets {
+        getByName("main") {
+            java.srcDir("build/generated/openapi/src/main/kotlin")
+        }
     }
 }
 
@@ -75,4 +81,20 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+openApiGenerate {
+    generatorName.set("kotlin")
+    inputSpec.set("$rootDir/docs/api/openapi.json")
+    outputDir.set(layout.buildDirectory.dir("generated/openapi").get().asFile.path)
+    apiPackage.set("com.example.rencar_pair.data.remote.api")
+    modelPackage.set("com.example.rencar_pair.data.remote.dto")
+    configOptions.set(
+        mapOf(
+            "library" to "jvm-retrofit2",
+            "serializationLibrary" to "kotlinx_serialization",
+            "coroutines" to "true",
+            "dateLibrary" to "java8"
+        )
+    )
 }

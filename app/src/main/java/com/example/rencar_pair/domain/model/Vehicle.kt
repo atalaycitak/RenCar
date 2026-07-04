@@ -1,5 +1,8 @@
 package com.example.rencar_pair.domain.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Vehicle(
     val id: String,
     val plate: String,

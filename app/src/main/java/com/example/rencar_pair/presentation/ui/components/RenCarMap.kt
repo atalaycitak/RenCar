@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.rencar_pair.presentation.ui.components
 
 import android.view.ViewGroup
@@ -42,7 +44,7 @@ fun RenCarMap(
         val options = MapLibreMapOptions.createFromAttributes(context, null).apply {
             camera(
                 org.maplibre.android.camera.CameraPosition.Builder()
-                    .target(org.maplibre.android.geometry.LatLng(latitude, longitude))
+                    .target(LatLng(latitude, longitude))
                     .zoom(zoom)
                     .build()
             )
@@ -71,12 +73,6 @@ fun RenCarMap(
         modifier = modifier,
         update = { map ->
             map.getMapAsync { mapboxMap ->
-                mapboxMap.animateCamera(
-                    org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                        org.maplibre.android.geometry.LatLng(latitude, longitude),
-                        zoom
-                    )
-                )
                 mapboxMap.clear()
                 markers.forEach { marker ->
                     mapboxMap.addMarker(

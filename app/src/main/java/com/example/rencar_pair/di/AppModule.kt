@@ -23,11 +23,17 @@ import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
 import com.example.rencar_pair.domain.usecase.RegisterUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
+import com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase
+import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
+import com.example.rencar_pair.domain.usecase.payment.GetWalletBalanceUseCase
+import com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase
+import com.example.rencar_pair.domain.usecase.payment.ProcessPaymentUseCase
+import com.example.rencar_pair.domain.usecase.payment.TopUpWalletUseCase
 import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalViewModel
-import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.RegisterViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpViewModel
+import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistViewModel
 import com.example.rencar_pair.presentation.ui.screens.home.HomeViewModel
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationViewModel
 import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationViewModel
@@ -42,7 +48,7 @@ val appModule = module {
 
     single { DataStoreManager(androidContext()) }
 
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
     single<LicenseRepository> { LicenseRepositoryImpl(get(), androidContext()) }
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
@@ -62,16 +68,14 @@ val appModule = module {
     factory { GetVehicleDetailUseCase(get()) }
     factory { CalculateReservationQuoteUseCase() }
     factory { CreateRentalUseCase(get()) }
-    
-    // Rental UseCases
-    factory { com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase(get()) }
-    factory { com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase(get()) }
-    
-    // Payment/Wallet UseCases
-    factory { com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase(get()) }
-    factory { com.example.rencar_pair.domain.usecase.payment.GetWalletBalanceUseCase(get()) }
-    factory { com.example.rencar_pair.domain.usecase.payment.TopUpWalletUseCase(get()) }
-    factory { com.example.rencar_pair.domain.usecase.payment.ProcessPaymentUseCase(get()) }
+
+    factory { GetActiveRentalUseCase(get()) }
+    factory { FinishRentalUseCase(get()) }
+
+    factory { GetWalletInfoUseCase(get()) }
+    factory { GetWalletBalanceUseCase(get()) }
+    factory { TopUpWalletUseCase(get()) }
+    factory { ProcessPaymentUseCase(get()) }
 
     viewModelOf(::LoginViewModel)
     viewModelOf(::VerifyOtpViewModel)

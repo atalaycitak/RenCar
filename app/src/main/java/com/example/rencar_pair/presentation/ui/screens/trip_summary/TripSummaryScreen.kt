@@ -3,29 +3,12 @@ package com.example.rencar_pair.presentation.ui.screens.trip_summary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.Blue50
+import com.example.rencar_pair.ui.theme.Error50
 import com.example.rencar_pair.ui.theme.Neutral10
 import com.example.rencar_pair.ui.theme.Neutral90
 import org.koin.androidx.compose.koinViewModel
@@ -66,14 +50,18 @@ fun TripSummaryScreen(
             fontWeight = FontWeight.Bold,
             color = Neutral10
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Ödeme kartları ve işlem sonucu lokal demo state üzerinden çalışır; Swagger'da payment endpoint'i yok.",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        state.errorMessage?.let {
+            Text(
+                text = it,
+                color = Error50,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -81,7 +69,10 @@ fun TripSummaryScreen(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                ReceiptRow(label = "Araç Bedeli", value = "₺${state.rental?.totalPrice ?: 0.0}")
+                ReceiptRow(
+                    label = "Araç Bedeli",
+                    value = "₺${"%.2f".format(state.rental?.totalPrice ?: 0.0)}"
+                )
                 ReceiptRow(label = "İndirim", value = "-₺0.00", valueColor = Color(0xFF10B981))
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Row(
@@ -89,7 +80,11 @@ fun TripSummaryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Toplam Tutar", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("₺${state.rental?.totalPrice ?: 0.0}", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "₺${"%.2f".format(state.rental?.totalPrice ?: 0.0)}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
                 }
             }
         }
@@ -105,7 +100,7 @@ fun TripSummaryScreen(
             if (state.savedCards.isEmpty()) {
                 item {
                     Text(
-                        "Kayıtlı ödeme yöntemi bulunamadı.",
+                        "Kayitli odeme yontemi bulunamadi.",
                         color = Color.Gray,
                         modifier = Modifier.padding(top = 16.dp)
                     )
@@ -164,17 +159,19 @@ fun PaymentCardItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(card.cardAssociation, fontWeight = FontWeight.Bold, color = Blue50, modifier = Modifier.width(60.dp))
+        Text(
+            card.cardAssociation,
+            fontWeight = FontWeight.Bold,
+            color = Blue50,
+            modifier = Modifier.width(60.dp)
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(card.cardAlias, fontWeight = FontWeight.Medium)
             Text("**** **** **** ${card.binNumber}", color = Color.Gray, fontSize = 12.sp)
         }
         Spacer(modifier = Modifier.weight(1f))
-        RadioButton(
-            selected = isSelected,
-            onClick = onClick
-        )
+        RadioButton(selected = isSelected, onClick = onClick)
     }
 }
 
@@ -186,6 +183,7 @@ fun TripSummaryRoute(
     viewModel: TripSummaryViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(rentalId) {
         viewModel.onIntent(TripSummaryIntent.LoadSummary(rentalId))
@@ -195,16 +193,24 @@ fun TripSummaryRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 TripSummaryEffect.NavigateToHome -> onNavigateToHome()
-                is TripSummaryEffect.ShowError -> Unit
-                is TripSummaryEffect.ShowPaymentSuccess -> Unit
+                is TripSummaryEffect.ShowPaymentSuccess -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+                is TripSummaryEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
 
-    TripSummaryScreen(
-        state = state,
-        onIntent = viewModel::onIntent,
-        onNavigateToHome = onNavigateToHome,
-        onShowMessage = {}
-    )
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
+        TripSummaryScreen(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onNavigateToHome = onNavigateToHome,
+            onShowMessage = {}
+        )
+    }
 }

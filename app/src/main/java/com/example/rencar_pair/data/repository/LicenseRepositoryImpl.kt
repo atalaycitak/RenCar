@@ -5,6 +5,7 @@ import android.net.Uri
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.LicenseStatusResponse
+import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.DriverLicense
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.domain.repository.LicenseRepository
@@ -21,42 +22,36 @@ class LicenseRepositoryImpl(
 ) : LicenseRepository {
 
     override suspend fun getStatus(): NetworkResult<DriverLicense> {
-        return try {
-            val response = api.getLicenseStatus()
-            if (response.isSuccessful) {
-                NetworkResult.Success(response.body()?.toDomain() ?: DriverLicense(LicenseStatus.NotUploaded))
-            } else {
-                NetworkResult.Error(
-                    message = response.errorBody()?.string() ?: "License status check failed",
-                    code = response.code()
+        return safeApiCall(
+            call = { api.getLicenseStatus() },
+            transform = { it.toDomain() }
+        ).let { result ->
+            when (result) {
+                is NetworkResult.Success -> result
+                is NetworkResult.Error -> NetworkResult.Success(
+                    DriverLicense(LicenseStatus.NotUploaded)
                 )
             }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Network error")
         }
     }
 
     override suspend fun upload(frontPath: String, backPath: String): NetworkResult<DriverLicense> {
-        return try {
-            val frontPart = MultipartBody.Part.createFormData(
-                "front",
-                resolveFileName(frontPath, "front-license.jpg"),
-                createImageRequestBody(frontPath)
-            )
-            val backPart = MultipartBody.Part.createFormData(
-                "back",
-                resolveFileName(backPath, "back-license.jpg"),
-                createImageRequestBody(backPath)
-            )
-            val response = api.uploadLicense(frontPart, backPart)
-            if (response.isSuccessful) {
-                NetworkResult.Success(response.body()?.toDomain() ?: DriverLicense(LicenseStatus.Pending))
-            } else {
-                NetworkResult.Error(response.errorBody()?.string() ?: "License upload failed", response.code())
-            }
-        } catch (e: Exception) {
-            NetworkResult.Error(e.message ?: "Upload failed")
-        }
+        return safeApiCall(
+            call = {
+                val frontPart = MultipartBody.Part.createFormData(
+                    "front",
+                    resolveFileName(frontPath, "front-license.jpg"),
+                    createImageRequestBody(frontPath)
+                )
+                val backPart = MultipartBody.Part.createFormData(
+                    "back",
+                    resolveFileName(backPath, "back-license.jpg"),
+                    createImageRequestBody(backPath)
+                )
+                api.uploadLicense(frontPart, backPart)
+            },
+            transform = { it.toDomain() }
+        )
     }
 
     private fun LicenseStatusResponse.toDomain(): DriverLicense {

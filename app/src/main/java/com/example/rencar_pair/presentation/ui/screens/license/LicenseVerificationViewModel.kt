@@ -1,47 +1,36 @@
 package com.example.rencar_pair.presentation.ui.screens.license
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.DriverLicense
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
 import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class LicenseVerificationViewModel(
     private val getLicenseStatusUseCase: GetLicenseStatusUseCase,
     private val uploadLicenseUseCase: UploadLicenseUseCase,
     private val refreshSessionUseCase: RefreshSessionUseCase
-) : ViewModel() {
-
-    private val _state = MutableStateFlow(LicenseVerificationState())
-    val state = _state.asStateFlow()
-
-    private val _effect = Channel<LicenseVerificationEffect>(Channel.BUFFERED)
-    val effect = _effect.receiveAsFlow()
+) : BaseMviViewModel<LicenseVerificationState, LicenseVerificationIntent, LicenseVerificationEffect>(
+    LicenseVerificationState()
+) {
 
     init {
         onIntent(LicenseVerificationIntent.LoadStatus)
     }
 
-    fun onIntent(intent: LicenseVerificationIntent) {
+    override fun onIntent(intent: LicenseVerificationIntent) {
         when (intent) {
             LicenseVerificationIntent.LoadStatus -> loadStatus()
-            is LicenseVerificationIntent.PickFrontImage -> _state.update {
+            is LicenseVerificationIntent.PickFrontImage -> updateState {
                 it.copy(
                     status = statusAfterNewImagePick(it.status),
                     frontImageUri = intent.uri,
                     errorMessage = null
                 )
             }
-            is LicenseVerificationIntent.PickBackImage -> _state.update {
+            is LicenseVerificationIntent.PickBackImage -> updateState {
                 it.copy(
                     status = statusAfterNewImagePick(it.status),
                     backImageUri = intent.uri,
@@ -53,10 +42,8 @@ class LicenseVerificationViewModel(
         }
     }
 
-    private fun continueToMap() {
-        viewModelScope.launch {
-            _effect.send(LicenseVerificationEffect.ContinueToMap)
-        }
+    fun continueToMap() {
+        emitEffect(LicenseVerificationEffect.ContinueToMap)
     }
 
     private fun statusAfterNewImagePick(status: LicenseStatus): LicenseStatus {
@@ -68,14 +55,13 @@ class LicenseVerificationViewModel(
     }
 
     private fun loadStatus() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+        launchCoroutine {
+            updateState { it.copy(isLoading = true, errorMessage = null) }
             when (val result = getLicenseStatusUseCase()) {
                 is NetworkResult.Success -> applyLicense(result.data)
-                is NetworkResult.Error -> _state.update {
+                is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }
-                NetworkResult.Loading -> Unit
             }
         }
     }
@@ -94,14 +80,14 @@ class LicenseVerificationViewModel(
     }
 
     private fun upload() {
-        val current = state.value
+        val current = currentState()
         if (!current.hasFrontImage || !current.hasBackImage) {
-            _state.update { it.copy(errorMessage = "Ehliyetin ön ve arka yüzü gerekli.") }
+            updateState { it.copy(errorMessage = "Ehliyetin ön ve arka yüzü gerekli.") }
             return
         }
 
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+        launchCoroutine {
+            updateState { it.copy(isLoading = true, errorMessage = null) }
             when (
                 val result = uploadLicenseUseCase(
                     frontPath = current.frontImageUri.orEmpty(),
@@ -109,10 +95,9 @@ class LicenseVerificationViewModel(
                 )
             ) {
                 is NetworkResult.Success -> applyLicense(result.data)
-                is NetworkResult.Error -> _state.update {
+                is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }
-                NetworkResult.Loading -> Unit
             }
         }
     }
@@ -121,7 +106,7 @@ class LicenseVerificationViewModel(
         license: DriverLicense,
         navigateWhenApproved: Boolean = false
     ) {
-        _state.update {
+        updateState {
             it.copy(
                 status = license.status,
                 isLoading = false,
