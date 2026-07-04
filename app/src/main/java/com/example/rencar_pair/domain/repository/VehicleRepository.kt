@@ -4,6 +4,10 @@ import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Vehicle
 
 interface VehicleRepository {
-    suspend fun getAvailableVehicles(): NetworkResult<List<Vehicle>>
+    suspend fun getAvailableVehicles(
+        type: String? = null,
+        page: Int? = null,
+        limit: Int? = null
+    ): NetworkResult<List<Vehicle>>
     suspend fun getVehicleDetail(id: String): NetworkResult<Vehicle>
 }

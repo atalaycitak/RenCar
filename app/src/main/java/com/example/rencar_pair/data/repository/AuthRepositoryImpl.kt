@@ -5,7 +5,9 @@ import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.TokenHolder
 import com.example.rencar_pair.data.remote.dto.AuthResponse
+import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.LoginRequest
+import com.example.rencar_pair.data.remote.dto.RefreshTokenRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
 import com.example.rencar_pair.data.remote.safeApiCall
@@ -46,23 +48,41 @@ class AuthRepositoryImpl(
         return persistAndBuildUser(rawResult)
     }
 
+    /**
+     * Refreshes the session by calling the real POST /auth/refresh endpoint.
+     * On success, the new token pair is persisted and the updated User is returned.
+     * On failure (expired/revoked refresh token), the local session is cleared.
+     */
     override suspend fun refreshSession(): NetworkResult<User> {
-        val savedToken = getSavedToken()
-        if (savedToken.isNullOrBlank()) {
-            return NetworkResult.Error("No saved session")
+        val savedRefreshToken = dataStore.getRefreshToken()
+        if (savedRefreshToken.isNullOrBlank()) {
+            return NetworkResult.Error("No refresh token available — please log in again")
         }
-        return NetworkResult.Success(
-            User(id = "", fullName = "", token = savedToken)
+        val rawResult = safeApiCall(
+            call = { api.refreshToken(RefreshTokenRequest(savedRefreshToken)) }
         )
+        return when (rawResult) {
+            is NetworkResult.Success -> persistAndBuildUser(rawResult)
+            is NetworkResult.Error -> {
+                // Refresh token is invalid or revoked — force logout
+                clearSession()
+                NetworkResult.Error(rawResult.message ?: "Session expired — please log in again")
+            }
+        }
     }
 
+    /**
+     * Fetches the current user profile from GET /auth/me using the live access token.
+     * Returns a real User with up-to-date role information.
+     */
     override suspend fun getCurrentUser(): NetworkResult<User> {
         val savedToken = getSavedToken()
         if (savedToken.isNullOrBlank()) {
-            return NetworkResult.Error("No saved session")
+            return NetworkResult.Error("No active session")
         }
-        return NetworkResult.Success(
-            User(id = "", fullName = "", token = savedToken)
+        return safeApiCall(
+            call = { api.getMe() },
+            transform = { it.toUser(savedToken) }
         )
     }
 
@@ -96,17 +116,23 @@ class AuthRepositoryImpl(
                     body.refreshToken?.let { dataStore.saveRefreshToken(it) }
                     val userId = body.user?.id.orEmpty()
                     dataStore.saveUserId(userId)
-                    NetworkResult.Success(
-                        User(
-                            id = userId,
-                            fullName = body.user?.fullName.orEmpty(),
-                            token = token,
-                            role = UserRole.fromApiString(body.user?.role)
-                        )
-                    )
+                    NetworkResult.Success(body.user?.toUser(token) ?: User(
+                        id = userId,
+                        fullName = "",
+                        token = token
+                    ))
                 }
             }
             is NetworkResult.Error -> rawResult
         }
+    }
+
+    private fun AuthUserResponse.toUser(token: String): User {
+        return User(
+            id = id,
+            fullName = fullName,
+            token = token,
+            role = UserRole.fromApiString(role)
+        )
     }
 }

@@ -11,9 +11,13 @@ class VehicleRepositoryImpl(
     private val api: RenCarApi
 ) : VehicleRepository {
 
-    override suspend fun getAvailableVehicles(): NetworkResult<List<Vehicle>> {
+    override suspend fun getAvailableVehicles(
+        type: String?,
+        page: Int?,
+        limit: Int?
+    ): NetworkResult<List<Vehicle>> {
         return safeApiCall(
-            call = { api.getVehicles() },
+            call = { api.getVehicles(type = type, page = page, limit = limit) },
             transform = { list -> list.orEmpty().map { it.toDomain() } }
         )
     }
