@@ -7,6 +7,10 @@ class AuthInterceptor(
     private val tokenHolder: TokenHolder
 ) : Interceptor {
 
+    // Auth endpoints that do NOT require an Authorization header.
+    // /auth/logout and /auth/me DO require it, so they are excluded from this list.
+    private val noAuthPaths = setOf("login", "register", "verify-otp", "refresh")
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
 
@@ -19,8 +23,9 @@ class AuthInterceptor(
             builder.header("Content-Type", "application/json")
         }
 
-        val isAuthEndpoint = original.url.pathSegments.contains("auth")
-        if (!token.isNullOrBlank() && !isAuthEndpoint) {
+        val lastSegment = original.url.pathSegments.lastOrNull()
+        val isUnauthenticatedEndpoint = lastSegment in noAuthPaths
+        if (!token.isNullOrBlank() && !isUnauthenticatedEndpoint) {
             builder.header("Authorization", "Bearer $token")
         }
 

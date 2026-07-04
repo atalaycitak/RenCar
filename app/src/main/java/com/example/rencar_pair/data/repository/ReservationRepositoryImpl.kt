@@ -43,6 +43,7 @@ class ReservationRepositoryImpl(
     private fun RentalResponse.toDomain(): Rental {
         return Rental(
             id = id,
+            userId = userId,
             vehicleId = vehicleId,
             startDate = startDate,
             endDate = endDate,
