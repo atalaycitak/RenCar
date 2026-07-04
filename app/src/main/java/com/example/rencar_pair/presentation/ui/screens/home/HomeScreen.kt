@@ -45,6 +45,9 @@ import androidx.core.content.ContextCompat
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
 import com.example.rencar_pair.presentation.ui.components.RenCarMap
+import com.example.rencar_pair.presentation.ui.components.VehicleDetailBottomSheet
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material3.FloatingActionButton
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -122,7 +125,10 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .height(360.dp)
             ) {
-                val center = state.selectedVehicle
+                // If a vehicle is selected, center on it. Otherwise center on user, or fallback to first vehicle.
+                val centerLat = state.selectedVehicle?.latitude ?: state.userLocation?.latitude ?: state.vehicles.firstOrNull()?.latitude ?: 41.0082
+                val centerLng = state.selectedVehicle?.longitude ?: state.userLocation?.longitude ?: state.vehicles.firstOrNull()?.longitude ?: 28.9784
+                
                 val mapMarkers = remember(state.vehicles) {
                     state.vehicles.map { vehicle ->
                         RenCarMapMarker(
@@ -130,16 +136,22 @@ fun HomeScreen(
                             latitude = vehicle.latitude,
                             longitude = vehicle.longitude,
                             title = vehicle.title,
-                            snippet = "${vehicle.plate} - ${vehicle.pricePerDay.toInt()} TL/gün"
+                            snippet = "${vehicle.pricePerDay.toInt()} TL/gün"
                         )
                     }
                 }
+                
                 RenCarMap(
                     modifier = Modifier.fillMaxSize(),
-                    latitude = center?.latitude ?: 41.0082,
-                    longitude = center?.longitude ?: 28.9784,
+                    latitude = centerLat,
+                    longitude = centerLng,
                     zoom = 13.0,
-                    markers = mapMarkers
+                    userLatitude = state.userLocation?.latitude,
+                    userLongitude = state.userLocation?.longitude,
+                    markers = mapMarkers,
+                    onMarkerClick = { id ->
+                        onIntent(HomeIntent.SelectVehicle(id))
+                    }
                 )
 
                 if (!state.locationPermissionGranted) {
@@ -149,6 +161,20 @@ fun HomeScreen(
                             .padding(16.dp)
                     )
                 }
+
+                // My Location FAB
+                FloatingActionButton(
+                    onClick = { onIntent(HomeIntent.FetchUserLocation) },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MyLocation,
+                        contentDescription = "Konumuma Git"
+                    )
+                }
             }
 
             VehiclePanel(
@@ -156,6 +182,18 @@ fun HomeScreen(
                 onSelect = { onIntent(HomeIntent.SelectVehicle(it)) },
                 onVehicleDetails = onVehicleDetails
             )
+            
+            // Show Bottom Sheet if a vehicle is selected from the map
+            state.selectedVehicle?.let { vehicle ->
+                VehicleDetailBottomSheet(
+                    vehicle = vehicle,
+                    onDismissRequest = { onIntent(HomeIntent.SelectVehicle(null)) },
+                    onRentClick = {
+                        onIntent(HomeIntent.SelectVehicle(null))
+                        onVehicleDetails(vehicle.id)
+                    }
+                )
+            }
         }
     }
 }

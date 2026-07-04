@@ -1,10 +1,12 @@
 package com.example.rencar_pair.di
 
 import com.example.rencar_pair.data.local.DataStoreManager
+import com.example.rencar_pair.data.location.DefaultLocationTracker
 import com.example.rencar_pair.data.repository.AuthRepositoryImpl
 import com.example.rencar_pair.data.repository.LicenseRepositoryImpl
 import com.example.rencar_pair.data.repository.ReservationRepositoryImpl
 import com.example.rencar_pair.data.repository.VehicleRepositoryImpl
+import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.repository.AuthRepository
 import com.example.rencar_pair.domain.repository.LicenseRepository
 import com.example.rencar_pair.domain.repository.PaymentRepository
@@ -41,6 +43,8 @@ import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationVi
 import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryViewModel
 import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailViewModel
 import com.example.rencar_pair.presentation.ui.screens.wallet.WalletViewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -56,6 +60,10 @@ val appModule = module {
 
     single<PaymentRepository> { com.example.rencar_pair.data.repository.PaymentRepositoryImpl() }
     single<WalletRepository> { com.example.rencar_pair.data.repository.WalletRepositoryImpl() }
+
+    single { LocationServices.getFusedLocationProviderClient(androidContext()) }
+
+    single<LocationTracker> { DefaultLocationTracker(get(), androidContext()) }
 
     factory { LoginUseCase(get()) }
     factory { VerifyOtpUseCase(get()) }
