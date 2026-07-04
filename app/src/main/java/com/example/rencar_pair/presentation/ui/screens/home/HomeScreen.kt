@@ -123,7 +123,7 @@ fun HomeScreen(
                             latitude = vehicle.latitude,
                             longitude = vehicle.longitude,
                             title = vehicle.title,
-                            snippet = "${vehicle.plate} - ${vehicle.pricePerDay.toInt()} TL/gun"
+                            snippet = "${vehicle.plate} - ${vehicle.pricePerDay.toInt()} TL/gün"
                         )
                     }
                 }
@@ -161,7 +161,7 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Text(
-            text = "Konum izni verilmedi. Araclari varsayilan Istanbul konumunda gosteriyoruz.",
+            text = "Konum izni verilmedi. Araçları varsayılan İstanbul konumunda gösteriyoruz.",
             modifier = Modifier.padding(14.dp),
             style = MaterialTheme.typography.bodyMedium
         )
@@ -179,7 +179,7 @@ private fun VehiclePanel(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Yakindaki araclar",
+            text = "Yakındaki araçlar",
             style = MaterialTheme.typography.titleLarge
         )
         state.errorMessage?.let {
@@ -189,7 +189,7 @@ private fun VehiclePanel(
             CircularProgressIndicator()
         } else if (state.vehicles.isEmpty()) {
             Text(
-                text = "Yakinda arac bulunamadi. Lutfen daha sonra tekrar deneyin.",
+                text = "Yakında araç bulunamadı. Lütfen daha sonra tekrar deneyin.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
@@ -239,7 +239,7 @@ private fun VehicleRow(
                 Text(text = "${vehicle.plate} - ${vehicle.rangeKm} km", style = MaterialTheme.typography.bodyMedium)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = "${vehicle.pricePerDay.toInt()} TL/gun")
+                Text(text = "${vehicle.pricePerDay.toInt()} TL/gün")
                 TextButton(onClick = onDetailsClick) {
                     Text(text = "Detay")
                 }

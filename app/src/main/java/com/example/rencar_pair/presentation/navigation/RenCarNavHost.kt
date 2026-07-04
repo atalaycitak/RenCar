@@ -80,6 +80,13 @@ fun RenCarNavHost(
         composable<VerifyOtpRoute> {
             VerifyOtpScreen(
                 onNavigateToHomeMap = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(LoginRoute) { inclusive = true }
+                        popUpTo(OnboardingRoute) { inclusive = true }
+                        popUpTo(VerifyOtpRoute::class.java.name) { inclusive = true }
+                    }
+                },
+                onNavigateToLicenseVerification = {
                     navController.navigate(LicenseCheckRoute) {
                         popUpTo<LoginRoute> { inclusive = true }
                         popUpTo<OnboardingRoute> { inclusive = true }
@@ -107,6 +114,11 @@ fun RenCarNavHost(
                 onContinueToMap = {
                     navController.navigate(HomeMapRoute) {
                         popUpTo<LicenseCheckRoute> { inclusive = true }
+                    }
+                },
+                onBackToLogin = {
+                    navController.navigate(LoginRoute) {
+                        popUpTo(LicenseCheckRoute) { inclusive = true }
                     }
                 }
             )

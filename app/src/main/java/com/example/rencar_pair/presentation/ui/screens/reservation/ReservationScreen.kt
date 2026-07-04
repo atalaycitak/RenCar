@@ -121,7 +121,7 @@ private fun ReservationContent(
             ) {
                 Text(text = vehicle.title, style = MaterialTheme.typography.titleLarge)
                 Text(text = vehicle.plate, style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${vehicle.locationName} teslim noktasi")
+                Text(text = "${vehicle.locationName} teslim noktası")
             }
         }
 
@@ -137,8 +137,8 @@ private fun ReservationContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "Kiralama suresi", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "1-30 gun arasi secilebilir")
+                    Text(text = "Kiralama süresi", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "1-30 gün arası seçilebilir")
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { onIntent(ReservationIntent.DecreaseDays) }) {
@@ -149,7 +149,7 @@ private fun ReservationContent(
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     IconButton(onClick = { onIntent(ReservationIntent.IncreaseDays) }) {
-                        Icon(Icons.Default.Add, contentDescription = "Artir")
+                        Icon(Icons.Default.Add, contentDescription = "Artır")
                     }
                 }
             }
@@ -162,13 +162,13 @@ private fun ReservationContent(
         }
 
         Text(
-            text = "Not: Fiyat hesaplama istemci tarafinda fake use case ile gosterilir; backend kiralama olustururken kendi toplam fiyatini kilitler.",
+            text = "Not: Fiyat hesaplama istemci tarafında fake use case ile gösterilir; backend kiralama oluştururken kendi toplam fiyatını kilitler.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         PrimaryButton(
-            text = if (state.isSubmitting) "Olusturuluyor" else "Rezervasyonu onayla",
+            text = if (state.isSubmitting) "Oluşturuluyor" else "Rezervasyonu onayla",
             onClick = { onIntent(ReservationIntent.ConfirmReservation) },
             enabled = !state.isSubmitting
         )
@@ -186,10 +186,10 @@ private fun QuoteCard(quote: ReservationQuote) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuoteRow("Gunluk fiyat", "${quote.pricePerDay.toInt()} TL")
-            QuoteRow("Sure", "${quote.days} gun")
+            QuoteRow("Günlük fiyat", "${quote.pricePerDay.toInt()} TL")
+            QuoteRow("Süre", "${quote.days} gün")
             QuoteRow("Servis bedeli", "${quote.serviceFee.toInt()} TL")
-            QuoteRow("Teslim ucreti", "${quote.deliveryFee.toInt()} TL")
+            QuoteRow("Teslim ücreti", "${quote.deliveryFee.toInt()} TL")
             QuoteRow("Toplam", "${quote.totalPrice.toInt()} TL", strong = true)
         }
     }

@@ -21,6 +21,16 @@ data class VerifyOtpRequest(
 )
 
 @Serializable
+data class RefreshTokenRequest(
+    val refreshToken: String
+)
+
+@Serializable
+data class MessageResponse(
+    val message: String
+)
+
+@Serializable
 data class RegisterRequest(
     val fullName: String,
     val email: String,
@@ -41,5 +51,7 @@ data class AuthUserResponse(
     val email: String? = null,
     val phone: String? = null,
     val fullName: String,
-    val role: String? = null
+    val role: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )

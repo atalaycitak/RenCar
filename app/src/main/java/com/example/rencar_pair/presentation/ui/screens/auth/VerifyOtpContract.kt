@@ -18,4 +18,5 @@ sealed interface VerifyOtpIntent : MviIntent {
 
 sealed class VerifyOtpEffect : MviEffect {
     data object NavigateToHome : VerifyOtpEffect()
+    data object NavigateToLicenseVerification : VerifyOtpEffect()
 }

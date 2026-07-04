@@ -7,6 +7,9 @@ interface AuthRepository {
     suspend fun login(phone: String): NetworkResult<String>
     suspend fun verifyOtp(phone: String, code: String): NetworkResult<User>
     suspend fun register(fullName: String, email: String, phone: String, password: String): NetworkResult<User>
+    suspend fun refreshSession(): NetworkResult<User>
+    suspend fun getCurrentUser(): NetworkResult<User>
+    suspend fun logout(): NetworkResult<String>
     suspend fun getSavedToken(): String?
     suspend fun clearSession()
 }

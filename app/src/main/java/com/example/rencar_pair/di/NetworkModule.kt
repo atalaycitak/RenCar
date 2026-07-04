@@ -36,7 +36,7 @@ val networkModule = module {
     }
 
     single {
-        TokenExpiredAuthenticator(get(), get())
+        TokenExpiredAuthenticator(get(), get(), get())
     }
 
     single {

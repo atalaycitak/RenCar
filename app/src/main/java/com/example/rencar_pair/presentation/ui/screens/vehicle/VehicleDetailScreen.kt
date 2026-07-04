@@ -61,7 +61,7 @@ fun VehicleDetailScreen(
 ) {
     Scaffold(
         topBar = {
-            RenCarTopBar(onBackClick = onBack, title = "Arac detayi")
+            RenCarTopBar(onBackClick = onBack, title = "Araç detayı")
         }
     ) { padding ->
         Box(
@@ -143,7 +143,7 @@ private fun VehicleDetailContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Gunluk fiyat", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Günlük fiyat", style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = "${vehicle.pricePerDay.toInt()} TL",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
@@ -151,7 +151,7 @@ private fun VehicleDetailContent(
             }
         }
 
-        PrimaryButton(text = "Rezervasyon olustur", onClick = onReserve)
+        PrimaryButton(text = "Rezervasyon oluştur", onClick = onReserve)
     }
 }
 

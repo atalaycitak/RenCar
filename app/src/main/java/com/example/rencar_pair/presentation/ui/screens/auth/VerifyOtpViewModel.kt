@@ -2,6 +2,7 @@ package com.example.rencar_pair.presentation.ui.screens.auth
 
 import androidx.lifecycle.SavedStateHandle
 import com.example.rencar_pair.domain.NetworkResult
+import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
@@ -38,7 +39,11 @@ class VerifyOtpViewModel(
             when (val result = verifyOtpUseCase(current.phone, current.code)) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false) }
-                    emitEffect(VerifyOtpEffect.NavigateToHome)
+                    if (result.data.role == UserRole.Customer) {
+                        emitEffect(VerifyOtpEffect.NavigateToHome)
+                    } else {
+                        emitEffect(VerifyOtpEffect.NavigateToLicenseVerification)
+                    }
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isLoading = false, errorMessage = result.message) }

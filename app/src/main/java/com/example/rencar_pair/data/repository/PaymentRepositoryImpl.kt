@@ -29,7 +29,7 @@ class PaymentRepositoryImpl : PaymentRepository {
     ): NetworkResult<PaymentResult> {
         delay(1000)
         if (amount <= 0) {
-            return NetworkResult.Error("Gecersiz tutar")
+            return NetworkResult.Error("Geçersiz tutar")
         }
         return NetworkResult.Success(
             PaymentResult(
@@ -49,7 +49,7 @@ class PaymentRepositoryImpl : PaymentRepository {
     ): NetworkResult<PaymentMethod> {
         delay(1500)
         if (cardNumber.length < 16) {
-            return NetworkResult.Error("Gecersiz kart numarasi")
+            return NetworkResult.Error("Geçersiz kart numarası")
         }
         val newCard = PaymentMethod(
             cardToken = "tok_${System.currentTimeMillis()}",

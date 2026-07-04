@@ -14,9 +14,12 @@ import com.example.rencar_pair.domain.repository.WalletRepository
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
 import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
 import com.example.rencar_pair.domain.usecase.GetAvailableVehiclesUseCase
+import com.example.rencar_pair.domain.usecase.GetCurrentUserUseCase
 import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
 import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase
 import com.example.rencar_pair.domain.usecase.LoginUseCase
+import com.example.rencar_pair.domain.usecase.LogoutUseCase
+import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
 import com.example.rencar_pair.domain.usecase.RegisterUseCase
 import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
@@ -46,7 +49,7 @@ val appModule = module {
     single { DataStoreManager(androidContext()) }
 
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
-    single<LicenseRepository> { LicenseRepositoryImpl(get()) }
+    single<LicenseRepository> { LicenseRepositoryImpl(get(), androidContext()) }
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
     single<ReservationRepository> { ReservationRepositoryImpl(get()) }
 
@@ -56,6 +59,9 @@ val appModule = module {
     factory { LoginUseCase(get()) }
     factory { VerifyOtpUseCase(get()) }
     factory { RegisterUseCase(get()) }
+    factory { RefreshSessionUseCase(get()) }
+    factory { GetCurrentUserUseCase(get()) }
+    factory { LogoutUseCase(get()) }
     factory { GetLicenseStatusUseCase(get()) }
     factory { UploadLicenseUseCase(get()) }
     factory { GetAvailableVehiclesUseCase(get()) }

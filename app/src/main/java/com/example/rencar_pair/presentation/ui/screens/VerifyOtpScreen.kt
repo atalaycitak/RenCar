@@ -21,13 +21,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
@@ -39,6 +39,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun VerifyOtpScreen(
     onNavigateToHomeMap: () -> Unit,
+    onNavigateToLicenseVerification: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: VerifyOtpViewModel = koinViewModel()
 ) {
@@ -48,6 +49,7 @@ fun VerifyOtpScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is VerifyOtpEffect.NavigateToHome -> onNavigateToHomeMap()
+                is VerifyOtpEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
             }
         }
     }
