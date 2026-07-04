@@ -12,5 +12,7 @@ data class VehicleResponse(
     val pricePerDay: Double,
     val status: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )

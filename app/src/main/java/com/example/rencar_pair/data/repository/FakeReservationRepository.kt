@@ -11,6 +11,7 @@ class FakeReservationRepository : ReservationRepository {
     override suspend fun createRental(vehicleId: String, endDate: String): NetworkResult<Rental> {
         val rental = Rental(
             id = "local-${System.currentTimeMillis()}",
+            userId = "",
             vehicleId = vehicleId,
             startDate = "now",
             endDate = endDate,
