@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 abstract class BaseMviViewModel<STATE : MviState, INTENT : MviIntent, EFFECT : MviEffect>(
@@ -24,7 +25,7 @@ abstract class BaseMviViewModel<STATE : MviState, INTENT : MviIntent, EFFECT : M
     protected fun currentState(): STATE = _state.value
 
     protected fun updateState(transform: (STATE) -> STATE) {
-        _state.value = transform(_state.value)
+        _state.update(transform)
     }
 
     protected fun emitEffect(effect: EFFECT) {

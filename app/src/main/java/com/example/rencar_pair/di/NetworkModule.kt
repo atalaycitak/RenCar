@@ -1,14 +1,10 @@
 package com.example.rencar_pair.di
 
-import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.AuthInterceptor
 import com.example.rencar_pair.data.remote.TokenExpiredAuthenticator
 import com.example.rencar_pair.data.remote.TokenHolder
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -19,11 +15,7 @@ import java.util.concurrent.TimeUnit
 
 val networkModule = module {
 
-    single {
-        val dataStoreManager: DataStoreManager = get()
-        val token = runBlocking { dataStoreManager.authToken.firstOrNull() }
-        TokenHolder().also { it.token = token }
-    }
+    single { TokenHolder() }
 
     single {
         HttpLoggingInterceptor().apply {
@@ -36,7 +28,7 @@ val networkModule = module {
     }
 
     single {
-        TokenExpiredAuthenticator(get(), get(), get())
+        TokenExpiredAuthenticator(get(), get())
     }
 
     single {
