@@ -67,14 +67,13 @@ class LicenseVerificationViewModel(
     }
 
     private fun refreshStatusAndContinue() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
+        launchCoroutine {
+            updateState { it.copy(isLoading = true, errorMessage = null) }
             when (val result = getLicenseStatusUseCase()) {
                 is NetworkResult.Success -> applyLicense(result.data, navigateWhenApproved = true)
-                is NetworkResult.Error -> _state.update {
+                is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }
-                NetworkResult.Loading -> Unit
             }
         }
     }
@@ -119,13 +118,12 @@ class LicenseVerificationViewModel(
             )
         }
         if (navigateWhenApproved && license.status == LicenseStatus.Approved) {
-            viewModelScope.launch {
+            launchCoroutine {
                 when (val refreshResult = refreshSessionUseCase()) {
                     is NetworkResult.Success -> continueToMap()
-                    is NetworkResult.Error -> _state.update {
+                    is NetworkResult.Error -> updateState {
                         it.copy(errorMessage = refreshResult.message)
                     }
-                    NetworkResult.Loading -> Unit
                 }
             }
         }

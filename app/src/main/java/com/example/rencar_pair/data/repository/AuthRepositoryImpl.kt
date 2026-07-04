@@ -4,6 +4,7 @@ import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.TokenHolder
+import com.example.rencar_pair.data.remote.dto.AuthResponse
 import com.example.rencar_pair.data.remote.dto.LoginRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
@@ -29,35 +30,7 @@ class AuthRepositoryImpl(
         val rawResult = safeApiCall(
             call = { api.verifyOtp(VerifyOtpRequest(phone, code)) }
         )
-
-        if (rawResult is NetworkResult.Success) {
-            val body = rawResult.data
-            val token = body.accessToken.orEmpty()
-            tokenHolder.token = token
-            dataStore.saveAuthToken(token)
-            body.refreshToken?.let { dataStore.saveRefreshToken(it) }
-            val userId = body.user?.id.orEmpty()
-            dataStore.saveUserId(userId)
-        }
-
-        return when (rawResult) {
-            is NetworkResult.Success -> {
-                val body = rawResult.data
-                val token = body.accessToken.orEmpty()
-                if (token.isBlank()) {
-                    NetworkResult.Error("Auth token missing")
-                } else {
-                    NetworkResult.Success(
-                        User(
-                            id = body.user?.id.orEmpty(),
-                            fullName = body.user?.fullName.orEmpty(),
-                            token = token
-                        )
-                    )
-                }
-            }
-            is NetworkResult.Error -> rawResult
-        }
+        return persistAndBuildUser(rawResult)
     }
 
     override suspend fun register(
@@ -69,35 +42,33 @@ class AuthRepositoryImpl(
         val rawResult = safeApiCall(
             call = { api.register(RegisterRequest(fullName, email, phone, password)) }
         )
+        return persistAndBuildUser(rawResult)
+    }
 
-        if (rawResult is NetworkResult.Success) {
-            val body = rawResult.data
-            val token = body.accessToken.orEmpty()
-            tokenHolder.token = token
-            dataStore.saveAuthToken(token)
-            body.refreshToken?.let { dataStore.saveRefreshToken(it) }
-            val userId = body.user?.id.orEmpty()
-            dataStore.saveUserId(userId)
+    override suspend fun refreshSession(): NetworkResult<User> {
+        val savedToken = getSavedToken()
+        if (savedToken.isNullOrBlank()) {
+            return NetworkResult.Error("No saved session")
         }
+        return NetworkResult.Success(
+            User(id = "", fullName = "", token = savedToken)
+        )
+    }
 
-        return when (rawResult) {
-            is NetworkResult.Success -> {
-                val body = rawResult.data
-                val token = body.accessToken.orEmpty()
-                if (token.isBlank()) {
-                    NetworkResult.Error("Auth token missing")
-                } else {
-                    NetworkResult.Success(
-                        User(
-                            id = body.user?.id.orEmpty(),
-                            fullName = body.user?.fullName.orEmpty(),
-                            token = token
-                        )
-                    )
-                }
-            }
-            is NetworkResult.Error -> rawResult
+    override suspend fun getCurrentUser(): NetworkResult<User> {
+        val savedToken = getSavedToken()
+        if (savedToken.isNullOrBlank()) {
+            return NetworkResult.Error("No saved session")
         }
+        return NetworkResult.Success(
+            User(id = "", fullName = "", token = savedToken)
+        )
+    }
+
+    override suspend fun logout(): NetworkResult<String> {
+        dataStore.clear()
+        tokenHolder.token = null
+        return NetworkResult.Success("Logged out")
     }
 
     override suspend fun getSavedToken(): String? {
@@ -107,5 +78,33 @@ class AuthRepositoryImpl(
     override suspend fun clearSession() {
         tokenHolder.token = null
         dataStore.clear()
+    }
+
+    private suspend fun persistAndBuildUser(
+        rawResult: NetworkResult<AuthResponse>
+    ): NetworkResult<User> {
+        return when (rawResult) {
+            is NetworkResult.Success -> {
+                val body = rawResult.data
+                val token = body.accessToken.orEmpty()
+                if (token.isBlank()) {
+                    NetworkResult.Error("Auth token missing")
+                } else {
+                    tokenHolder.token = token
+                    dataStore.saveAuthToken(token)
+                    body.refreshToken?.let { dataStore.saveRefreshToken(it) }
+                    val userId = body.user?.id.orEmpty()
+                    dataStore.saveUserId(userId)
+                    NetworkResult.Success(
+                        User(
+                            id = userId,
+                            fullName = body.user?.fullName.orEmpty(),
+                            token = token
+                        )
+                    )
+                }
+            }
+            is NetworkResult.Error -> rawResult
+        }
     }
 }
