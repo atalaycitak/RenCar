@@ -128,7 +128,7 @@ private fun VehicleDetailContent(
             DetailMetric(Icons.Default.Verified, "Plaka", vehicle.plate)
             DetailMetric(Icons.Default.Speed, "Menzil", "${vehicle.rangeKm} km")
             DetailMetric(Icons.Default.LocationOn, "Konum", vehicle.locationName)
-            DetailMetric(Icons.Default.DirectionsCar, "Durum", vehicle.status)
+            DetailMetric(Icons.Default.DirectionsCar, "Durum", vehicle.status.name)
         }
 
         Card(

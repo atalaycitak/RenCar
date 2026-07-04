@@ -5,6 +5,8 @@ import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehicleStatus
+import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.VehicleRepository
 
 class VehicleRepositoryImpl(
@@ -35,11 +37,12 @@ class VehicleRepositoryImpl(
             plate = plate,
             brand = brand,
             model = model,
-            type = type,
+            type = VehicleType.fromApiString(type),
             pricePerDay = pricePerDay,
-            status = status,
+            status = VehicleStatus.fromApiString(status),
             latitude = latitude,
             longitude = longitude
         )
     }
 }
+

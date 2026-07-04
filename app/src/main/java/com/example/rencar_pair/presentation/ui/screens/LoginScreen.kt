@@ -20,10 +20,14 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,10 +49,19 @@ import org.koin.androidx.compose.koinViewModel
 fun LoginScreen(
     onNavigateToVerifyOtp: (String) -> Unit,
     onNavigateToRegister: () -> Unit,
+    sessionExpired: Boolean = false,
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show session-expired message when arriving after a 401 forced logout
+    LaunchedEffect(sessionExpired) {
+        if (sessionExpired) {
+            snackbarHostState.showSnackbar("Oturumunuz sona erdi, lütfen tekrar giriş yapın.")
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -59,6 +72,10 @@ fun LoginScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()

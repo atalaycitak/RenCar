@@ -2,6 +2,8 @@ package com.example.rencar_pair.data.remote
 
 import com.example.rencar_pair.domain.NetworkResult
 import kotlinx.coroutines.CancellationException
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Response
 
 suspend fun <T, R> safeApiCall(
@@ -14,10 +16,8 @@ suspend fun <T, R> safeApiCall(
             response.body()?.let { NetworkResult.Success(transform(it)) }
                 ?: NetworkResult.Error("Empty response body")
         } else {
-            NetworkResult.Error(
-                message = response.errorBody()?.string() ?: "Unknown error",
-                code = response.code()
-            )
+            val errorMessage = parseErrorBody(response.errorBody()?.string(), response.code())
+            NetworkResult.Error(message = errorMessage, code = response.code())
         }
     } catch (e: CancellationException) {
         throw e
@@ -30,4 +30,28 @@ suspend fun <T> safeApiCall(
     call: suspend () -> Response<T>
 ): NetworkResult<T> {
     return safeApiCall(call) { it }
+}
+
+/**
+ * Tries to extract a human-readable message from the API error body JSON.
+ * The backend returns `{"message": "..."}` or `{"message": [...]}` (validation errors).
+ * Falls back to a generic HTTP error message if the body cannot be parsed.
+ */
+private fun parseErrorBody(rawBody: String?, httpCode: Int): String {
+    if (rawBody.isNullOrBlank()) return "HTTP $httpCode error"
+    return try {
+        val json = JSONObject(rawBody)
+        when {
+            json.has("message") -> {
+                // message can be a String or a JSON array (validation errors from NestJS)
+                val msg = json.get("message")
+                if (msg is String) msg
+                else json.getJSONArray("message").join(", ").replace("\"", "")
+            }
+            json.has("error") -> json.getString("error")
+            else -> rawBody
+        }
+    } catch (e: JSONException) {
+        rawBody
+    }
 }
