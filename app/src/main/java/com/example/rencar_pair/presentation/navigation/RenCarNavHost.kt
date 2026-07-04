@@ -33,7 +33,7 @@ fun RenCarNavHost(
     LaunchedEffect(dataStoreManager) {
         dataStoreManager.tokenExpired.collect {
             navController.navigate(LoginRoute) {
-                popUpTo(0) { inclusive = true }
+                popUpTo<SplashRoute> { inclusive = true }
             }
         }
     }
@@ -81,9 +81,9 @@ fun RenCarNavHost(
             VerifyOtpScreen(
                 onNavigateToHomeMap = {
                     navController.navigate(HomeMapRoute) {
-                        popUpTo(LoginRoute) { inclusive = true }
-                        popUpTo(OnboardingRoute) { inclusive = true }
-                        popUpTo(VerifyOtpRoute::class.java.name) { inclusive = true }
+                        popUpTo<LoginRoute> { inclusive = true }
+                        popUpTo<OnboardingRoute> { inclusive = true }
+                        popUpTo<VerifyOtpRoute> { inclusive = true }
                     }
                 },
                 onNavigateToLicenseVerification = {

@@ -23,6 +23,12 @@ class TokenExpiredAuthenticator(
                 dataStoreManager.notifyTokenExpired()
             }
         }
+
+        // Returning null means OkHttp will not retry and will return the 401 response
+        // as-is. A full refresh-token flow would:
+        // 1. Fetch a new access token synchronously using the stored refresh token
+        // 2. Return a new Request with Authorization: Bearer <new-token>
+        // 3. Only clear the session and return null if refresh also fails
         return null
     }
 }

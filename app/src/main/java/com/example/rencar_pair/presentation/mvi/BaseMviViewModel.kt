@@ -19,7 +19,7 @@ abstract class BaseMviViewModel<STATE : MviState, INTENT : MviIntent, EFFECT : M
     private val _state = MutableStateFlow(initialState)
     val state: StateFlow<STATE> = _state.asStateFlow()
 
-    private val _effect = Channel<EFFECT>(Channel.CONFLATED)
+    private val _effect = Channel<EFFECT>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
     protected fun currentState(): STATE = _state.value

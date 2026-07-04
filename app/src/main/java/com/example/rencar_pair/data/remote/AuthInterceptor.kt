@@ -19,14 +19,11 @@ class AuthInterceptor(
             builder.header("Content-Type", "application/json")
         }
 
-        if (!token.isNullOrBlank() && !original.url.encodedPath.contains("/auth/")) {
+        val isAuthEndpoint = original.url.pathSegments.contains("auth")
+        if (!token.isNullOrBlank() && !isAuthEndpoint) {
             builder.header("Authorization", "Bearer $token")
         }
 
-        val request = builder
-            .method(original.method, original.body)
-            .build()
-
-        return chain.proceed(request)
+        return chain.proceed(builder.build())
     }
 }
