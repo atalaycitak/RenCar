@@ -82,7 +82,8 @@ class TokenExpiredAuthenticator(
                             logoutLocally()
                             null
                         }
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        if (e is kotlinx.coroutines.CancellationException) throw e
                         logoutLocally()
                         null
                     }

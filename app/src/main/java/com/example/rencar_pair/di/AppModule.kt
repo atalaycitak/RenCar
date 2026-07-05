@@ -86,7 +86,7 @@ val appModule = module {
     factory { LoginUseCase(get()) }
     factory { VerifyOtpUseCase(get()) }
     factory { RegisterUseCase(get()) }
-    factory { CalculateReservationQuoteUseCase() }
+    single { CalculateReservationQuoteUseCase() }
     factory { ReturnVehicleUseCase(get()) }
 
     viewModelOf(::SplashViewModel)

@@ -48,13 +48,10 @@ class DefaultReservationRepository(
             id = id,
             userId = userId,
             vehicleId = vehicleId,
-            startDate = parseInstantOrNull(startDate) ?: Instant.now(),
-            endDate = parseInstantOrNull(endDate) ?: Instant.now(),
+            startDate = Instant.parse(startDate),
+            endDate = Instant.parse(endDate),
             totalPrice = totalPrice,
             status = RentalStatus.fromApiString(status)
         )
     }
-
-    private fun parseInstantOrNull(iso: String): Instant? =
-        try { Instant.parse(iso) } catch (_: Exception) { null }
 }
