@@ -8,7 +8,10 @@ data class TripHistoryState(
     val rentals: List<Rental> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
-) : MviState
+) : MviState {
+    val totalSpent: Double
+        get() = rentals.sumOf { it.totalPrice }
+}
 
 sealed interface TripHistoryIntent : MviIntent {
     data object LoadHistory : TripHistoryIntent

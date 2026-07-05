@@ -78,7 +78,7 @@ fun TripHistoryScreenContent(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 
-                val totalSpent = state.rentals.sumOf { it.totalPrice }
+                val totalSpent = state.totalSpent
                 Text(
                     text = "Toplam ${state.rentals.size} yolculuk · ₺${totalSpent.toInt()} harcama",
                     style = MaterialTheme.typography.bodyMedium,

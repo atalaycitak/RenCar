@@ -21,10 +21,14 @@ suspend fun <T, R> safeApiCall(
         }
     } catch (e: CancellationException) {
         throw e
-    } catch (e: java.io.IOException) {
-        NetworkResult.Error("İnternet bağlantınızı kontrol edin.")
     } catch (e: Exception) {
-        NetworkResult.Error(e.message ?: "Network error")
+        val msg = when (e) {
+            is java.net.UnknownHostException, is java.net.ConnectException -> "İnternet bağlantınızı kontrol edin."
+            is java.net.SocketTimeoutException -> "Sunucuya bağlanılamadı, lütfen tekrar deneyin."
+            is java.io.IOException -> "Ağ hatası oluştu, lütfen internetinizi kontrol edin."
+            else -> "Beklenmeyen bir hata oluştu: ${e.localizedMessage}"
+        }
+        NetworkResult.Error(msg)
     }
 }
 
