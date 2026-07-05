@@ -63,20 +63,7 @@ class ActiveRentalViewModel(
 
     private fun finishRental() {
         val rentalId = currentState().rental?.id ?: return
-        launchCoroutine {
-            updateState { it.copy(isFinishing = true, errorMessage = null) }
-            when (val result = rentalUseCases.returnRental(rentalId)) {
-                is NetworkResult.Success -> {
-                    timerJob?.cancel()
-                    updateState { it.copy(isFinishing = false, rental = result.data) }
-                    emitEffect(ActiveRentalEffect.NavigateToSummary(rentalId))
-                }
-                is NetworkResult.Error -> {
-                    updateState { it.copy(isFinishing = false, errorMessage = result.message) }
-                    emitEffect(ActiveRentalEffect.ShowError(result.message))
-                }
-            }
-        }
+        emitEffect(ActiveRentalEffect.NavigateToReturnVehicle(rentalId))
     }
 
     private fun updateSimulation() {

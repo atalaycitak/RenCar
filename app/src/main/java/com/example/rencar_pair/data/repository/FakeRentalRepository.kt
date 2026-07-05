@@ -6,10 +6,14 @@ import kotlinx.coroutines.delay
 
 class FakeRentalRepository : RentalRepository {
 
-    override suspend fun returnVehicle(rentalId: String, photos: List<String>): NetworkResult<Unit> {
-        delay(2000)
+    override suspend fun returnVehicle(
+        rentalId: String,
+        photos: List<String>,
+        damageNote: String
+    ): NetworkResult<Unit> {
+        delay(800)
         if (photos.size != 4) {
-            return NetworkResult.Error("Dört açıdan da fotoğraf yüklenmelidir")
+            return NetworkResult.Error("Dort acidan da fotograf yuklenmelidir")
         }
         return NetworkResult.Success(Unit)
     }

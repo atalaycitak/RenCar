@@ -1,5 +1,6 @@
 package com.example.rencar_pair.di
 
+import com.example.rencar_pair.BuildConfig
 import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.data.location.DefaultLocationTracker
 import com.example.rencar_pair.data.repository.*
@@ -42,33 +43,31 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
-const val USE_FAKE_REPOSITORIES = false
-
 val appModule = module {
 
     single { DataStoreManager(androidContext()) }
 
     // Repositories
     single<AuthRepository> {
-        if (USE_FAKE_REPOSITORIES) FakeAuthRepository() else DefaultAuthRepository(get(), get(), get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeAuthRepository() else DefaultAuthRepository(get(), get(), get())
     }
     single<LicenseRepository> {
-        if (USE_FAKE_REPOSITORIES) FakeLicenseRepository() else DefaultLicenseRepository(get(), androidContext())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeLicenseRepository() else DefaultLicenseRepository(get(), androidContext())
     }
     single<VehicleRepository> {
-        if (USE_FAKE_REPOSITORIES) FakeVehicleRepository() else DefaultVehicleRepository(get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleRepository() else DefaultVehicleRepository(get())
     }
     single<ReservationRepository> {
-        if (USE_FAKE_REPOSITORIES) FakeReservationRepository() else DefaultReservationRepository(get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeReservationRepository() else DefaultReservationRepository(get())
     }
     single<RentalRepository> {
-        if (USE_FAKE_REPOSITORIES) FakeRentalRepository() else DefaultRentalRepository()
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeRentalRepository() else DefaultRentalRepository(get())
     }
     single<PaymentRepository> {
-        if (USE_FAKE_REPOSITORIES) FakePaymentRepository() else DefaultPaymentRepository()
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakePaymentRepository() else DefaultPaymentRepository()
     }
     single<WalletRepository> {
-        if (USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository()
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository()
     }
 
     single { LocationServices.getFusedLocationProviderClient(androidContext()) }

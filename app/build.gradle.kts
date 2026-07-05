@@ -5,6 +5,12 @@ plugins {
     alias(libs.plugins.openapi.generator)
 }
 
+val repositoryMode = providers.gradleProperty("rencar.repositoryMode")
+    .orElse("real")
+    .get()
+    .lowercase()
+val useFakeRepositories = repositoryMode == "fake"
+
 android {
     namespace = "com.example.rencar_pair"
     compileSdk {
@@ -21,6 +27,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("boolean", "USE_FAKE_REPOSITORIES", useFakeRepositories.toString())
+        buildConfigField("String", "REPOSITORY_MODE", "\"${if (useFakeRepositories) "fake" else "real"}\"")
     }
 
     buildTypes {
@@ -36,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     sourceSets {
         getByName("main") {

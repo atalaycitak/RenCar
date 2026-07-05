@@ -1,20 +1,26 @@
 package com.example.rencar_pair.data.repository
 
+import com.example.rencar_pair.data.remote.RenCarApi
+import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.repository.RentalRepository
-import kotlinx.coroutines.delay
 
-/**
- * STUB implementation — validates photo count client-side via delay.
- * REPLACE with real Retrofit call to the rental return endpoint when available.
- */
-class DefaultRentalRepository : RentalRepository {
+class DefaultRentalRepository(
+    private val api: RenCarApi
+) : RentalRepository {
 
-    override suspend fun returnVehicle(rentalId: String, photos: List<String>): NetworkResult<Unit> {
-        delay(2000)
+    override suspend fun returnVehicle(
+        rentalId: String,
+        photos: List<String>,
+        damageNote: String
+    ): NetworkResult<Unit> {
         if (photos.size != 4) {
-            return NetworkResult.Error("Dört açıdan da fotoğraf yüklenmelidir")
+            return NetworkResult.Error("Dort acidan da fotograf yuklenmelidir")
         }
-        return NetworkResult.Success(Unit)
+
+        return safeApiCall(
+            call = { api.returnRental(rentalId) },
+            transform = { Unit }
+        )
     }
 }

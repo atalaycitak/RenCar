@@ -173,8 +173,8 @@ fun RenCarNavHost(
             val route = backStackEntry.toRoute<ActiveRentalRoute>()
             ActiveRentalScreen(
                 rentalId = route.rentalId,
-                onNavigateToSummary = { rentalId ->
-                    navController.navigate(TripSummaryRoute(rentalId)) {
+                onNavigateToReturnVehicle = { rentalId ->
+                    navController.navigate(ReturnVehicleRoute(rentalId)) {
                         popUpTo<ActiveRentalRoute> { inclusive = true }
                     }
                 }
@@ -241,10 +241,9 @@ fun RenCarNavHost(
             ReturnVehicleScreen(
                 rentalId = route.rentalId,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToHome = {
-                    navController.navigate(HomeMapRoute) {
-                        popUpTo(navController.graph.startDestinationId)
-                        launchSingleTop = true
+                onNavigateToSummary = { rentalId ->
+                    navController.navigate(TripSummaryRoute(rentalId)) {
+                        popUpTo<ReturnVehicleRoute> { inclusive = true }
                     }
                 }
             )
