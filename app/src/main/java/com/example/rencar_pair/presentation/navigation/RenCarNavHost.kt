@@ -1,13 +1,11 @@
 package com.example.rencar_pair.presentation.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.presentation.ui.screens.LoginScreen
 import com.example.rencar_pair.presentation.ui.screens.VerifyOtpScreen
 import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
@@ -24,22 +22,12 @@ import com.example.rencar_pair.presentation.ui.screens.wallet.WalletScreen
 import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryScreen
 import com.example.rencar_pair.presentation.ui.screens.profile.ProfileScreen
 import com.example.rencar_pair.presentation.ui.screens.return_vehicle.ReturnVehicleScreen
-import org.koin.compose.koinInject
 
 @Composable
 fun RenCarNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    val dataStoreManager: DataStoreManager = koinInject()
-
-    LaunchedEffect(dataStoreManager) {
-        dataStoreManager.tokenExpired.collect {
-            navController.navigate(LoginRoute(sessionExpired = true)) {
-                popUpTo<SplashRoute> { inclusive = true }
-            }
-        }
-    }
 
     NavHost(
         navController = navController,

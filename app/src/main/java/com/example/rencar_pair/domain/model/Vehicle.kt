@@ -1,7 +1,5 @@
 package com.example.rencar_pair.domain.model
 
-import androidx.compose.runtime.Immutable
-
 /** Araç tipi — API'den gelen değerlerin tür güvenli temsili. */
 enum class VehicleType {
     Sedan, Suv, Hatchback, Station, Minivan, Unknown;
@@ -32,7 +30,6 @@ enum class VehicleStatus {
     }
 }
 
-@Immutable
 data class Vehicle(
     val id: String,
     val plate: String,

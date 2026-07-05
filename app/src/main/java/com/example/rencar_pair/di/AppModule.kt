@@ -40,6 +40,7 @@ import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklis
 import com.example.rencar_pair.presentation.ui.screens.home.HomeViewModel
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationViewModel
 import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationViewModel
+import com.example.rencar_pair.presentation.ui.screens.splash.SplashViewModel
 import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryViewModel
 import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailViewModel
 import com.example.rencar_pair.presentation.ui.screens.wallet.WalletViewModel
@@ -109,6 +110,7 @@ val appModule = module {
     factory { TopUpWalletUseCase(get()) }
     factory { ProcessPaymentUseCase(get()) }
 
+    viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)
     viewModelOf(::VerifyOtpViewModel)
     viewModelOf(::RegisterViewModel)
