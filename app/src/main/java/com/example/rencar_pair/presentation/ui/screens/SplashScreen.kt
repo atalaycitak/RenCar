@@ -1,6 +1,5 @@
 package com.example.rencar_pair.presentation.ui.screens
 
-import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -26,17 +25,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.rencar_pair.domain.repository.AuthRepository
+import com.example.rencar_pair.presentation.ui.screens.splash.SplashViewModel
+import com.example.rencar_pair.presentation.ui.screens.splash.SplashEffect
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import kotlinx.coroutines.delay
-import org.koin.compose.koinInject
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
     onNavigateToLicenseVerification: () -> Unit,
     modifier: Modifier = Modifier,
-    authRepository: AuthRepository = koinInject()
+    viewModel: SplashViewModel = koinViewModel()
 ) {
     var startAnimation by remember { mutableStateOf(false) }
     val alphaAnim by animateFloatAsState(
@@ -48,17 +48,14 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         startAnimation = true
         delay(2000)
+    }
 
-        try {
-            val savedToken = authRepository.getSavedToken()
-            if (savedToken != null) {
-                onNavigateToLicenseVerification()
-            } else {
-                onNavigateToOnboarding()
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                SplashEffect.NavigateToOnboarding -> onNavigateToOnboarding()
+                SplashEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
             }
-        } catch (e: Exception) {
-            Log.e("SplashScreen", "Failed to check saved token", e)
-            onNavigateToOnboarding()
         }
     }
 
