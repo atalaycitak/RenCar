@@ -15,6 +15,7 @@ import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class DefaultAuthRepository(
     private val api: RenCarApi,
@@ -87,12 +88,14 @@ class DefaultAuthRepository(
     }
 
     override suspend fun logout(): NetworkResult<String> {
-        // Best-effort server-side logout: invalidates all active refresh tokens.
-        // We clear the local session regardless of API result so the user
-        // is always logged out even if the network call fails.
-        try { api.logout() } catch (_: Exception) { }
-        dataStore.clear()
-        tokenHolder.token = null
+        // Best-effort server-side logout in background.
+        // We use GlobalScope with NonCancellable to ensure the API call completes
+        // even if the ViewModel scope is cancelled when navigating away.
+        @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
+            try { api.logout() } catch (_: Exception) { }
+        }
+        clearSession()
         return NetworkResult.Success("Logged out")
     }
 

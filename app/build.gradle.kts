@@ -44,6 +44,11 @@ android {
     }
 }
 
+composeCompiler {
+    enableStrongSkippingMode = true
+    stabilityConfigurationFile = rootProject.file("app/stability_config.conf")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

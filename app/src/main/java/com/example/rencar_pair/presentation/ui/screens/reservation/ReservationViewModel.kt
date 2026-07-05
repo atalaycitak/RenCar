@@ -25,8 +25,20 @@ class ReservationViewModel(
     override fun onIntent(intent: ReservationIntent) {
         when (intent) {
             ReservationIntent.LoadVehicle -> loadVehicle()
-            ReservationIntent.IncreaseDays -> updateDays(currentState().selectedDays + 1)
-            ReservationIntent.DecreaseDays -> updateDays(currentState().selectedDays - 1)
+            ReservationIntent.IncreaseDays -> updateState { current ->
+                val newDays = (current.selectedDays + 1).coerceIn(1, 30)
+                current.copy(
+                    selectedDays = newDays,
+                    quote = current.vehicle?.let { calculateReservationQuoteUseCase(it, newDays) }
+                )
+            }
+            ReservationIntent.DecreaseDays -> updateState { current ->
+                val newDays = (current.selectedDays - 1).coerceIn(1, 30)
+                current.copy(
+                    selectedDays = newDays,
+                    quote = current.vehicle?.let { calculateReservationQuoteUseCase(it, newDays) }
+                )
+            }
             ReservationIntent.ConfirmReservation -> confirmReservation()
         }
     }
@@ -49,16 +61,6 @@ class ReservationViewModel(
         }
     }
 
-    private fun updateDays(days: Int) {
-        val safeDays = days.coerceIn(1, 30)
-        updateState { current ->
-            val vehicle = current.vehicle
-            current.copy(
-                selectedDays = safeDays,
-                quote = vehicle?.let { calculateReservationQuoteUseCase(it, safeDays) }
-            )
-        }
-    }
 
     private fun confirmReservation() {
         val vehicle = currentState().vehicle ?: return
