@@ -1,6 +1,8 @@
 package com.example.rencar_pair.data.repository
 
 import java.time.Instant
+import java.time.format.DateTimeParseException
+import android.util.Log
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Rental
@@ -17,7 +19,7 @@ class FakeReservationRepository : ReservationRepository {
             userId = "",
             vehicleId = vehicleId,
             startDate = Instant.now(),
-            endDate = parseInstantOrNull(endDate) ?: Instant.now().plusSeconds(86400),
+            endDate = parseEndDate(endDate),
             totalPrice = 0.0,
             status = RentalStatus.Active
         )
@@ -49,6 +51,16 @@ class FakeReservationRepository : ReservationRepository {
         }
     }
 
-    private fun parseInstantOrNull(iso: String): Instant? =
-        try { Instant.parse(iso) } catch (_: Exception) { null }
+    private fun parseEndDate(iso: String): Instant {
+        return try {
+            Instant.parse(iso)
+        } catch (e: DateTimeParseException) {
+            Log.w(TAG, "Invalid endDate '$iso', defaulting to +24h", e)
+            Instant.now().plusSeconds(86400)
+        }
+    }
+
+    private companion object {
+        private const val TAG = "FakeReservationRepo"
+    }
 }

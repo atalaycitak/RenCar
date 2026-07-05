@@ -39,14 +39,16 @@ fun ReturnVehicleScreen(
     viewModel: ReturnVehicleViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is ReturnVehicleEffect.NavigateToHome -> onNavigateToHome()
-                is ReturnVehicleEffect.ShowError -> {
-                    // Handled in UI state optionally
-                }
+                is ReturnVehicleEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
@@ -54,6 +56,7 @@ fun ReturnVehicleScreen(
     ReturnVehicleScreenContent(
         rentalId = rentalId,
         state = state,
+        snackbarHostState = snackbarHostState,
         onIntent = viewModel::onIntent,
         onNavigateBack = onNavigateBack
     )
@@ -63,6 +66,7 @@ fun ReturnVehicleScreen(
 fun ReturnVehicleScreenContent(
     rentalId: String,
     state: ReturnVehicleState,
+    snackbarHostState: SnackbarHostState,
     onIntent: (ReturnVehicleIntent) -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -82,6 +86,7 @@ fun ReturnVehicleScreenContent(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
@@ -273,6 +278,7 @@ private fun ReturnVehicleScreenPreview() {
                 isLoading = false,
                 errorMessage = null
             ),
+            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onNavigateBack = {}
         )

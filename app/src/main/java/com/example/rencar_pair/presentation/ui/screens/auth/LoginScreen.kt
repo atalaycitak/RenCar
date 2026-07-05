@@ -69,7 +69,7 @@ fun LoginScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToVerifyOtp -> onNavigateToVerifyOtp(effect.phone)

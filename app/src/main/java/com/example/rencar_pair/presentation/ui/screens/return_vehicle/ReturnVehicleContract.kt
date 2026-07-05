@@ -1,10 +1,12 @@
 package com.example.rencar_pair.presentation.ui.screens.return_vehicle
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.ReturnAngle
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class ReturnVehicleState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,

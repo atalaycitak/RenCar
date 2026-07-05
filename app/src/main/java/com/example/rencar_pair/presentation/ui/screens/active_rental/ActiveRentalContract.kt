@@ -1,10 +1,12 @@
 package com.example.rencar_pair.presentation.ui.screens.active_rental
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class ActiveRentalState(
     val rental: Rental? = null,
     val elapsedMinutes: Int = 0,

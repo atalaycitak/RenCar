@@ -28,6 +28,7 @@ fun ActiveRentalScreen(
     viewModel: ActiveRentalViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(rentalId) {
         viewModel.onIntent(ActiveRentalIntent.LoadRental(rentalId))
@@ -37,16 +38,25 @@ fun ActiveRentalScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is ActiveRentalEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
-                is ActiveRentalEffect.ShowError -> { /* error shown via state.errorMessage */ }
+                is ActiveRentalEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
 
-    ActiveRentalScreenContent(
-        state = state,
-        onIntent = viewModel::onIntent,
-        onNavigateToSummary = onNavigateToSummary
-    )
+    Box(modifier = modifier) {
+        ActiveRentalScreenContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onNavigateToSummary = onNavigateToSummary
+        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
 }
 
 @Composable

@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,7 +24,6 @@ import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.ui.theme.RenCarTheme
-import kotlinx.coroutines.flow.collect
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -34,19 +34,23 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val effectFlow = viewModel.effect
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(effectFlow) {
-        effectFlow.collect { effect ->
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
             when (effect) {
                 is ProfileEffect.NavigateToLogin -> onNavigateToLogin()
-                is ProfileEffect.ShowError -> {} // Handle snackbar in real app
+                is ProfileEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
             }
         }
     }
 
     ProfileScreenContent(
         state = state,
+        snackbarHostState = snackbarHostState,
         onIntent = viewModel::onIntent,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory
@@ -56,11 +60,13 @@ fun ProfileScreen(
 @Composable
 fun ProfileScreenContent(
     state: ProfileState,
+    snackbarHostState: SnackbarHostState,
     onIntent: (ProfileIntent) -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit
 ) {
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             RenCarBottomNavigation(
                 currentRoute = BottomNavRoute.PROFILE,
@@ -201,6 +207,7 @@ private fun ProfileScreenPreview() {
                 ),
                 isLoading = false
             ),
+            snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onNavigateToHome = {},
             onNavigateToHistory = {}

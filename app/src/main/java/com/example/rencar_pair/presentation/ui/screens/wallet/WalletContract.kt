@@ -1,10 +1,12 @@
 package com.example.rencar_pair.presentation.ui.screens.wallet
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.WalletInfo
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class WalletState(
     val walletInfo: WalletInfo? = null,
     val isLoading: Boolean = false,
