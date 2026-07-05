@@ -1,9 +1,11 @@
 package com.example.rencar_pair.presentation.ui.screens.vehicle
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class VehicleDetailState(
     val vehicle: Vehicle? = null,
     val isLoading: Boolean = false,

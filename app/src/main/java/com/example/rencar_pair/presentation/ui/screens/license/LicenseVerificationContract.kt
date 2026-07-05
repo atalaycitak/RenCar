@@ -1,10 +1,12 @@
 package com.example.rencar_pair.presentation.ui.screens.license
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class LicenseVerificationState(
     val status: LicenseStatus = LicenseStatus.NotUploaded,
     val frontImageUri: String? = null,
@@ -25,6 +27,6 @@ sealed interface LicenseVerificationIntent : MviIntent {
     data object Continue : LicenseVerificationIntent
 }
 
-sealed class LicenseVerificationEffect : MviEffect {
-    data object ContinueToMap : LicenseVerificationEffect()
+sealed interface LicenseVerificationEffect : MviEffect {
+    data object ContinueToMap : LicenseVerificationEffect
 }

@@ -14,13 +14,15 @@ import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.domain.repository.AuthRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class DefaultAuthRepository(
     private val api: RenCarApi,
     private val dataStore: DataStoreManager,
-    private val tokenHolder: TokenHolder
+    private val tokenHolder: TokenHolder,
+    private val applicationScope: CoroutineScope
 ) : AuthRepository {
 
     override suspend fun login(phone: String): NetworkResult<String> {
@@ -88,11 +90,7 @@ class DefaultAuthRepository(
     }
 
     override suspend fun logout(): NetworkResult<String> {
-        // Best-effort server-side logout in background.
-        // We use GlobalScope with NonCancellable to ensure the API call completes
-        // even if the ViewModel scope is cancelled when navigating away.
-        @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
-        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
+        applicationScope.launch {
             try { api.logout() } catch (_: Exception) { }
         }
         clearSession()

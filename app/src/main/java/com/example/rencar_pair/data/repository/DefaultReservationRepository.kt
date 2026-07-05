@@ -1,6 +1,8 @@
 package com.example.rencar_pair.data.repository
 
 import java.time.Instant
+import java.time.format.DateTimeParseException
+import android.util.Log
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.data.remote.RenCarApi
@@ -25,7 +27,7 @@ class DefaultReservationRepository(
     override suspend fun getRentals(): NetworkResult<List<Rental>> {
         return safeApiCall(
             call = { api.getRentals() },
-            transform = { list -> list.orEmpty().map { it.toDomain() } }
+            transform = { list -> list.orEmpty().mapNotNull { it.toDomainOrNull() } }
         )
     }
 
@@ -53,5 +55,18 @@ class DefaultReservationRepository(
             totalPrice = totalPrice,
             status = RentalStatus.fromApiString(status)
         )
+    }
+
+    private fun RentalResponse.toDomainOrNull(): Rental? {
+        return try {
+            toDomain()
+        } catch (e: DateTimeParseException) {
+            Log.w(TAG, "Skipping rental $id: invalid date format", e)
+            null
+        }
+    }
+
+    private companion object {
+        private const val TAG = "ReservationRepo"
     }
 }

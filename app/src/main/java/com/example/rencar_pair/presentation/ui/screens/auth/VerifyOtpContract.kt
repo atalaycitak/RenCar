@@ -1,9 +1,11 @@
 package com.example.rencar_pair.presentation.ui.screens.auth
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class VerifyOtpState(
     val phone: String = "",
     val code: String = "",
@@ -16,7 +18,7 @@ sealed interface VerifyOtpIntent : MviIntent {
     data object OnVerifyClicked : VerifyOtpIntent
 }
 
-sealed class VerifyOtpEffect : MviEffect {
-    data object NavigateToHome : VerifyOtpEffect()
-    data object NavigateToLicenseVerification : VerifyOtpEffect()
+sealed interface VerifyOtpEffect : MviEffect {
+    data object NavigateToHome : VerifyOtpEffect
+    data object NavigateToLicenseVerification : VerifyOtpEffect
 }

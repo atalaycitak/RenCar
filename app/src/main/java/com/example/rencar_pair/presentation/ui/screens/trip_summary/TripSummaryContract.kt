@@ -1,11 +1,13 @@
 package com.example.rencar_pair.presentation.ui.screens.trip_summary
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class TripSummaryState(
     val rentalId: String = "",
     val rental: Rental? = null,

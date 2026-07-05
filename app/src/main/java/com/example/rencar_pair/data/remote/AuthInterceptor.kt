@@ -1,15 +1,12 @@
 package com.example.rencar_pair.data.remote
 
+import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Response
 
 class AuthInterceptor(
     private val tokenHolder: TokenHolder
 ) : Interceptor {
-
-    // Auth endpoints that do NOT require an Authorization header.
-    // /auth/logout and /auth/me DO require it, so they are excluded from this list.
-    private val noAuthPaths = setOf("login", "register", "verify-otp", "refresh")
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
@@ -23,12 +20,25 @@ class AuthInterceptor(
             builder.header("Content-Type", "application/json")
         }
 
-        val lastSegment = original.url.pathSegments.lastOrNull()
-        val isUnauthenticatedEndpoint = lastSegment in noAuthPaths
-        if (!token.isNullOrBlank() && !isUnauthenticatedEndpoint) {
+        if (!token.isNullOrBlank() && requiresAuth(original.url)) {
             builder.header("Authorization", "Bearer $token")
         }
 
         return chain.proceed(builder.build())
+    }
+
+    private fun requiresAuth(url: HttpUrl): Boolean {
+        val segments = url.pathSegments
+        val first = segments.firstOrNull() ?: return true
+        if (first == "health") return false
+        if (first == "auth") {
+            val second = segments.getOrNull(1) ?: return true
+            return second !in publicAuthEndpoints
+        }
+        return true
+    }
+
+    private companion object {
+        val publicAuthEndpoints = setOf("login", "register", "verify-otp", "refresh")
     }
 }

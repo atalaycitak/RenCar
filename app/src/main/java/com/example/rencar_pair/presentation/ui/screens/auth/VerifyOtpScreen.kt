@@ -48,7 +48,7 @@ fun VerifyOtpScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is VerifyOtpEffect.NavigateToHome -> onNavigateToHomeMap()

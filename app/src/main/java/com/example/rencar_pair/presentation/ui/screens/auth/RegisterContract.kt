@@ -1,9 +1,11 @@
 package com.example.rencar_pair.presentation.ui.screens.auth
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class RegisterState(
     val fullName: String = "",
     val email: String = "",
@@ -21,6 +23,6 @@ sealed interface RegisterIntent : MviIntent {
     data object OnRegisterClicked : RegisterIntent
 }
 
-sealed class RegisterEffect : MviEffect {
-    data object NavigateToLicenseVerification : RegisterEffect()
+sealed interface RegisterEffect : MviEffect {
+    data object NavigateToLicenseVerification : RegisterEffect
 }

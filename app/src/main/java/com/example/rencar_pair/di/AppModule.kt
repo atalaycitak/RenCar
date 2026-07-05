@@ -1,5 +1,6 @@
 package com.example.rencar_pair.di
 
+import com.example.rencar_pair.RenCarApplication
 import com.example.rencar_pair.BuildConfig
 import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.data.location.DefaultLocationTracker
@@ -47,9 +48,11 @@ val appModule = module {
 
     single { DataStoreManager(androidContext()) }
 
+    single { (androidContext() as RenCarApplication).applicationScope }
+
     // Repositories
     single<AuthRepository> {
-        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeAuthRepository() else DefaultAuthRepository(get(), get(), get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeAuthRepository() else DefaultAuthRepository(get(), get(), get(), get())
     }
     single<LicenseRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeLicenseRepository() else DefaultLicenseRepository(get(), androidContext())
@@ -82,11 +85,11 @@ val appModule = module {
     single { PaymentUseCases(get(), get()) }
 
     // Use cases with real business logic (validation, calculations)
-    factory { LoginUseCase(get()) }
-    factory { VerifyOtpUseCase(get()) }
-    factory { RegisterUseCase(get()) }
+    single { LoginUseCase(get()) }
+    single { VerifyOtpUseCase(get()) }
+    single { RegisterUseCase(get()) }
     single { CalculateReservationQuoteUseCase() }
-    factory { ReturnVehicleUseCase(get()) }
+    single { ReturnVehicleUseCase(get()) }
 
     viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)

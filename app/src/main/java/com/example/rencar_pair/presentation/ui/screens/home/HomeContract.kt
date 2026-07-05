@@ -1,10 +1,12 @@
 package com.example.rencar_pair.presentation.ui.screens.home
 
+import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
+@Stable
 data class HomeState(
     val vehicles: List<Vehicle> = emptyList(),
     val selectedVehicleId: String? = null,
