@@ -23,6 +23,7 @@ fun CustomTextField(
     placeholder: String? = null,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
     isError: Boolean = false,
     errorMessage: String? = null
 ) {
@@ -46,6 +47,7 @@ fun CustomTextField(
                 }
             },
             keyboardOptions = keyboardOptions,
+            visualTransformation = visualTransformation,
             isError = isError,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(

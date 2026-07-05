@@ -35,7 +35,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
+import com.example.rencar_pair.presentation.ui.components.PhoneVisualTransformation
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.RenCarTheme
 
@@ -145,6 +147,7 @@ fun RegisterScreenContent(
                     keyboardType = KeyboardType.Phone,
                     imeAction = ImeAction.Next
                 ),
+                visualTransformation = PhoneVisualTransformation(),
                 isError = state.errorMessage != null && state.phone.isBlank()
             )
 
@@ -159,6 +162,7 @@ fun RegisterScreenContent(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
                 ),
+                visualTransformation = PasswordVisualTransformation(),
                 isError = state.errorMessage != null && state.password.isBlank()
             )
 

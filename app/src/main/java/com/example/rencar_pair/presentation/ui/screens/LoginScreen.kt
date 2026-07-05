@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
+import com.example.rencar_pair.presentation.ui.components.PhoneVisualTransformation
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginEffect
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginIntent
@@ -149,6 +150,7 @@ fun LoginScreenContent(
                     keyboardType = KeyboardType.Phone,
                     imeAction = ImeAction.Done
                 ),
+                visualTransformation = PhoneVisualTransformation(),
                 isError = state.errorMessage != null && state.phone.isBlank()
             )
 
