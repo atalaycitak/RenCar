@@ -9,7 +9,7 @@ import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.VehicleRepository
 
-class VehicleRepositoryImpl(
+class DefaultVehicleRepository(
     private val api: RenCarApi
 ) : VehicleRepository {
 

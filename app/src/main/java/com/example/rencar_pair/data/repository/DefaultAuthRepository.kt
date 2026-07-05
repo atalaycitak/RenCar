@@ -16,7 +16,7 @@ import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.firstOrNull
 
-class AuthRepositoryImpl(
+class DefaultAuthRepository(
     private val api: RenCarApi,
     private val dataStore: DataStoreManager,
     private val tokenHolder: TokenHolder
