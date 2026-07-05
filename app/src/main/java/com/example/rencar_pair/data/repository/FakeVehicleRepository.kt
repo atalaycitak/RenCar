@@ -19,6 +19,7 @@ class FakeVehicleRepository : VehicleRepository {
             pricePerDay = 1200.0,
             latitude = 41.0082,
             longitude = 28.9784,
+            rangeKm = 420,
             locationName = "Sultanahmet, Istanbul"
         ),
         Vehicle(
@@ -31,7 +32,47 @@ class FakeVehicleRepository : VehicleRepository {
             pricePerDay = 3500.0,
             latitude = 41.0390,
             longitude = 28.9835,
+            rangeKm = 510,
             locationName = "Taksim, Istanbul"
+        ),
+        Vehicle(
+            id = "v3",
+            brand = "Dacia",
+            model = "Duster",
+            plate = "34 SUV 900",
+            type = VehicleType.Suv,
+            status = VehicleStatus.Available,
+            pricePerDay = 2100.0,
+            latitude = 41.0565,
+            longitude = 29.0320,
+            rangeKm = 380,
+            locationName = "Besiktas, Istanbul"
+        ),
+        Vehicle(
+            id = "v4",
+            brand = "Fiat",
+            model = "Egea",
+            plate = "34 HCH 456",
+            type = VehicleType.Hatchback,
+            status = VehicleStatus.Available,
+            pricePerDay = 950.0,
+            latitude = 40.9909,
+            longitude = 29.0302,
+            rangeKm = 300,
+            locationName = "Kadikoy, Istanbul"
+        ),
+        Vehicle(
+            id = "v5",
+            brand = "Mercedes",
+            model = "Vito",
+            plate = "34 VAN 777",
+            type = VehicleType.Minivan,
+            status = VehicleStatus.Available,
+            pricePerDay = 2800.0,
+            latitude = 41.0151,
+            longitude = 28.9795,
+            rangeKm = 460,
+            locationName = "Karakoy, Istanbul"
         )
     )
 

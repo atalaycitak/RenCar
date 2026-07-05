@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,39 +17,43 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.rencar_pair.domain.model.Vehicle
-import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
-import com.example.rencar_pair.presentation.ui.components.RenCarMap
-import com.example.rencar_pair.presentation.ui.components.VehicleDetailBottomSheet
-import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
+import com.example.rencar_pair.domain.model.VehicleStatus
+import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.FloatingActionButton
+import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
+import com.example.rencar_pair.presentation.ui.components.RenCarMap
+import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
+import com.example.rencar_pair.presentation.ui.components.VehicleDetailBottomSheet
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -110,6 +115,8 @@ fun HomeScreenContent(
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
+    val visibleVehicles = state.filteredVehicles
+
     Scaffold(
         bottomBar = {
             RenCarBottomNavigation(
@@ -133,24 +140,29 @@ fun HomeScreenContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(360.dp)
+                    .height(380.dp)
             ) {
-                // If a vehicle is selected, center on it. Otherwise center on user, or fallback to first vehicle.
-                val centerLat = state.selectedVehicle?.latitude ?: state.userLocation?.latitude ?: state.vehicles.firstOrNull()?.latitude ?: 41.0082
-                val centerLng = state.selectedVehicle?.longitude ?: state.userLocation?.longitude ?: state.vehicles.firstOrNull()?.longitude ?: 28.9784
-                
-                val mapMarkers = remember(state.vehicles) {
-                    state.vehicles.map { vehicle ->
+                val centerLat = state.selectedVehicle?.latitude
+                    ?: state.userLocation?.latitude
+                    ?: visibleVehicles.firstOrNull()?.latitude
+                    ?: 41.0082
+                val centerLng = state.selectedVehicle?.longitude
+                    ?: state.userLocation?.longitude
+                    ?: visibleVehicles.firstOrNull()?.longitude
+                    ?: 28.9784
+
+                val mapMarkers = remember(visibleVehicles) {
+                    visibleVehicles.map { vehicle ->
                         RenCarMapMarker(
                             id = vehicle.id,
                             latitude = vehicle.latitude,
                             longitude = vehicle.longitude,
                             title = vehicle.title,
-                            snippet = "${vehicle.pricePerDay.toInt()} TL/gün"
+                            snippet = "${vehicle.pricePerDay.toInt()} TL/gun"
                         )
                     }
                 }
-                
+
                 RenCarMap(
                     modifier = Modifier.fillMaxSize(),
                     latitude = centerLat,
@@ -164,15 +176,22 @@ fun HomeScreenContent(
                     }
                 )
 
+                MapFilterBar(
+                    state = state,
+                    onIntent = onIntent,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(12.dp)
+                )
+
                 if (!state.locationPermissionGranted) {
                     PermissionNotice(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
-                            .padding(16.dp)
+                            .padding(start = 16.dp, end = 16.dp, top = 122.dp)
                     )
                 }
 
-                // My Location FAB
                 FloatingActionButton(
                     onClick = { onIntent(HomeIntent.FetchUserLocation) },
                     modifier = Modifier
@@ -182,18 +201,18 @@ fun HomeScreenContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.MyLocation,
-                        contentDescription = "Konumuma Git"
+                        contentDescription = "Konumuma git"
                     )
                 }
             }
 
             VehiclePanel(
                 state = state,
+                visibleVehicles = visibleVehicles,
                 onSelect = { onIntent(HomeIntent.SelectVehicle(it)) },
                 onVehicleDetails = onVehicleDetails
             )
-            
-            // Show Bottom Sheet if a vehicle is selected from the map
+
             state.selectedVehicle?.let { vehicle ->
                 VehicleDetailBottomSheet(
                     vehicle = vehicle,
@@ -209,6 +228,78 @@ fun HomeScreenContent(
 }
 
 @Composable
+private fun MapFilterBar(
+    state: HomeState,
+    onIntent: (HomeIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 4.dp,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChipRow(
+                options = vehicleTypeOptions,
+                selectedValue = state.selectedVehicleType,
+                onSelected = { onIntent(HomeIntent.UpdateVehicleTypeFilter(it)) }
+            )
+            FilterChipRow(
+                options = priceOptions,
+                selectedValue = state.maxDailyPrice,
+                onSelected = { onIntent(HomeIntent.UpdateMaxPriceFilter(it)) }
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                rangeOptions.forEach { option ->
+                    FilterChip(
+                        selected = state.minRangeKm == option.value,
+                        onClick = { onIntent(HomeIntent.UpdateMinRangeFilter(option.value)) },
+                        label = { Text(option.label) }
+                    )
+                }
+                if (state.hasActiveFilters) {
+                    TextButton(onClick = { onIntent(HomeIntent.ClearFilters) }) {
+                        Text("Temizle")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> FilterChipRow(
+    options: List<FilterOption<T>>,
+    selectedValue: T?,
+    onSelected: (T?) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        options.forEach { option ->
+            FilterChip(
+                selected = selectedValue == option.value,
+                onClick = { onSelected(option.value) },
+                label = { Text(option.label) }
+            )
+        }
+    }
+}
+
+@Composable
 private fun PermissionNotice(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -216,7 +307,7 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Text(
-            text = "Konum izni verilmedi. Araçları varsayılan İstanbul konumunda gösteriyoruz.",
+            text = "Konum izni verilmedi. Araclar varsayilan Istanbul konumunda gosteriliyor.",
             modifier = Modifier.padding(14.dp),
             style = MaterialTheme.typography.bodyMedium
         )
@@ -226,6 +317,7 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
 @Composable
 private fun VehiclePanel(
     state: HomeState,
+    visibleVehicles: List<Vehicle>,
     onSelect: (String) -> Unit,
     onVehicleDetails: (String) -> Unit
 ) {
@@ -234,7 +326,7 @@ private fun VehiclePanel(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Yakındaki araçlar",
+            text = "Yakindaki araclar (${visibleVehicles.size})",
             style = MaterialTheme.typography.titleLarge
         )
         state.errorMessage?.let {
@@ -242,16 +334,20 @@ private fun VehiclePanel(
         }
         if (state.isLoading) {
             CircularProgressIndicator()
-        } else if (state.vehicles.isEmpty()) {
+        } else if (visibleVehicles.isEmpty()) {
             Text(
-                text = "Yakında araç bulunamadı. Lütfen daha sonra tekrar deneyin.",
+                text = if (state.hasActiveFilters) {
+                    "Bu filtrelere uygun arac bulunamadi."
+                } else {
+                    "Yakinda arac bulunamadi. Lutfen daha sonra tekrar deneyin."
+                },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
             )
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(state.vehicles, key = { it.id }) { vehicle ->
+                items(visibleVehicles, key = { it.id }) { vehicle ->
                     VehicleRow(
                         vehicle = vehicle,
                         selected = vehicle.id == state.selectedVehicle?.id,
@@ -292,9 +388,10 @@ private fun VehicleRow(
             Column {
                 Text(text = "${vehicle.brand} ${vehicle.model}", style = MaterialTheme.typography.titleMedium)
                 Text(text = "${vehicle.plate} - ${vehicle.type}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "${vehicle.rangeKm} km menzil", style = MaterialTheme.typography.bodySmall)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = "${vehicle.pricePerDay.toInt()} TL/gün")
+                Text(text = "${vehicle.pricePerDay.toInt()} TL/gun")
                 TextButton(onClick = onDetailsClick) {
                     Text(text = "Detay")
                 }
@@ -302,6 +399,34 @@ private fun VehicleRow(
         }
     }
 }
+
+private data class FilterOption<T>(
+    val value: T?,
+    val label: String
+)
+
+private val vehicleTypeOptions = listOf(
+    FilterOption<VehicleType>(null, "Tum tipler"),
+    FilterOption(VehicleType.Sedan, "Sedan"),
+    FilterOption(VehicleType.Suv, "SUV"),
+    FilterOption(VehicleType.Hatchback, "Hatchback"),
+    FilterOption(VehicleType.Minivan, "Minivan")
+)
+
+private val priceOptions = listOf(
+    FilterOption<Int>(null, "Tum fiyatlar"),
+    FilterOption(1000, "1000 TL alti"),
+    FilterOption(1500, "1500 TL alti"),
+    FilterOption(2500, "2500 TL alti"),
+    FilterOption(4000, "4000 TL alti")
+)
+
+private val rangeOptions = listOf(
+    FilterOption<Int>(null, "Tum menziller"),
+    FilterOption(300, "300+ km"),
+    FilterOption(400, "400+ km"),
+    FilterOption(500, "500+ km")
+)
 
 @Preview(showBackground = true)
 @Composable
@@ -316,22 +441,24 @@ private fun HomeScreenPreview() {
                         brand = "Renault",
                         model = "Clio",
                         plate = "34 ABC 123",
-                        type = com.example.rencar_pair.domain.model.VehicleType.Sedan,
-                        status = com.example.rencar_pair.domain.model.VehicleStatus.Available,
+                        type = VehicleType.Sedan,
+                        status = VehicleStatus.Available,
                         pricePerDay = 600.0,
                         latitude = 41.0082,
-                        longitude = 28.9784
+                        longitude = 28.9784,
+                        rangeKm = 420
                     ),
                     Vehicle(
                         id = "2",
-                        brand = "Fiat",
-                        model = "Egea",
-                        plate = "34 DEF 456",
-                        type = com.example.rencar_pair.domain.model.VehicleType.Sedan,
-                        status = com.example.rencar_pair.domain.model.VehicleStatus.Available,
-                        pricePerDay = 550.0,
+                        brand = "Dacia",
+                        model = "Duster",
+                        plate = "34 SUV 456",
+                        type = VehicleType.Suv,
+                        status = VehicleStatus.Available,
+                        pricePerDay = 2100.0,
                         latitude = 41.0092,
-                        longitude = 28.9794
+                        longitude = 28.9794,
+                        rangeKm = 360
                     )
                 ),
                 locationPermissionGranted = true
