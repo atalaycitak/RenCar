@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,10 +17,40 @@ import com.example.rencar_pair.ui.theme.Neutral10
 import com.example.rencar_pair.ui.theme.Neutral90
 import com.example.rencar_pair.ui.theme.Blue50
 import com.example.rencar_pair.ui.theme.Error50
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ActiveRentalScreen(
+    rentalId: String,
+    onNavigateToSummary: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ActiveRentalViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(rentalId) {
+        viewModel.onIntent(ActiveRentalIntent.LoadRental(rentalId))
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is ActiveRentalEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
+                is ActiveRentalEffect.ShowError -> { /* error shown via state.errorMessage */ }
+            }
+        }
+    }
+
+    ActiveRentalScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onNavigateToSummary = onNavigateToSummary
+    )
+}
+
+@Composable
+fun ActiveRentalScreenContent(
     state: ActiveRentalState,
     onIntent: (ActiveRentalIntent) -> Unit,
     onNavigateToSummary: (String) -> Unit
@@ -113,31 +144,21 @@ fun ActiveRentalScreen(
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun ActiveRentalRoute(
-    rentalId: String,
-    onNavigateToSummary: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: ActiveRentalViewModel = koinViewModel()
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(rentalId) {
-        viewModel.onIntent(ActiveRentalIntent.LoadRental(rentalId))
+private fun ActiveRentalScreenPreview() {
+    RenCarTheme {
+        ActiveRentalScreenContent(
+            state = ActiveRentalState(
+                rental = null,
+                elapsedMinutes = 45,
+                distanceKm = 12.5,
+                currentCost = 150.0,
+                isFinishing = false,
+                errorMessage = null
+            ),
+            onIntent = {},
+            onNavigateToSummary = {}
+        )
     }
-
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is ActiveRentalEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
-                is ActiveRentalEffect.ShowError -> { /* error shown via state.errorMessage */ }
-            }
-        }
-    }
-
-    ActiveRentalScreen(
-        state = state,
-        onIntent = viewModel::onIntent,
-        onNavigateToSummary = onNavigateToSummary
-    )
 }

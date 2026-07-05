@@ -36,15 +36,22 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginEffect
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginIntent
+import com.example.rencar_pair.presentation.ui.screens.auth.LoginState
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginViewModel
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * Stateful Composable (Route)
+ * Sadece ViewModel ile etkileşime girer ve datayı (state/intent) stateless bileşene aktarır.
+ */
 @Composable
 fun LoginScreen(
     onNavigateToVerifyOtp: (String) -> Unit,
@@ -71,6 +78,29 @@ fun LoginScreen(
         }
     }
 
+    // Gerçek arayüz bileşenini (stateless) çağırıyoruz
+    LoginScreenContent(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        onIntent = viewModel::onIntent,
+        onNavigateToRegister = onNavigateToRegister,
+        modifier = modifier
+    )
+}
+
+/**
+ * Stateless Composable (Screen Content)
+ * ViewModel'den tamamen bağımsızdır, sadece verilen datayı (state) çizer.
+ * Bu sayede kolayca @Preview yazabiliriz ve test edebiliriz.
+ */
+@Composable
+fun LoginScreenContent(
+    state: LoginState,
+    snackbarHostState: SnackbarHostState,
+    onIntent: (LoginIntent) -> Unit,
+    onNavigateToRegister: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(modifier = modifier.fillMaxSize()) {
         SnackbarHost(
             hostState = snackbarHostState,
@@ -112,7 +142,7 @@ fun LoginScreen(
 
             CustomTextField(
                 value = state.phone,
-                onValueChange = { viewModel.onIntent(LoginIntent.OnPhoneChanged(it)) },
+                onValueChange = { onIntent(LoginIntent.OnPhoneChanged(it)) },
                 label = "Telefon Numarası",
                 placeholder = "+905550000000",
                 keyboardOptions = KeyboardOptions(
@@ -143,7 +173,7 @@ fun LoginScreen(
 
             PrimaryButton(
                 text = "Giriş Yap",
-                onClick = { viewModel.onIntent(LoginIntent.OnLoginClicked) },
+                onClick = { onIntent(LoginIntent.OnLoginClicked) },
                 enabled = !state.isLoading
             )
 
@@ -161,5 +191,39 @@ fun LoginScreen(
         }
 
         LoadingOverlay(isLoading = state.isLoading)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenPreview() {
+    RenCarTheme {
+        LoginScreenContent(
+            state = LoginState(
+                phone = "+905550000000",
+                isLoading = false,
+                errorMessage = null
+            ),
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onNavigateToRegister = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenErrorPreview() {
+    RenCarTheme {
+        LoginScreenContent(
+            state = LoginState(
+                phone = "",
+                isLoading = false,
+                errorMessage = "Telefon numarası boş bırakılamaz"
+            ),
+            snackbarHostState = remember { SnackbarHostState() },
+            onIntent = {},
+            onNavigateToRegister = {}
+        )
     }
 }

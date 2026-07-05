@@ -23,11 +23,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
+import com.example.rencar_pair.ui.theme.RenCarTheme
 
 @Composable
 fun OnboardingScreen(
+    onNavigateToLogin: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OnboardingScreenContent(
+        onNavigateToLogin = onNavigateToLogin,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun OnboardingScreenContent(
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -90,6 +103,16 @@ fun OnboardingScreen(
             modifier = Modifier
                 .padding(8.dp)
                 .clickable { onNavigateToLogin() }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingScreenPreview() {
+    RenCarTheme {
+        OnboardingScreenContent(
+            onNavigateToLogin = {}
         )
     }
 }

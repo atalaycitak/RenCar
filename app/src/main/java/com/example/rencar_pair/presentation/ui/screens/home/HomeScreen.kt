@@ -40,6 +40,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.rencar_pair.domain.model.Vehicle
@@ -50,38 +51,22 @@ import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.FloatingActionButton
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun HomeRoute(
+fun HomeScreen(
     onVehicleDetails: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeScreen(
-        state = state,
-        onIntent = viewModel::onIntent,
-        onVehicleDetails = onVehicleDetails,
-        onNavigateToHistory = onNavigateToHistory,
-        onNavigateToProfile = onNavigateToProfile
-    )
-}
-
-@Composable
-fun HomeScreen(
-    state: HomeState,
-    onIntent: (HomeIntent) -> Unit,
-    onVehicleDetails: (String) -> Unit,
-    onNavigateToHistory: () -> Unit,
-    onNavigateToProfile: () -> Unit
-) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
-        onIntent(HomeIntent.LocationPermissionChanged(grants.values.any { it }))
+        viewModel.onIntent(HomeIntent.LocationPermissionChanged(grants.values.any { it }))
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -98,7 +83,7 @@ fun HomeScreen(
             ) == PackageManager.PERMISSION_GRANTED
 
             if (fineGranted || coarseGranted) {
-                onIntent(HomeIntent.LocationPermissionChanged(true))
+                viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
             } else {
                 permissionLauncher.launch(
                     arrayOf(
@@ -110,6 +95,23 @@ fun HomeScreen(
         }
     }
 
+    HomeScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onVehicleDetails = onVehicleDetails,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToProfile = onNavigateToProfile
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    state: HomeState,
+    onIntent: (HomeIntent) -> Unit,
+    onVehicleDetails: (String) -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
     Scaffold(
         bottomBar = {
             RenCarBottomNavigation(
@@ -300,5 +302,46 @@ private fun VehicleRow(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenPreview() {
+    RenCarTheme {
+        HomeScreenContent(
+            state = HomeState(
+                isLoading = false,
+                vehicles = listOf(
+                    Vehicle(
+                        id = "1",
+                        brand = "Renault",
+                        model = "Clio",
+                        plate = "34 ABC 123",
+                        type = com.example.rencar_pair.domain.model.VehicleType.Sedan,
+                        status = com.example.rencar_pair.domain.model.VehicleStatus.Available,
+                        pricePerDay = 600.0,
+                        latitude = 41.0082,
+                        longitude = 28.9784
+                    ),
+                    Vehicle(
+                        id = "2",
+                        brand = "Fiat",
+                        model = "Egea",
+                        plate = "34 DEF 456",
+                        type = com.example.rencar_pair.domain.model.VehicleType.Sedan,
+                        status = com.example.rencar_pair.domain.model.VehicleStatus.Available,
+                        pricePerDay = 550.0,
+                        latitude = 41.0092,
+                        longitude = 28.9794
+                    )
+                ),
+                locationPermissionGranted = true
+            ),
+            onIntent = {},
+            onVehicleDetails = {},
+            onNavigateToHistory = {},
+            onNavigateToProfile = {}
+        )
     }
 }

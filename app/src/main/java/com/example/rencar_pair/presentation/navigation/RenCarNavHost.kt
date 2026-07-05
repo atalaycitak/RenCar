@@ -13,17 +13,17 @@ import com.example.rencar_pair.presentation.ui.screens.VerifyOtpScreen
 import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
 import com.example.rencar_pair.presentation.ui.screens.RegisterScreen
 import com.example.rencar_pair.presentation.ui.screens.SplashScreen
-import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistRoute as DeliveryChecklistScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.home.HomeRoute
-import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationRoute
-import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationRoute as ReservationScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailRoute as VehicleDetailScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalRoute as ActiveRentalScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryRoute as TripSummaryScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.wallet.WalletRoute as WalletScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryRoute as TripHistoryScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.profile.ProfileRoute as ProfileScreenRoute
-import com.example.rencar_pair.presentation.ui.screens.return_vehicle.ReturnVehicleRoute as ReturnVehicleScreenRoute
+import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistScreen
+import com.example.rencar_pair.presentation.ui.screens.home.HomeScreen
+import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationScreen
+import com.example.rencar_pair.presentation.ui.screens.reservation.ReservationScreen
+import com.example.rencar_pair.presentation.ui.screens.vehicle.VehicleDetailScreen
+import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalScreen
+import com.example.rencar_pair.presentation.ui.screens.trip_summary.TripSummaryScreen
+import com.example.rencar_pair.presentation.ui.screens.wallet.WalletScreen
+import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryScreen
+import com.example.rencar_pair.presentation.ui.screens.profile.ProfileScreen
+import com.example.rencar_pair.presentation.ui.screens.return_vehicle.ReturnVehicleScreen
 import org.koin.compose.koinInject
 
 @Composable
@@ -115,7 +115,7 @@ fun RenCarNavHost(
         }
 
         composable<LicenseCheckRoute> {
-            LicenseVerificationRoute(
+            LicenseVerificationScreen(
                 onContinueToMap = {
                     navController.navigate(HomeMapRoute) {
                         popUpTo<LicenseCheckRoute> { inclusive = true }
@@ -130,7 +130,7 @@ fun RenCarNavHost(
         }
 
         composable<HomeMapRoute> {
-            HomeRoute(
+            HomeScreen(
                 onVehicleDetails = { vehicleId ->
                     navController.navigate(VehicleDetailRoute(vehicleId))
                 },
@@ -151,7 +151,7 @@ fun RenCarNavHost(
 
         composable<VehicleDetailRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<VehicleDetailRoute>()
-            VehicleDetailScreenRoute(
+            VehicleDetailScreen(
                 vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
                 onReserve = { vehicleId ->
@@ -162,7 +162,7 @@ fun RenCarNavHost(
 
         composable<ReservationRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ReservationRoute>()
-            ReservationScreenRoute(
+            ReservationScreen(
                 vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
                 onDeliveryChecklist = { rentalId, vehicleId ->
@@ -173,7 +173,7 @@ fun RenCarNavHost(
 
         composable<DeliveryChecklistRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<DeliveryChecklistRoute>()
-            DeliveryChecklistScreenRoute(
+            DeliveryChecklistScreen(
                 rentalId = route.rentalId,
                 vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
@@ -187,7 +187,7 @@ fun RenCarNavHost(
 
         composable<ActiveRentalRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ActiveRentalRoute>()
-            ActiveRentalScreenRoute(
+            ActiveRentalScreen(
                 rentalId = route.rentalId,
                 onNavigateToSummary = { rentalId ->
                     navController.navigate(TripSummaryRoute(rentalId)) {
@@ -199,7 +199,7 @@ fun RenCarNavHost(
 
         composable<TripSummaryRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<TripSummaryRoute>()
-            TripSummaryScreenRoute(
+            TripSummaryScreen(
                 rentalId = route.rentalId,
                 onNavigateToHome = {
                     navController.navigate(HomeMapRoute) {
@@ -210,11 +210,11 @@ fun RenCarNavHost(
         }
 
         composable<WalletRoute> {
-            WalletScreenRoute()
+            WalletScreen()
         }
 
         composable<TripHistoryListRoute> {
-            TripHistoryScreenRoute(
+            TripHistoryScreen(
                 onNavigateToHome = {
                     navController.navigate(HomeMapRoute) {
                         popUpTo(navController.graph.startDestinationId)
@@ -231,7 +231,7 @@ fun RenCarNavHost(
         }
 
         composable<ProfileRoute> {
-            ProfileScreenRoute(
+            ProfileScreen(
                 onNavigateToHome = {
                     navController.navigate(HomeMapRoute) {
                         popUpTo(navController.graph.startDestinationId)
@@ -254,7 +254,7 @@ fun RenCarNavHost(
 
         composable<ReturnVehicleRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ReturnVehicleRoute>()
-            ReturnVehicleScreenRoute(
+            ReturnVehicleScreen(
                 rentalId = route.rentalId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToHome = {

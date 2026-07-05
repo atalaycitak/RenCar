@@ -11,24 +11,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun TripHistoryRoute(
+fun TripHistoryScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: TripHistoryViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     
-    TripHistoryScreen(
+    TripHistoryScreenContent(
         state = state,
         onNavigateToHome = onNavigateToHome,
         onNavigateToProfile = onNavigateToProfile
@@ -36,7 +39,7 @@ fun TripHistoryRoute(
 }
 
 @Composable
-fun TripHistoryScreen(
+fun TripHistoryScreenContent(
     state: TripHistoryState,
     onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit
@@ -177,5 +180,39 @@ fun TripHistoryCard(rental: Rental) {
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TripHistoryScreenPreview() {
+    RenCarTheme {
+        TripHistoryScreenContent(
+            state = TripHistoryState(
+                isLoading = false,
+                rentals = listOf(
+                    Rental(
+                        id = "RNT-1234567890",
+                        userId = "USR-1",
+                        vehicleId = "VHC-1",
+                        startDate = Instant.now().minusSeconds(86400 * 2),
+                        endDate = Instant.now().minusSeconds(86400 * 1),
+                        status = "COMPLETED",
+                        totalPrice = 1200.0
+                    ),
+                    Rental(
+                        id = "RNT-0987654321",
+                        userId = "USR-1",
+                        vehicleId = "VHC-2",
+                        startDate = Instant.now(),
+                        endDate = Instant.now().plusSeconds(86400),
+                        status = "ACTIVE",
+                        totalPrice = 600.0
+                    )
+                )
+            ),
+            onNavigateToHome = {},
+            onNavigateToProfile = {}
+        )
     }
 }
