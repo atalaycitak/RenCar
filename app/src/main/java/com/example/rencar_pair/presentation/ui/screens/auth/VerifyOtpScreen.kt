@@ -1,4 +1,4 @@
-package com.example.rencar_pair.presentation.ui.screens
+package com.example.rencar_pair.presentation.ui.screens.auth
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

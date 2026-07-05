@@ -25,7 +25,7 @@ class TripSummaryViewModel(
     private fun loadSummary(rentalId: String) {
         launchCoroutine {
             updateState { it.copy(isLoading = true, rentalId = rentalId) }
-            when (val result = rentalUseCases.getActiveRental(rentalId)) {
+            when (val result = rentalUseCases.getRental(rentalId)) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(rental = result.data) }
                     loadCards()

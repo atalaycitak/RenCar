@@ -5,3 +5,5 @@ interface MviState
 interface MviIntent
 
 interface MviEffect
+
+sealed interface NoEffect : MviEffect

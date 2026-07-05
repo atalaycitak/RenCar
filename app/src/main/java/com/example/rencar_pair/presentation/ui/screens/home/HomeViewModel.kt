@@ -4,11 +4,12 @@ import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
+import com.example.rencar_pair.presentation.mvi.NoEffect
 
 class HomeViewModel(
     private val vehicleUseCases: VehicleUseCases,
     private val locationTracker: LocationTracker
-) : BaseMviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
+) : BaseMviViewModel<HomeState, HomeIntent, NoEffect>(HomeState()) {
 
     init {
         onIntent(HomeIntent.LoadVehicles)

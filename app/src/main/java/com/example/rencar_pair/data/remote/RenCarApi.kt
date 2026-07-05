@@ -5,6 +5,7 @@ import com.example.rencar_pair.data.remote.dto.AdminRentalResponse
 import com.example.rencar_pair.data.remote.dto.AuthResponse
 import com.example.rencar_pair.data.remote.dto.CreateRentalRequest
 import com.example.rencar_pair.data.remote.dto.CreateVehicleRequest
+import com.example.rencar_pair.data.remote.dto.EmptyResponse
 import com.example.rencar_pair.data.remote.dto.LoginRequest
 import com.example.rencar_pair.data.remote.dto.LicenseStatusResponse
 import com.example.rencar_pair.data.remote.dto.LicenseUploadResponse
@@ -84,13 +85,13 @@ interface RenCarApi {
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
 
     @GET("health")
-    suspend fun health(): Response<Unit>
+    suspend fun health(): Response<EmptyResponse>
 
     @GET("customer/ping")
-    suspend fun customerPing(): Response<Unit>
+    suspend fun customerPing(): Response<EmptyResponse>
 
     @GET("admin/ping")
-    suspend fun adminPing(): Response<Unit>
+    suspend fun adminPing(): Response<EmptyResponse>
 
     @GET("admin/licenses")
     suspend fun getAdminLicenses(
@@ -130,7 +131,7 @@ interface RenCarApi {
     ): Response<VehicleResponse>
 
     @DELETE("admin/vehicles/{id}")
-    suspend fun deleteAdminVehicle(@Path("id") id: String): Response<Unit>
+    suspend fun deleteAdminVehicle(@Path("id") id: String): Response<EmptyResponse>
 
     @GET("admin/rentals")
     suspend fun getAdminRentals(

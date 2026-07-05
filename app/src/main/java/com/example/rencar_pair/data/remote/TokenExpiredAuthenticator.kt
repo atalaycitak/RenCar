@@ -66,11 +66,9 @@ class TokenExpiredAuthenticator(
                             if (newAccessToken.isNotBlank()) {
                                 tokenHolder.token = newAccessToken
 
-                                scope.launch {
-                                    dataStoreManager.saveAuthToken(newAccessToken)
-                                    newTokens.refreshToken?.let {
-                                        dataStoreManager.saveRefreshToken(it)
-                                    }
+                                dataStoreManager.saveAuthToken(newAccessToken)
+                                newTokens.refreshToken?.let {
+                                    dataStoreManager.saveRefreshToken(it)
                                 }
 
                                 return@withLock requestThatFailed.newBuilder()

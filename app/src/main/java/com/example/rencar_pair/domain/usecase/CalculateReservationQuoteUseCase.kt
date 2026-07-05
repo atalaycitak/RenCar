@@ -2,10 +2,7 @@ package com.example.rencar_pair.domain.usecase
 
 import com.example.rencar_pair.domain.model.ReservationQuote
 import com.example.rencar_pair.domain.model.Vehicle
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import java.time.Instant
 import kotlin.math.roundToInt
 
 class CalculateReservationQuoteUseCase {
@@ -24,18 +21,12 @@ class CalculateReservationQuoteUseCase {
             serviceFee = serviceFee,
             deliveryFee = deliveryFee,
             totalPrice = totalPrice,
-            endDateIso = formatIso(System.currentTimeMillis() + safeDays * ONE_DAY_MS)
+            endDateIso = Instant.ofEpochMilli(System.currentTimeMillis() + safeDays * ONE_DAY_MS).toString()
         )
     }
 
     private fun roundMoney(value: Double): Double {
         return (value * 100).roundToInt() / 100.0
-    }
-
-    private fun formatIso(timestamp: Long): String {
-        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }.format(Date(timestamp))
     }
 
     private companion object {

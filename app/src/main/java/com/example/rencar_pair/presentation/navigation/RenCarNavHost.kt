@@ -6,11 +6,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.example.rencar_pair.presentation.ui.screens.LoginScreen
-import com.example.rencar_pair.presentation.ui.screens.VerifyOtpScreen
-import com.example.rencar_pair.presentation.ui.screens.OnboardingScreen
-import com.example.rencar_pair.presentation.ui.screens.RegisterScreen
-import com.example.rencar_pair.presentation.ui.screens.SplashScreen
+import com.example.rencar_pair.presentation.ui.screens.auth.LoginScreen
+import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpScreen
+import com.example.rencar_pair.presentation.ui.screens.onboarding.OnboardingScreen
+import com.example.rencar_pair.presentation.ui.screens.auth.RegisterScreen
+import com.example.rencar_pair.presentation.ui.screens.splash.SplashScreen
 import com.example.rencar_pair.presentation.ui.screens.delivery.DeliveryChecklistScreen
 import com.example.rencar_pair.presentation.ui.screens.home.HomeScreen
 import com.example.rencar_pair.presentation.ui.screens.license.LicenseVerificationScreen
@@ -150,7 +150,6 @@ fun RenCarNavHost(
         composable<ReservationRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<ReservationRoute>()
             ReservationScreen(
-                vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
                 onDeliveryChecklist = { rentalId, vehicleId ->
                     navController.navigate(DeliveryChecklistRoute(rentalId, vehicleId))

@@ -8,9 +8,9 @@ class RentalUseCases(
     suspend fun createRental(vehicleId: String, endDate: String) =
         reservationRepository.createRental(vehicleId, endDate)
 
-    suspend fun getActiveRental(id: String) = reservationRepository.getRental(id)
+    suspend fun getRental(id: String) = reservationRepository.getRental(id)
 
-    suspend fun finishRental(id: String) = reservationRepository.returnRental(id)
+    suspend fun returnRental(id: String) = reservationRepository.returnRental(id)
 
     suspend fun getMyRentals() = reservationRepository.getRentals()
 }

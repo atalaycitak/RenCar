@@ -4,11 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
+import com.example.rencar_pair.presentation.mvi.NoEffect
 
 class VehicleDetailViewModel(
     savedStateHandle: SavedStateHandle,
     private val vehicleUseCases: VehicleUseCases
-) : BaseMviViewModel<VehicleDetailState, VehicleDetailIntent, VehicleDetailEffect>(
+) : BaseMviViewModel<VehicleDetailState, VehicleDetailIntent, NoEffect>(
     VehicleDetailState(isLoading = true)
 ) {
 
