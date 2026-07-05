@@ -80,16 +80,15 @@ class ActiveRentalViewModel(
     }
 
     private fun updateSimulation() {
-        val current = currentState()
-        if (current.rental != null && !current.isFinishing) {
-            val addedCost = 2.5
-            val addedDistance = 0.5
-            updateState {
-                it.copy(
+        updateState { current ->
+            if (current.rental != null && !current.isFinishing) {
+                current.copy(
                     elapsedMinutes = current.elapsedMinutes + 1,
-                    currentCost = current.currentCost + addedCost,
-                    distanceKm = current.distanceKm + addedDistance
+                    currentCost = current.currentCost + 2.5,
+                    distanceKm = current.distanceKm + 0.5
                 )
+            } else {
+                current
             }
         }
     }

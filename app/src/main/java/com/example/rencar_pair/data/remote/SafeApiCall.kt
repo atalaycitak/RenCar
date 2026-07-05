@@ -21,6 +21,8 @@ suspend fun <T, R> safeApiCall(
         }
     } catch (e: CancellationException) {
         throw e
+    } catch (e: java.io.IOException) {
+        NetworkResult.Error("İnternet bağlantınızı kontrol edin.")
     } catch (e: Exception) {
         NetworkResult.Error(e.message ?: "Network error")
     }
