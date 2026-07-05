@@ -131,6 +131,20 @@ fun ProfileScreenContent(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AssistChip(
+                        onClick = {},
+                        enabled = false,
+                        label = {
+                            Text(
+                                text = if (state.isFakeRepositoryMode) {
+                                    "Demo modu: FAKE"
+                                } else {
+                                    "API modu: REAL"
+                                }
+                            )
+                        }
+                    )
 
                     Spacer(modifier = Modifier.height(40.dp))
 

@@ -10,7 +10,9 @@ import com.example.rencar_pair.presentation.mvi.MviState
 data class ProfileState(
     val user: User? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val repositoryMode: String = "real",
+    val isFakeRepositoryMode: Boolean = false
 ) : MviState
 
 sealed interface ProfileIntent : MviIntent {

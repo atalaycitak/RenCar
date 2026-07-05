@@ -14,6 +14,11 @@ class ReturnVehicleViewModel(
     override fun onIntent(intent: ReturnVehicleIntent) {
         when (intent) {
             is ReturnVehicleIntent.AddPhoto -> addPhoto(intent.angle, intent.uri)
+            is ReturnVehicleIntent.UpdateDamageNote -> updateDamageNote(intent.note)
+            ReturnVehicleIntent.RequestReturnConfirmation -> requestReturnConfirmation()
+            ReturnVehicleIntent.DismissReturnConfirmation -> updateState {
+                it.copy(showReturnConfirmation = false)
+            }
             is ReturnVehicleIntent.SubmitReturn -> submitReturn(intent.rentalId)
         }
     }
@@ -29,11 +34,24 @@ class ReturnVehicleViewModel(
         }
     }
 
+    private fun updateDamageNote(note: String) {
+        updateState { it.copy(damageNote = note, errorMessage = null) }
+    }
+
+    private fun requestReturnConfirmation() {
+        if (!currentState().allPhotosFilled) {
+            updateState { it.copy(errorMessage = "Lutfen dort acidan da fotograf yukleyin") }
+            return
+        }
+
+        updateState { it.copy(showReturnConfirmation = true, errorMessage = null) }
+    }
+
     private fun submitReturn(rentalId: String) {
         val current = currentState()
 
         if (!current.allPhotosFilled) {
-            updateState { it.copy(errorMessage = "Lütfen dört açıdan da fotoğraf yükleyin") }
+            updateState { it.copy(errorMessage = "Lutfen dort acidan da fotograf yukleyin") }
             return
         }
 
@@ -45,11 +63,17 @@ class ReturnVehicleViewModel(
         )
 
         launchCoroutine {
-            updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = returnVehicleUseCase(rentalId, photos)) {
+            updateState {
+                it.copy(
+                    isLoading = true,
+                    errorMessage = null,
+                    showReturnConfirmation = false
+                )
+            }
+            when (val result = returnVehicleUseCase(rentalId, photos, current.damageNote.trim())) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false) }
-                    emitEffect(ReturnVehicleEffect.NavigateToHome)
+                    emitEffect(ReturnVehicleEffect.NavigateToSummary(rentalId))
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isLoading = false, errorMessage = result.message) }

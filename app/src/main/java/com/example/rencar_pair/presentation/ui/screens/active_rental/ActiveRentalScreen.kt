@@ -1,9 +1,21 @@
 package com.example.rencar_pair.presentation.ui.screens.active_rental
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,17 +25,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
-import com.example.rencar_pair.ui.theme.Neutral10
-import com.example.rencar_pair.ui.theme.Neutral90
 import com.example.rencar_pair.ui.theme.Blue50
 import com.example.rencar_pair.ui.theme.Error50
+import com.example.rencar_pair.ui.theme.Neutral10
+import com.example.rencar_pair.ui.theme.Neutral90
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ActiveRentalScreen(
     rentalId: String,
-    onNavigateToSummary: (String) -> Unit,
+    onNavigateToReturnVehicle: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ActiveRentalViewModel = koinViewModel()
 ) {
@@ -37,7 +49,7 @@ fun ActiveRentalScreen(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is ActiveRentalEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
+                is ActiveRentalEffect.NavigateToReturnVehicle -> onNavigateToReturnVehicle(effect.rentalId)
                 is ActiveRentalEffect.ShowError -> snackbarHostState.showSnackbar(
                     message = effect.message,
                     duration = SnackbarDuration.Short
@@ -50,7 +62,7 @@ fun ActiveRentalScreen(
         ActiveRentalScreenContent(
             state = state,
             onIntent = viewModel::onIntent,
-            onNavigateToSummary = onNavigateToSummary
+            onNavigateToReturnVehicle = onNavigateToReturnVehicle
         )
         SnackbarHost(
             hostState = snackbarHostState,
@@ -63,10 +75,11 @@ fun ActiveRentalScreen(
 fun ActiveRentalScreenContent(
     state: ActiveRentalState,
     onIntent: (ActiveRentalIntent) -> Unit,
-    onNavigateToSummary: (String) -> Unit
+    onNavigateToReturnVehicle: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Neutral90)
             .padding(24.dp),
@@ -74,7 +87,7 @@ fun ActiveRentalScreenContent(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Aktif Sürüş",
+            text = "Aktif Surus",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Neutral10
@@ -103,7 +116,7 @@ fun ActiveRentalScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Geçen Süre",
+                    text = "Gecen Sure",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
@@ -129,9 +142,9 @@ fun ActiveRentalScreenContent(
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Güncel Tutar", color = Color.Gray, fontSize = 12.sp)
+                        Text("Guncel Tutar", color = Color.Gray, fontSize = 12.sp)
                         Text(
-                            text = "₺%.2f".format(state.currentCost),
+                            text = "TL %.2f".format(state.currentCost),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -146,7 +159,7 @@ fun ActiveRentalScreenContent(
             CircularProgressIndicator(color = Error50)
         } else {
             PrimaryButton(
-                text = "Sürüşü Bitir",
+                text = "Iade Surecini Baslat",
                 onClick = { onIntent(ActiveRentalIntent.FinishRental) },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -168,7 +181,7 @@ private fun ActiveRentalScreenPreview() {
                 errorMessage = null
             ),
             onIntent = {},
-            onNavigateToSummary = {}
+            onNavigateToReturnVehicle = {}
         )
     }
 }

@@ -1,12 +1,18 @@
 package com.example.rencar_pair.presentation.ui.screens.profile
 
+import com.example.rencar_pair.BuildConfig
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.usecase.AuthUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class ProfileViewModel(
     private val authUseCases: AuthUseCases
-) : BaseMviViewModel<ProfileState, ProfileIntent, ProfileEffect>(ProfileState()) {
+) : BaseMviViewModel<ProfileState, ProfileIntent, ProfileEffect>(
+    ProfileState(
+        repositoryMode = BuildConfig.REPOSITORY_MODE,
+        isFakeRepositoryMode = BuildConfig.USE_FAKE_REPOSITORIES
+    )
+) {
 
     init {
         onIntent(ProfileIntent.LoadProfile)

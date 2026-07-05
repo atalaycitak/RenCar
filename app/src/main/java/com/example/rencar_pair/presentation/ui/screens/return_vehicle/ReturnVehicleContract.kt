@@ -13,7 +13,9 @@ data class ReturnVehicleState(
     val frontPhotoUri: String? = null,
     val backPhotoUri: String? = null,
     val leftPhotoUri: String? = null,
-    val rightPhotoUri: String? = null
+    val rightPhotoUri: String? = null,
+    val damageNote: String = "",
+    val showReturnConfirmation: Boolean = false
 ) : MviState {
 
     val allPhotosFilled: Boolean
@@ -23,10 +25,13 @@ data class ReturnVehicleState(
 
 sealed interface ReturnVehicleIntent : MviIntent {
     data class AddPhoto(val angle: ReturnAngle, val uri: String) : ReturnVehicleIntent
+    data class UpdateDamageNote(val note: String) : ReturnVehicleIntent
+    data object RequestReturnConfirmation : ReturnVehicleIntent
+    data object DismissReturnConfirmation : ReturnVehicleIntent
     data class SubmitReturn(val rentalId: String) : ReturnVehicleIntent
 }
 
 sealed interface ReturnVehicleEffect : MviEffect {
-    data object NavigateToHome : ReturnVehicleEffect
+    data class NavigateToSummary(val rentalId: String) : ReturnVehicleEffect
     data class ShowError(val message: String) : ReturnVehicleEffect
 }

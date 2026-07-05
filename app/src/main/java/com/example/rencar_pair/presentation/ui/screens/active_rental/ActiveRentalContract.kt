@@ -24,6 +24,6 @@ sealed interface ActiveRentalIntent : MviIntent {
 }
 
 sealed interface ActiveRentalEffect : MviEffect {
-    data class NavigateToSummary(val rentalId: String) : ActiveRentalEffect
+    data class NavigateToReturnVehicle(val rentalId: String) : ActiveRentalEffect
     data class ShowError(val message: String) : ActiveRentalEffect
 }
