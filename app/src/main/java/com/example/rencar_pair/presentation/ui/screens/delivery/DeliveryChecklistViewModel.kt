@@ -1,35 +1,29 @@
 package com.example.rencar_pair.presentation.ui.screens.delivery
 
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import androidx.lifecycle.SavedStateHandle
+import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class DeliveryChecklistViewModel(
-    rentalId: String,
-    vehicleId: String
-) : ViewModel() {
-
-    private val _state = MutableStateFlow(
-        DeliveryChecklistState(
-            rentalId = rentalId,
-            vehicleId = vehicleId
-        )
+    savedStateHandle: SavedStateHandle
+) : BaseMviViewModel<DeliveryChecklistState, DeliveryChecklistIntent, DeliveryChecklistEffect>(
+    DeliveryChecklistState(
+        rentalId = savedStateHandle.get<String>("rentalId") ?: "",
+        vehicleId = savedStateHandle.get<String>("vehicleId") ?: ""
     )
-    val state = _state.asStateFlow()
+) {
 
-    fun onIntent(intent: DeliveryChecklistIntent) {
+    override fun onIntent(intent: DeliveryChecklistIntent) {
         when (intent) {
-            DeliveryChecklistIntent.ToggleVehicleCondition -> _state.update {
+            DeliveryChecklistIntent.ToggleVehicleCondition -> updateState {
                 it.copy(vehicleConditionChecked = !it.vehicleConditionChecked)
             }
-            DeliveryChecklistIntent.TogglePhotos -> _state.update {
+            DeliveryChecklistIntent.TogglePhotos -> updateState {
                 it.copy(photosChecked = !it.photosChecked)
             }
-            DeliveryChecklistIntent.ToggleDoorsAndKey -> _state.update {
+            DeliveryChecklistIntent.ToggleDoorsAndKey -> updateState {
                 it.copy(doorsAndKeyChecked = !it.doorsAndKeyChecked)
             }
-            DeliveryChecklistIntent.CompleteChecklist -> _state.update {
+            DeliveryChecklistIntent.CompleteChecklist -> updateState {
                 if (it.canComplete) it.copy(isCompleted = true) else it
             }
         }

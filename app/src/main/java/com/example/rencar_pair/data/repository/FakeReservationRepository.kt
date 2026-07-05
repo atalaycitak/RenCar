@@ -4,6 +4,7 @@ import java.time.Instant
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.repository.ReservationRepository
 
 class FakeReservationRepository : ReservationRepository {
@@ -16,9 +17,9 @@ class FakeReservationRepository : ReservationRepository {
             userId = "",
             vehicleId = vehicleId,
             startDate = Instant.now(),
-            endDate = try { Instant.parse(endDate) } catch (e: Exception) { Instant.now().plusSeconds(86400) },
+            endDate = parseInstantOrNull(endDate) ?: Instant.now().plusSeconds(86400),
             totalPrice = 0.0,
-            status = "ACTIVE"
+            status = RentalStatus.Active
         )
         rentals.add(0, rental)
         return NetworkResult.Success(rental)
@@ -40,11 +41,14 @@ class FakeReservationRepository : ReservationRepository {
     override suspend fun returnRental(id: String): NetworkResult<Rental> {
         val index = rentals.indexOfFirst { it.id == id }
         return if (index != -1) {
-            val updated = rentals[index].copy(status = "RETURNED")
+            val updated = rentals[index].copy(status = RentalStatus.Completed)
             rentals[index] = updated
             NetworkResult.Success(updated)
         } else {
             NetworkResult.Error("Rental not found")
         }
     }
+
+    private fun parseInstantOrNull(iso: String): Instant? =
+        try { Instant.parse(iso) } catch (_: Exception) { null }
 }

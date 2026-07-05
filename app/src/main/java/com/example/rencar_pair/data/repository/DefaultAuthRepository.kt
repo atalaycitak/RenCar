@@ -103,6 +103,7 @@ class DefaultAuthRepository(
     override suspend fun clearSession() {
         tokenHolder.token = null
         dataStore.clear()
+        dataStore.notifyTokenExpired()
     }
 
     private suspend fun persistAndBuildUser(

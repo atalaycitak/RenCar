@@ -1,15 +1,17 @@
 package com.example.rencar_pair.presentation.ui.screens.reservation
 
+import androidx.lifecycle.SavedStateHandle
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
-import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
-import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase
+import com.example.rencar_pair.domain.usecase.RentalUseCases
+import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -61,11 +63,12 @@ class ReservationViewModelTest {
         reservationRepository: FakeReservationRepositoryForTest = FakeReservationRepositoryForTest()
     ): ReservationViewModel {
         val vehicleRepository = FakeVehicleRepositoryForTest()
+        val savedStateHandle = SavedStateHandle(mapOf("vehicleId" to "vehicle-1"))
         return ReservationViewModel(
-            vehicleId = "vehicle-1",
-            getVehicleDetailUseCase = GetVehicleDetailUseCase(vehicleRepository),
+            savedStateHandle = savedStateHandle,
+            vehicleUseCases = VehicleUseCases(vehicleRepository),
             calculateReservationQuoteUseCase = CalculateReservationQuoteUseCase(),
-            createRentalUseCase = CreateRentalUseCase(reservationRepository)
+            rentalUseCases = RentalUseCases(reservationRepository)
         )
     }
 }
@@ -111,7 +114,7 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
             startDate = Instant.parse("2026-01-01T10:00:00Z"),
             endDate = Instant.parse(endDate),
             totalPrice = 1230.0,
-            status = "ACTIVE"
+            status = RentalStatus.Active
         )
         return NetworkResult.Success(rental!!)
     }
@@ -129,7 +132,7 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
                 startDate = Instant.parse("2026-01-01T10:00:00Z"),
                 endDate = Instant.parse("2026-01-02T10:00:00Z"),
                 totalPrice = 1230.0,
-                status = "ACTIVE"
+                status = RentalStatus.Active
             )
         )
     }
@@ -142,8 +145,8 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
             startDate = Instant.parse("2026-01-01T10:00:00Z"),
             endDate = Instant.parse("2026-01-02T10:00:00Z"),
             totalPrice = 1230.0,
-            status = "ACTIVE"
-        )).copy(status = "COMPLETED")
+            status = RentalStatus.Active
+        )).copy(status = RentalStatus.Completed)
         rental = completed
         return NetworkResult.Success(completed)
     }

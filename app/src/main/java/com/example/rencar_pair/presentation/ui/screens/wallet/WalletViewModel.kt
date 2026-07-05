@@ -1,15 +1,11 @@
 package com.example.rencar_pair.presentation.ui.screens.wallet
 
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.usecase.payment.GetSavedCardsUseCase
-import com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase
-import com.example.rencar_pair.domain.usecase.payment.TopUpWalletUseCase
+import com.example.rencar_pair.domain.usecase.PaymentUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class WalletViewModel(
-    private val getWalletInfoUseCase: GetWalletInfoUseCase,
-    private val topUpWalletUseCase: TopUpWalletUseCase,
-    private val getSavedCardsUseCase: GetSavedCardsUseCase
+    private val paymentUseCases: PaymentUseCases
 ) : BaseMviViewModel<WalletState, WalletIntent, WalletEffect>(WalletState()) {
 
     private var defaultCardToken: String? = null
@@ -35,7 +31,7 @@ class WalletViewModel(
     private fun loadWallet() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getWalletInfoUseCase()) {
+            when (val result = paymentUseCases.getWalletInfo()) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false, walletInfo = result.data) }
                 }
@@ -49,7 +45,7 @@ class WalletViewModel(
 
     private fun loadDefaultCard() {
         launchCoroutine {
-            when (val result = getSavedCardsUseCase()) {
+            when (val result = paymentUseCases.getSavedCards()) {
                 is NetworkResult.Success -> {
                     defaultCardToken = result.data.firstOrNull()?.cardToken
                 }
@@ -73,7 +69,7 @@ class WalletViewModel(
 
         launchCoroutine {
             updateState { it.copy(isToppingUp = true, errorMessage = null) }
-            when (val result = topUpWalletUseCase(amount, cardToken)) {
+            when (val result = paymentUseCases.topUpWallet(amount, cardToken)) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isToppingUp = false, isTopUpDialogVisible = false) }
                     emitEffect(WalletEffect.ShowMessage("Bakiye başarıyla yüklendi!"))

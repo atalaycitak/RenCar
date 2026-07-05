@@ -1,16 +1,14 @@
 package com.example.rencar_pair.presentation.ui.screens.active_rental
 
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase
-import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
+import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 class ActiveRentalViewModel(
-    private val getActiveRentalUseCase: GetActiveRentalUseCase,
-    private val finishRentalUseCase: FinishRentalUseCase
+    private val rentalUseCases: RentalUseCases
 ) : BaseMviViewModel<ActiveRentalState, ActiveRentalIntent, ActiveRentalEffect>(
     ActiveRentalState()
 ) {
@@ -28,7 +26,7 @@ class ActiveRentalViewModel(
     private fun loadRental(rentalId: String) {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getActiveRentalUseCase(rentalId)) {
+            when (val result = rentalUseCases.getActiveRental(rentalId)) {
                 is NetworkResult.Success -> {
                     updateState {
                         it.copy(
@@ -67,7 +65,7 @@ class ActiveRentalViewModel(
         val rentalId = currentState().rental?.id ?: return
         launchCoroutine {
             updateState { it.copy(isFinishing = true, errorMessage = null) }
-            when (val result = finishRentalUseCase(rentalId)) {
+            when (val result = rentalUseCases.finishRental(rentalId)) {
                 is NetworkResult.Success -> {
                     timerJob?.cancel()
                     updateState { it.copy(isFinishing = false, rental = result.data) }
@@ -84,8 +82,6 @@ class ActiveRentalViewModel(
     private fun updateSimulation() {
         val current = currentState()
         if (current.rental != null && !current.isFinishing) {
-            // Placeholder client-side simulation.
-            // Replace with backend-driven cost/distance when rental tracking API is available.
             val addedCost = 2.5
             val addedDistance = 0.5
             updateState {

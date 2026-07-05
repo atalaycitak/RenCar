@@ -9,6 +9,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * STUB implementation — holds balance and transactions in memory with Mutex.
+ * REPLACE with real Retrofit calls to the wallet endpoints when available.
+ */
 class DefaultWalletRepository : WalletRepository {
     private val mutex = Mutex()
     private var currentBalance = 1500.0

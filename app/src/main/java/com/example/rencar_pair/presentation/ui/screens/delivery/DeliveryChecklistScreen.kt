@@ -35,17 +35,12 @@ import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarTopBar
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
 
 @Composable
 fun DeliveryChecklistScreen(
-    rentalId: String,
-    vehicleId: String,
     onBack: () -> Unit,
     onDone: () -> Unit,
-    viewModel: DeliveryChecklistViewModel = koinViewModel(
-        parameters = { parametersOf(rentalId, vehicleId) }
-    )
+    viewModel: DeliveryChecklistViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     DeliveryChecklistScreenContent(

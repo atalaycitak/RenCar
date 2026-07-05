@@ -1,19 +1,22 @@
 package com.example.rencar_pair.presentation.ui.screens.reservation
 
+import androidx.lifecycle.SavedStateHandle
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
-import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
-import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase
+import com.example.rencar_pair.domain.usecase.RentalUseCases
+import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class ReservationViewModel(
-    private val vehicleId: String,
-    private val getVehicleDetailUseCase: GetVehicleDetailUseCase,
+    savedStateHandle: SavedStateHandle,
+    private val vehicleUseCases: VehicleUseCases,
     private val calculateReservationQuoteUseCase: CalculateReservationQuoteUseCase,
-    private val createRentalUseCase: CreateRentalUseCase
+    private val rentalUseCases: RentalUseCases
 ) : BaseMviViewModel<ReservationState, ReservationIntent, ReservationEffect>(
     ReservationState(isLoading = true)
 ) {
+
+    private val vehicleId: String = savedStateHandle.get<String>("vehicleId")!!
 
     init {
         onIntent(ReservationIntent.LoadVehicle)
@@ -31,7 +34,7 @@ class ReservationViewModel(
     private fun loadVehicle() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getVehicleDetailUseCase(vehicleId)) {
+            when (val result = vehicleUseCases.getVehicleDetail(vehicleId)) {
                 is NetworkResult.Success -> updateState {
                     it.copy(
                         vehicle = result.data,
@@ -64,7 +67,7 @@ class ReservationViewModel(
 
         launchCoroutine {
             updateState { it.copy(isSubmitting = true, errorMessage = null) }
-            when (val result = createRentalUseCase(vehicle.id, quote.endDateIso)) {
+            when (val result = rentalUseCases.createRental(vehicle.id, quote.endDateIso)) {
                 is NetworkResult.Success -> {
                     updateState {
                         it.copy(isSubmitting = false, rentalId = result.data.id)

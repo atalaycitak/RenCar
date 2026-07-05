@@ -1,15 +1,13 @@
 package com.example.rencar_pair.presentation.ui.screens.trip_summary
 
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.usecase.payment.GetSavedCardsUseCase
-import com.example.rencar_pair.domain.usecase.payment.ProcessPaymentUseCase
-import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
+import com.example.rencar_pair.domain.usecase.PaymentUseCases
+import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class TripSummaryViewModel(
-    private val getActiveRentalUseCase: GetActiveRentalUseCase,
-    private val processPaymentUseCase: ProcessPaymentUseCase,
-    private val getSavedCardsUseCase: GetSavedCardsUseCase
+    private val rentalUseCases: RentalUseCases,
+    private val paymentUseCases: PaymentUseCases
 ) : BaseMviViewModel<TripSummaryState, TripSummaryIntent, TripSummaryEffect>(
     TripSummaryState()
 ) {
@@ -27,7 +25,7 @@ class TripSummaryViewModel(
     private fun loadSummary(rentalId: String) {
         launchCoroutine {
             updateState { it.copy(isLoading = true, rentalId = rentalId) }
-            when (val result = getActiveRentalUseCase(rentalId)) {
+            when (val result = rentalUseCases.getActiveRental(rentalId)) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(rental = result.data) }
                     loadCards()
@@ -41,7 +39,7 @@ class TripSummaryViewModel(
 
     private fun loadCards() {
         launchCoroutine {
-            when (val result = getSavedCardsUseCase()) {
+            when (val result = paymentUseCases.getSavedCards()) {
                 is NetworkResult.Success -> {
                     val cards = result.data
                     updateState {
@@ -72,7 +70,7 @@ class TripSummaryViewModel(
 
         launchCoroutine {
             updateState { it.copy(isPaying = true) }
-            when (val result = processPaymentUseCase(rentalId, cardToken, amount)) {
+            when (val result = paymentUseCases.processPayment(rentalId, cardToken, amount)) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isPaying = false) }
                     emitEffect(TripSummaryEffect.ShowPaymentSuccess("Ödeme başarıyla alındı!"))

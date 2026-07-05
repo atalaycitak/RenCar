@@ -3,11 +3,16 @@ package com.example.rencar_pair.data.repository
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
+import com.example.rencar_pair.domain.model.PaymentStatus
 import com.example.rencar_pair.domain.repository.PaymentRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * STUB implementation — holds cards and payment in memory with Mutex.
+ * REPLACE with real Retrofit calls to the payment endpoints when available.
+ */
 class DefaultPaymentRepository : PaymentRepository {
     private val mutex = Mutex()
     private val fakeCards = mutableListOf(
@@ -36,7 +41,7 @@ class DefaultPaymentRepository : PaymentRepository {
         }
         return NetworkResult.Success(
             PaymentResult(
-                status = "SUCCESS",
+                status = PaymentStatus.Success,
                 transactionId = "tx_${System.currentTimeMillis()}",
                 errorMessage = null
             )

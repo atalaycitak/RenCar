@@ -140,7 +140,6 @@ fun RenCarNavHost(
         composable<VehicleDetailRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<VehicleDetailRoute>()
             VehicleDetailScreen(
-                vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
                 onReserve = { vehicleId ->
                     navController.navigate(ReservationRoute(vehicleId))
@@ -162,8 +161,6 @@ fun RenCarNavHost(
         composable<DeliveryChecklistRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<DeliveryChecklistRoute>()
             DeliveryChecklistScreen(
-                rentalId = route.rentalId,
-                vehicleId = route.vehicleId,
                 onBack = { navController.popBackStack() },
                 onDone = {
                     navController.navigate(ActiveRentalRoute(route.rentalId)) {

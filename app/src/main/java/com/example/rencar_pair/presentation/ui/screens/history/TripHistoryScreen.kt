@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.ui.theme.RenCarTheme
@@ -138,14 +139,14 @@ fun TripHistoryCard(rental: Rental) {
                 )
                 
                 val statusColor = when(rental.status) {
-                    "ACTIVE" -> MaterialTheme.colorScheme.primary
-                    "COMPLETED" -> MaterialTheme.colorScheme.secondary
-                    "CANCELLED" -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    RentalStatus.Active -> MaterialTheme.colorScheme.primary
+                    RentalStatus.Completed -> MaterialTheme.colorScheme.secondary
+                    RentalStatus.Cancelled -> MaterialTheme.colorScheme.error
+                    RentalStatus.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
                 
                 Text(
-                    text = rental.status,
+                    text = rental.status.name,
                     style = MaterialTheme.typography.labelSmall,
                     color = statusColor,
                     fontWeight = FontWeight.Bold
@@ -197,7 +198,7 @@ private fun TripHistoryScreenPreview() {
                         vehicleId = "VHC-1",
                         startDate = Instant.now().minusSeconds(86400 * 2),
                         endDate = Instant.now().minusSeconds(86400 * 1),
-                        status = "COMPLETED",
+                        status = RentalStatus.Completed,
                         totalPrice = 1200.0
                     ),
                     Rental(
@@ -206,7 +207,7 @@ private fun TripHistoryScreenPreview() {
                         vehicleId = "VHC-2",
                         startDate = Instant.now(),
                         endDate = Instant.now().plusSeconds(86400),
-                        status = "ACTIVE",
+                        status = RentalStatus.Active,
                         totalPrice = 600.0
                     )
                 )

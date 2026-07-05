@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.Blue50
 import com.example.rencar_pair.ui.theme.Error50
@@ -231,7 +232,7 @@ private fun TripSummaryScreenPreview() {
                     vehicleId = "VHC-1",
                     startDate = Instant.now(),
                     endDate = Instant.now().plusSeconds(86400),
-                    status = "COMPLETED",
+                    status = RentalStatus.Completed,
                     totalPrice = 1500.0
                 ),
                 savedCards = listOf(

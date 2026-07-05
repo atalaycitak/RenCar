@@ -1,5 +1,6 @@
 package com.example.rencar_pair.presentation.ui.screens.delivery
 
+import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
@@ -20,3 +21,5 @@ sealed interface DeliveryChecklistIntent : MviIntent {
     data object ToggleDoorsAndKey : DeliveryChecklistIntent
     data object CompleteChecklist : DeliveryChecklistIntent
 }
+
+sealed interface DeliveryChecklistEffect : MviEffect

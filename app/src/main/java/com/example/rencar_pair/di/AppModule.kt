@@ -11,27 +11,16 @@ import com.example.rencar_pair.domain.repository.RentalRepository
 import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.repository.WalletRepository
+import com.example.rencar_pair.domain.usecase.AuthUseCases
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
-import com.example.rencar_pair.domain.usecase.CreateRentalUseCase
-import com.example.rencar_pair.domain.usecase.GetAvailableVehiclesUseCase
-import com.example.rencar_pair.domain.usecase.GetCurrentUserUseCase
-import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
-import com.example.rencar_pair.domain.usecase.GetVehicleDetailUseCase
+import com.example.rencar_pair.domain.usecase.LicenseUseCases
 import com.example.rencar_pair.domain.usecase.LoginUseCase
-import com.example.rencar_pair.domain.usecase.LogoutUseCase
-import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
+import com.example.rencar_pair.domain.usecase.PaymentUseCases
 import com.example.rencar_pair.domain.usecase.RegisterUseCase
-import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
+import com.example.rencar_pair.domain.usecase.RentalUseCases
+import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.domain.usecase.VerifyOtpUseCase
-import com.example.rencar_pair.domain.usecase.rental.FinishRentalUseCase
-import com.example.rencar_pair.domain.usecase.rental.GetActiveRentalUseCase
-import com.example.rencar_pair.domain.usecase.rental.GetMyRentalsUseCase
 import com.example.rencar_pair.domain.usecase.rental.ReturnVehicleUseCase
-import com.example.rencar_pair.domain.usecase.payment.GetWalletBalanceUseCase
-import com.example.rencar_pair.domain.usecase.payment.GetWalletInfoUseCase
-import com.example.rencar_pair.domain.usecase.payment.GetSavedCardsUseCase
-import com.example.rencar_pair.domain.usecase.payment.ProcessPaymentUseCase
-import com.example.rencar_pair.domain.usecase.payment.TopUpWalletUseCase
 import com.example.rencar_pair.presentation.ui.screens.active_rental.ActiveRentalViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.LoginViewModel
 import com.example.rencar_pair.presentation.ui.screens.auth.RegisterViewModel
@@ -86,29 +75,19 @@ val appModule = module {
 
     single<LocationTracker> { DefaultLocationTracker(get(), androidContext()) }
 
+    // Grouped Use Cases (replaces anemic delegation use cases)
+    single { AuthUseCases(get()) }
+    single { VehicleUseCases(get()) }
+    single { LicenseUseCases(get()) }
+    single { RentalUseCases(get()) }
+    single { PaymentUseCases(get(), get()) }
+
+    // Use cases with real business logic (validation, calculations)
     factory { LoginUseCase(get()) }
     factory { VerifyOtpUseCase(get()) }
     factory { RegisterUseCase(get()) }
-    factory { RefreshSessionUseCase(get()) }
-    factory { GetCurrentUserUseCase(get()) }
-    factory { LogoutUseCase(get()) }
-    factory { GetLicenseStatusUseCase(get()) }
-    factory { UploadLicenseUseCase(get()) }
-    factory { GetAvailableVehiclesUseCase(get()) }
-    factory { GetVehicleDetailUseCase(get()) }
     factory { CalculateReservationQuoteUseCase() }
-    factory { CreateRentalUseCase(get()) }
-
-    factory { GetActiveRentalUseCase(get()) }
-    factory { FinishRentalUseCase(get()) }
-    factory { GetMyRentalsUseCase(get()) }
     factory { ReturnVehicleUseCase(get()) }
-
-    factory { GetWalletInfoUseCase(get()) }
-    factory { GetWalletBalanceUseCase(get()) }
-    factory { GetSavedCardsUseCase(get()) }
-    factory { TopUpWalletUseCase(get()) }
-    factory { ProcessPaymentUseCase(get()) }
 
     viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)

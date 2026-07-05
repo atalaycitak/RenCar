@@ -3,6 +3,7 @@ package com.example.rencar_pair.data.repository
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
+import com.example.rencar_pair.domain.model.PaymentStatus
 import com.example.rencar_pair.domain.repository.PaymentRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -36,7 +37,7 @@ class FakePaymentRepository : PaymentRepository {
         }
         return NetworkResult.Success(
             PaymentResult(
-                status = "SUCCESS",
+                status = PaymentStatus.Success,
                 transactionId = "tx_${System.currentTimeMillis()}",
                 errorMessage = null
             )

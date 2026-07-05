@@ -1,13 +1,11 @@
 package com.example.rencar_pair.presentation.ui.screens.profile
 
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.usecase.GetCurrentUserUseCase
-import com.example.rencar_pair.domain.usecase.LogoutUseCase
+import com.example.rencar_pair.domain.usecase.AuthUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class ProfileViewModel(
-    private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val authUseCases: AuthUseCases
 ) : BaseMviViewModel<ProfileState, ProfileIntent, ProfileEffect>(ProfileState()) {
 
     init {
@@ -24,7 +22,7 @@ class ProfileViewModel(
     private fun loadProfile() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getCurrentUserUseCase()) {
+            when (val result = authUseCases.getCurrentUser()) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false, user = result.data) }
                 }
@@ -38,7 +36,7 @@ class ProfileViewModel(
     private fun logout() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = logoutUseCase()) {
+            when (val result = authUseCases.logout()) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false) }
                     emitEffect(ProfileEffect.NavigateToLogin)

@@ -1,6 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.history
 
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
@@ -13,3 +14,5 @@ data class TripHistoryState(
 sealed interface TripHistoryIntent : MviIntent {
     data object LoadHistory : TripHistoryIntent
 }
+
+sealed interface TripHistoryEffect : MviEffect

@@ -3,15 +3,13 @@ package com.example.rencar_pair.presentation.ui.screens.license
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.DriverLicense
 import com.example.rencar_pair.domain.model.LicenseStatus
-import com.example.rencar_pair.domain.usecase.GetLicenseStatusUseCase
-import com.example.rencar_pair.domain.usecase.RefreshSessionUseCase
-import com.example.rencar_pair.domain.usecase.UploadLicenseUseCase
+import com.example.rencar_pair.domain.usecase.AuthUseCases
+import com.example.rencar_pair.domain.usecase.LicenseUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class LicenseVerificationViewModel(
-    private val getLicenseStatusUseCase: GetLicenseStatusUseCase,
-    private val uploadLicenseUseCase: UploadLicenseUseCase,
-    private val refreshSessionUseCase: RefreshSessionUseCase
+    private val licenseUseCases: LicenseUseCases,
+    private val authUseCases: AuthUseCases
 ) : BaseMviViewModel<LicenseVerificationState, LicenseVerificationIntent, LicenseVerificationEffect>(
     LicenseVerificationState()
 ) {
@@ -57,7 +55,7 @@ class LicenseVerificationViewModel(
     private fun loadStatus() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getLicenseStatusUseCase()) {
+            when (val result = licenseUseCases.getStatus()) {
                 is NetworkResult.Success -> applyLicense(result.data)
                 is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
@@ -69,7 +67,7 @@ class LicenseVerificationViewModel(
     private fun refreshStatusAndContinue() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getLicenseStatusUseCase()) {
+            when (val result = licenseUseCases.getStatus()) {
                 is NetworkResult.Success -> applyLicense(result.data, navigateWhenApproved = true)
                 is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
@@ -88,7 +86,7 @@ class LicenseVerificationViewModel(
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
             when (
-                val result = uploadLicenseUseCase(
+                val result = licenseUseCases.upload(
                     frontPath = current.frontImageUri.orEmpty(),
                     backPath = current.backImageUri.orEmpty()
                 )
@@ -119,7 +117,7 @@ class LicenseVerificationViewModel(
         }
         if (navigateWhenApproved && license.status == LicenseStatus.Approved) {
             launchCoroutine {
-                when (val refreshResult = refreshSessionUseCase()) {
+                when (val refreshResult = authUseCases.refreshSession()) {
                     is NetworkResult.Success -> continueToMap()
                     is NetworkResult.Error -> updateState {
                         it.copy(errorMessage = refreshResult.message)

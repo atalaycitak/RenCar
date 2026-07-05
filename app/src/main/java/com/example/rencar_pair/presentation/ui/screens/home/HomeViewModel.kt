@@ -1,33 +1,27 @@
 package com.example.rencar_pair.presentation.ui.screens.home
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.location.LocationTracker
-import com.example.rencar_pair.domain.usecase.GetAvailableVehiclesUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import com.example.rencar_pair.domain.usecase.VehicleUseCases
+import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 
 class HomeViewModel(
-    private val getAvailableVehiclesUseCase: GetAvailableVehiclesUseCase,
+    private val vehicleUseCases: VehicleUseCases,
     private val locationTracker: LocationTracker
-) : ViewModel() {
-
-    private val _state = MutableStateFlow(HomeState())
-    val state = _state.asStateFlow()
+) : BaseMviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
 
     init {
         onIntent(HomeIntent.LoadVehicles)
     }
 
-    fun onIntent(intent: HomeIntent) {
+    override fun onIntent(intent: HomeIntent) {
         when (intent) {
             HomeIntent.LoadVehicles -> loadVehicles()
-            is HomeIntent.SelectVehicle -> _state.update { it.copy(selectedVehicleId = intent.id) }
+            is HomeIntent.SelectVehicle -> updateState {
+                it.copy(selectedVehicleId = intent.id)
+            }
             is HomeIntent.LocationPermissionChanged -> {
-                _state.update {
+                updateState {
                     it.copy(locationPermissionGranted = intent.granted)
                 }
                 if (intent.granted) {
@@ -39,17 +33,17 @@ class HomeViewModel(
     }
 
     private fun loadVehicles() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = getAvailableVehiclesUseCase()) {
-                is NetworkResult.Success -> _state.update {
+        launchCoroutine {
+            updateState { it.copy(isLoading = true, errorMessage = null) }
+            when (val result = vehicleUseCases.getAvailableVehicles()) {
+                is NetworkResult.Success -> updateState {
                     it.copy(
                         vehicles = result.data,
                         selectedVehicleId = result.data.firstOrNull()?.id,
                         isLoading = false
                     )
                 }
-                is NetworkResult.Error -> _state.update {
+                is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }
             }
@@ -57,9 +51,9 @@ class HomeViewModel(
     }
 
     private fun fetchUserLocation() {
-        viewModelScope.launch {
+        launchCoroutine {
             val location = locationTracker.getCurrentLocation()
-            _state.update { it.copy(userLocation = location) }
+            updateState { it.copy(userLocation = location) }
         }
     }
 }

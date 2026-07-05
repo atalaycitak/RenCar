@@ -2,6 +2,7 @@ package com.example.rencar_pair.presentation.ui.screens.home
 
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 
@@ -22,3 +23,5 @@ sealed interface HomeIntent : MviIntent {
     data class LocationPermissionChanged(val granted: Boolean) : HomeIntent
     data object FetchUserLocation : HomeIntent
 }
+
+sealed interface HomeEffect : MviEffect

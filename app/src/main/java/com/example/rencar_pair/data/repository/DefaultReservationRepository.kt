@@ -8,6 +8,7 @@ import com.example.rencar_pair.data.remote.dto.CreateRentalRequest
 import com.example.rencar_pair.data.remote.dto.RentalResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.repository.ReservationRepository
 
 class DefaultReservationRepository(
@@ -47,10 +48,13 @@ class DefaultReservationRepository(
             id = id,
             userId = userId,
             vehicleId = vehicleId,
-            startDate = try { Instant.parse(startDate) } catch (e: Exception) { Instant.now() },
-            endDate = try { Instant.parse(endDate) } catch (e: Exception) { Instant.now() },
+            startDate = parseInstantOrNull(startDate) ?: Instant.now(),
+            endDate = parseInstantOrNull(endDate) ?: Instant.now(),
             totalPrice = totalPrice,
-            status = status
+            status = RentalStatus.fromApiString(status)
         )
     }
+
+    private fun parseInstantOrNull(iso: String): Instant? =
+        try { Instant.parse(iso) } catch (_: Exception) { null }
 }
