@@ -29,14 +29,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarTopBar
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun DeliveryChecklistRoute(
+fun DeliveryChecklistScreen(
     rentalId: String,
     vehicleId: String,
     onBack: () -> Unit,
@@ -46,7 +48,7 @@ fun DeliveryChecklistRoute(
     )
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    DeliveryChecklistScreen(
+    DeliveryChecklistScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         onBack = onBack,
@@ -55,7 +57,7 @@ fun DeliveryChecklistRoute(
 }
 
 @Composable
-fun DeliveryChecklistScreen(
+fun DeliveryChecklistScreenContent(
     state: DeliveryChecklistState,
     onIntent: (DeliveryChecklistIntent) -> Unit,
     onBack: () -> Unit,
@@ -162,5 +164,25 @@ private fun ChecklistRow(
                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DeliveryChecklistScreenPreview() {
+    RenCarTheme {
+        DeliveryChecklistScreenContent(
+            state = DeliveryChecklistState(
+                rentalId = "RNT-12345",
+                vehicleId = "VHC-987",
+                vehicleConditionChecked = true,
+                photosChecked = false,
+                doorsAndKeyChecked = false,
+                isCompleted = false
+            ),
+            onIntent = {},
+            onBack = {},
+            onDone = {}
+        )
     }
 }

@@ -29,15 +29,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.domain.model.ReservationQuote
+import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarTopBar
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun ReservationRoute(
+fun ReservationScreen(
     vehicleId: String,
     onBack: () -> Unit,
     onDeliveryChecklist: (String, String) -> Unit,
@@ -55,7 +58,7 @@ fun ReservationRoute(
         }
     }
 
-    ReservationScreen(
+    ReservationScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         onBack = onBack
@@ -63,7 +66,7 @@ fun ReservationRoute(
 }
 
 @Composable
-fun ReservationScreen(
+fun ReservationScreenContent(
     state: ReservationState,
     onIntent: (ReservationIntent) -> Unit,
     onBack: () -> Unit
@@ -86,7 +89,7 @@ fun ReservationScreen(
                         .align(Alignment.Center)
                         .padding(24.dp)
                 )
-                state.vehicle != null && state.quote != null -> ReservationContent(
+                state.vehicle != null && state.quote != null -> ReservationView(
                     state = state,
                     onIntent = onIntent
                 )
@@ -96,7 +99,7 @@ fun ReservationScreen(
 }
 
 @Composable
-private fun ReservationContent(
+private fun ReservationView(
     state: ReservationState,
     onIntent: (ReservationIntent) -> Unit
 ) {
@@ -209,6 +212,40 @@ private fun QuoteRow(
         Text(
             text = value,
             fontWeight = if (strong) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReservationScreenPreview() {
+    RenCarTheme {
+        ReservationScreenContent(
+            state = ReservationState(
+                isLoading = false,
+                vehicle = Vehicle(
+                    id = "1",
+                    brand = "Renault",
+                    model = "Clio",
+                    plate = "34 ABC 123",
+                    type = com.example.rencar_pair.domain.model.VehicleType.Sedan,
+                    status = com.example.rencar_pair.domain.model.VehicleStatus.Available,
+                    pricePerDay = 600.0,
+                    latitude = 41.0,
+                    longitude = 28.0
+                ),
+                quote = ReservationQuote(
+                    vehicleId = "1",
+                    endDateIso = "2024-01-01T00:00:00Z",
+                    pricePerDay = 600.0,
+                    days = 3,
+                    serviceFee = 100.0,
+                    deliveryFee = 50.0,
+                    totalPrice = 1950.0
+                )
+            ),
+            onIntent = {},
+            onBack = {}
         )
     }
 }

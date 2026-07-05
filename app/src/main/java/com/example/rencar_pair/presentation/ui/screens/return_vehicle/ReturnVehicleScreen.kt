@@ -23,14 +23,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.ReturnAngle
 import com.example.rencar_pair.presentation.ui.components.RenCarCameraPreview
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun ReturnVehicleRoute(
+fun ReturnVehicleScreen(
     rentalId: String,
     onNavigateBack: () -> Unit,
     onNavigateToHome: () -> Unit,
@@ -49,7 +51,7 @@ fun ReturnVehicleRoute(
         }
     }
 
-    ReturnVehicleScreen(
+    ReturnVehicleScreenContent(
         rentalId = rentalId,
         state = state,
         onIntent = viewModel::onIntent,
@@ -58,7 +60,7 @@ fun ReturnVehicleRoute(
 }
 
 @Composable
-fun ReturnVehicleScreen(
+fun ReturnVehicleScreenContent(
     rentalId: String,
     state: ReturnVehicleState,
     onIntent: (ReturnVehicleIntent) -> Unit,
@@ -253,6 +255,26 @@ private fun AngleButton(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             color = if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReturnVehicleScreenPreview() {
+    RenCarTheme {
+        ReturnVehicleScreenContent(
+            rentalId = "RNT-12345",
+            state = ReturnVehicleState(
+                frontPhotoUri = null,
+                backPhotoUri = null,
+                leftPhotoUri = null,
+                rightPhotoUri = null,
+                isLoading = false,
+                errorMessage = null
+            ),
+            onIntent = {},
+            onNavigateBack = {}
         )
     }
 }

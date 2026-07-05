@@ -13,33 +13,77 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.PaymentMethod
+import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.Blue50
 import com.example.rencar_pair.ui.theme.Error50
 import com.example.rencar_pair.ui.theme.Neutral10
 import com.example.rencar_pair.ui.theme.Neutral90
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
+import java.time.Instant
 
 @Composable
 fun TripSummaryScreen(
+    rentalId: String,
+    onNavigateToHome: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: TripSummaryViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(rentalId) {
+        viewModel.onIntent(TripSummaryIntent.LoadSummary(rentalId))
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                TripSummaryEffect.NavigateToHome -> onNavigateToHome()
+                is TripSummaryEffect.ShowPaymentSuccess -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+                is TripSummaryEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        TripSummaryScreenContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onNavigateToHome = onNavigateToHome,
+            modifier = modifier.padding(padding)
+        )
+    }
+}
+
+@Composable
+fun TripSummaryScreenContent(
     state: TripSummaryState,
     onIntent: (TripSummaryIntent) -> Unit,
     onNavigateToHome: () -> Unit,
-    onShowMessage: (String) -> Unit
+    modifier: Modifier = Modifier
 ) {
     if (state.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Neutral90)
             .padding(24.dp)
@@ -175,42 +219,35 @@ fun PaymentCardItem(
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun TripSummaryRoute(
-    rentalId: String,
-    onNavigateToHome: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: TripSummaryViewModel = koinViewModel()
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(rentalId) {
-        viewModel.onIntent(TripSummaryIntent.LoadSummary(rentalId))
-    }
-
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                TripSummaryEffect.NavigateToHome -> onNavigateToHome()
-                is TripSummaryEffect.ShowPaymentSuccess -> snackbarHostState.showSnackbar(
-                    message = effect.message,
-                    duration = SnackbarDuration.Short
-                )
-                is TripSummaryEffect.ShowError -> snackbarHostState.showSnackbar(
-                    message = effect.message,
-                    duration = SnackbarDuration.Short
-                )
-            }
-        }
-    }
-
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
-        TripSummaryScreen(
-            state = state,
-            onIntent = viewModel::onIntent,
-            onNavigateToHome = onNavigateToHome,
-            onShowMessage = {}
+private fun TripSummaryScreenPreview() {
+    RenCarTheme {
+        TripSummaryScreenContent(
+            state = TripSummaryState(
+                rental = Rental(
+                    id = "RNT-12345",
+                    userId = "USR-1",
+                    vehicleId = "VHC-1",
+                    startDate = Instant.now(),
+                    endDate = Instant.now().plusSeconds(86400),
+                    status = "COMPLETED",
+                    totalPrice = 1500.0
+                ),
+                savedCards = listOf(
+                    PaymentMethod(
+                        cardToken = "token1",
+                        cardAlias = "İş Bankası Kartım",
+                        binNumber = "123456",
+                        cardAssociation = "VISA"
+                    )
+                ),
+                selectedCardToken = "token1",
+                isLoading = false,
+                isPaying = false
+            ),
+            onIntent = {},
+            onNavigateToHome = {}
         )
     }
 }

@@ -13,9 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.rencar_pair.domain.model.WalletInfo
 import com.example.rencar_pair.domain.model.WalletTransaction
 import com.example.rencar_pair.domain.model.WalletTransactionType
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
@@ -23,36 +25,70 @@ import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.Blue50
 import com.example.rencar_pair.ui.theme.Error50
 import com.example.rencar_pair.ui.theme.Neutral90
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
+    modifier: Modifier = Modifier,
+    viewModel: WalletViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is WalletEffect.ShowMessage -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+                is WalletEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Short
+                )
+            }
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        WalletScreenContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            modifier = modifier.padding(padding)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WalletScreenContent(
     state: WalletState,
-    onIntent: (WalletIntent) -> Unit
+    onIntent: (WalletIntent) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     if (state.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Cüzdanım", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        },
-        containerColor = Neutral90
-    ) { padding ->
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Neutral90)
+    ) {
+        TopAppBar(
+            title = { Text("Cüzdanım", fontWeight = FontWeight.Bold) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+        )
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .padding(24.dp)
         ) {
             state.errorMessage?.let {
@@ -186,33 +222,22 @@ fun TransactionItem(tx: WalletTransaction) {
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun WalletRoute(
-    modifier: Modifier = Modifier,
-    viewModel: WalletViewModel = koinViewModel()
-) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is WalletEffect.ShowMessage -> snackbarHostState.showSnackbar(
-                    message = effect.message,
-                    duration = SnackbarDuration.Short
+private fun WalletScreenPreview() {
+    RenCarTheme {
+        WalletScreenContent(
+            state = WalletState(
+                isLoading = false,
+                walletInfo = WalletInfo(
+                    balance = 1500.0,
+                    transactions = listOf(
+                        WalletTransaction("1", 500.0, System.currentTimeMillis(), com.example.rencar_pair.domain.model.WalletTransactionType.TOP_UP),
+                        WalletTransaction("2", 150.0, System.currentTimeMillis() - 86400000, com.example.rencar_pair.domain.model.WalletTransactionType.RENTAL_PAYMENT)
+                    )
                 )
-                is WalletEffect.ShowError -> snackbarHostState.showSnackbar(
-                    message = effect.message,
-                    duration = SnackbarDuration.Short
-                )
-            }
-        }
-    }
-
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
-        WalletScreen(
-            state = state,
-            onIntent = viewModel::onIntent
+            ),
+            onIntent = {}
         )
     }
 }

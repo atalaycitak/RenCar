@@ -16,15 +16,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun ProfileRoute(
+fun ProfileScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToLogin: () -> Unit,
@@ -42,7 +45,7 @@ fun ProfileRoute(
         }
     }
 
-    ProfileScreen(
+    ProfileScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         onNavigateToHome = onNavigateToHome,
@@ -51,7 +54,7 @@ fun ProfileRoute(
 }
 
 @Composable
-fun ProfileScreen(
+fun ProfileScreenContent(
     state: ProfileState,
     onIntent: (ProfileIntent) -> Unit,
     onNavigateToHome: () -> Unit,
@@ -180,6 +183,27 @@ fun ProfileMenuItem(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileScreenPreview() {
+    RenCarTheme {
+        ProfileScreenContent(
+            state = ProfileState(
+                user = User(
+                    id = "1",
+                    fullName = "John Doe",
+                    token = "token",
+                    role = com.example.rencar_pair.domain.model.UserRole.Customer
+                ),
+                isLoading = false
+            ),
+            onIntent = {},
+            onNavigateToHome = {},
+            onNavigateToHistory = {}
         )
     }
 }

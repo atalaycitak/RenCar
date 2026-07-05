@@ -31,22 +31,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarTopBar
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun VehicleDetailRoute(
+fun VehicleDetailScreen(
     vehicleId: String,
     onBack: () -> Unit,
     onReserve: (String) -> Unit,
     viewModel: VehicleDetailViewModel = koinViewModel(parameters = { parametersOf(vehicleId) })
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    VehicleDetailScreen(
+    VehicleDetailScreenContent(
         state = state,
         onBack = onBack,
         onReserve = onReserve
@@ -54,7 +56,7 @@ fun VehicleDetailRoute(
 }
 
 @Composable
-fun VehicleDetailScreen(
+fun VehicleDetailScreenContent(
     state: VehicleDetailState,
     onBack: () -> Unit,
     onReserve: (String) -> Unit
@@ -79,7 +81,7 @@ fun VehicleDetailScreen(
                         .align(Alignment.Center)
                         .padding(24.dp)
                 )
-                state.vehicle != null -> VehicleDetailContent(
+                state.vehicle != null -> VehicleDetailView(
                     vehicle = state.vehicle,
                     onReserve = { onReserve(state.vehicle.id) }
                 )
@@ -89,7 +91,7 @@ fun VehicleDetailScreen(
 }
 
 @Composable
-private fun VehicleDetailContent(
+private fun VehicleDetailView(
     vehicle: Vehicle,
     onReserve: () -> Unit
 ) {
@@ -174,5 +176,30 @@ private fun DetailMetric(
             Text(text = label, style = MaterialTheme.typography.bodySmall)
             Text(text = value, style = MaterialTheme.typography.titleMedium)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VehicleDetailScreenPreview() {
+    RenCarTheme {
+        VehicleDetailScreenContent(
+            state = VehicleDetailState(
+                isLoading = false,
+                vehicle = Vehicle(
+                    id = "1",
+                    brand = "Renault",
+                    model = "Clio",
+                    plate = "34 ABC 123",
+                    type = com.example.rencar_pair.domain.model.VehicleType.Sedan,
+                    status = com.example.rencar_pair.domain.model.VehicleStatus.Available,
+                    pricePerDay = 600.0,
+                    latitude = 41.0,
+                    longitude = 28.0
+                )
+            ),
+            onBack = {},
+            onReserve = {}
+        )
     }
 }

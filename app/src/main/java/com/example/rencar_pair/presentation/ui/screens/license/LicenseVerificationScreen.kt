@@ -34,14 +34,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.presentation.ui.components.RenCarCameraPreview
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun LicenseVerificationRoute(
+fun LicenseVerificationScreen(
     onContinueToMap: () -> Unit,
     onBackToLogin: () -> Unit,
     viewModel: LicenseVerificationViewModel = koinViewModel()
@@ -56,7 +58,7 @@ fun LicenseVerificationRoute(
         }
     }
 
-    LicenseVerificationScreen(
+    LicenseVerificationScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         onContinue = { viewModel.onIntent(LicenseVerificationIntent.Continue) },
@@ -65,7 +67,7 @@ fun LicenseVerificationRoute(
 }
 
 @Composable
-fun LicenseVerificationScreen(
+fun LicenseVerificationScreenContent(
     state: LicenseVerificationState,
     onIntent: (LicenseVerificationIntent) -> Unit,
     onContinue: () -> Unit,
@@ -298,5 +300,23 @@ private fun primaryButtonTextFor(phase: LicenseUiPhase): String {
         LicenseUiPhase.Rejected -> "Doğrulamayı başlat"
         LicenseUiPhase.Reviewing -> "Durumu kontrol et"
         LicenseUiPhase.Approved -> "Devam et"
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LicenseVerificationScreenPreview() {
+    RenCarTheme {
+        LicenseVerificationScreenContent(
+            state = LicenseVerificationState(
+                status = LicenseStatus.NotUploaded,
+                isLoading = false,
+                errorMessage = null,
+                rejectReason = null
+            ),
+            onIntent = {},
+            onContinue = {},
+            onBackToLogin = {}
+        )
     }
 }

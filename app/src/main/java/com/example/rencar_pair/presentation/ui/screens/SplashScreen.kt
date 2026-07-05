@@ -1,5 +1,6 @@
 package com.example.rencar_pair.presentation.ui.screens
 
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -23,9 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import android.util.Log
 import com.example.rencar_pair.domain.repository.AuthRepository
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -60,6 +62,17 @@ fun SplashScreen(
         }
     }
 
+    SplashScreenContent(
+        alphaAnim = alphaAnim,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun SplashScreenContent(
+    alphaAnim: Float,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -82,5 +95,13 @@ fun SplashScreen(
             color = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.alpha(alphaAnim)
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SplashScreenPreview() {
+    RenCarTheme {
+        SplashScreenContent(alphaAnim = 1f)
     }
 }

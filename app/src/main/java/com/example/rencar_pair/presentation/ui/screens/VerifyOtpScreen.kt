@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
@@ -33,7 +34,9 @@ import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpEffect
 import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpIntent
+import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpState
 import com.example.rencar_pair.presentation.ui.screens.auth.VerifyOtpViewModel
+import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -54,6 +57,19 @@ fun VerifyOtpScreen(
         }
     }
 
+    VerifyOtpScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun VerifyOtpScreenContent(
+    state: VerifyOtpState,
+    onIntent: (VerifyOtpIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -91,7 +107,7 @@ fun VerifyOtpScreen(
 
             CustomTextField(
                 value = state.code,
-                onValueChange = { viewModel.onIntent(VerifyOtpIntent.OnCodeChanged(it)) },
+                onValueChange = { onIntent(VerifyOtpIntent.OnCodeChanged(it)) },
                 label = "OTP Kodu",
                 placeholder = "123456",
                 keyboardOptions = KeyboardOptions(
@@ -122,11 +138,22 @@ fun VerifyOtpScreen(
 
             PrimaryButton(
                 text = "Doğrula",
-                onClick = { viewModel.onIntent(VerifyOtpIntent.OnVerifyClicked) },
+                onClick = { onIntent(VerifyOtpIntent.OnVerifyClicked) },
                 enabled = !state.isLoading
             )
         }
 
         LoadingOverlay(isLoading = state.isLoading)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VerifyOtpScreenPreview() {
+    RenCarTheme {
+        VerifyOtpScreenContent(
+            state = VerifyOtpState(phone = "+905550000000"),
+            onIntent = {}
+        )
     }
 }
