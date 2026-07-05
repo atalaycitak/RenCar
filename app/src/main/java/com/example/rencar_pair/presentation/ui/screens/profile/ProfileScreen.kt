@@ -23,7 +23,7 @@ import com.example.rencar_pair.domain.model.User
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.ui.theme.RenCarTheme
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -37,7 +37,7 @@ fun ProfileScreen(
     val effectFlow = viewModel.effect
 
     LaunchedEffect(effectFlow) {
-        effectFlow.collectLatest { effect ->
+        effectFlow.collect { effect ->
             when (effect) {
                 is ProfileEffect.NavigateToLogin -> onNavigateToLogin()
                 is ProfileEffect.ShowError -> {} // Handle snackbar in real app

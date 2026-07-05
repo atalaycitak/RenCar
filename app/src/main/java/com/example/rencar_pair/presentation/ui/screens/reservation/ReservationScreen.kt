@@ -40,7 +40,6 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ReservationScreen(
-    vehicleId: String,
     onBack: () -> Unit,
     onDeliveryChecklist: (String, String) -> Unit,
     viewModel: ReservationViewModel = koinViewModel()

@@ -26,7 +26,7 @@ class ActiveRentalViewModel(
     private fun loadRental(rentalId: String) {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = rentalUseCases.getActiveRental(rentalId)) {
+            when (val result = rentalUseCases.getRental(rentalId)) {
                 is NetworkResult.Success -> {
                     updateState {
                         it.copy(
@@ -50,7 +50,7 @@ class ActiveRentalViewModel(
         timerJob?.cancel()
         timerJob = launchCoroutine {
             while (isActive) {
-                delay(60000)
+                delay(TICK_INTERVAL_MS)
                 onIntent(ActiveRentalIntent.TickTime)
             }
         }
@@ -65,7 +65,7 @@ class ActiveRentalViewModel(
         val rentalId = currentState().rental?.id ?: return
         launchCoroutine {
             updateState { it.copy(isFinishing = true, errorMessage = null) }
-            when (val result = rentalUseCases.finishRental(rentalId)) {
+            when (val result = rentalUseCases.returnRental(rentalId)) {
                 is NetworkResult.Success -> {
                     timerJob?.cancel()
                     updateState { it.copy(isFinishing = false, rental = result.data) }
@@ -80,16 +80,21 @@ class ActiveRentalViewModel(
     }
 
     private fun updateSimulation() {
-        updateState { current ->
-            if (current.rental != null && !current.isFinishing) {
-                current.copy(
+        val current = currentState()
+        if (current.rental != null && !current.isFinishing) {
+            updateState {
+                it.copy(
                     elapsedMinutes = current.elapsedMinutes + 1,
-                    currentCost = current.currentCost + 2.5,
-                    distanceKm = current.distanceKm + 0.5
+                    currentCost = current.currentCost + COST_PER_MINUTE,
+                    distanceKm = current.distanceKm + DISTANCE_PER_MINUTE_KM
                 )
-            } else {
-                current
             }
         }
+    }
+
+    private companion object {
+        const val TICK_INTERVAL_MS = 60_000L
+        const val COST_PER_MINUTE = 2.5
+        const val DISTANCE_PER_MINUTE_KM = 0.5
     }
 }
