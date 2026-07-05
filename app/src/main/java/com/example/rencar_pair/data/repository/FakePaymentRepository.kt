@@ -8,7 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class PaymentRepositoryImpl : PaymentRepository {
+class FakePaymentRepository : PaymentRepository {
     private val mutex = Mutex()
     private val fakeCards = mutableListOf(
         PaymentMethod(

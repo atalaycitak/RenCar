@@ -10,7 +10,7 @@ import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.repository.ReservationRepository
 
-class ReservationRepositoryImpl(
+class DefaultReservationRepository(
     private val api: RenCarApi
 ) : ReservationRepository {
 

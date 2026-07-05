@@ -2,11 +2,7 @@ package com.example.rencar_pair.di
 
 import com.example.rencar_pair.data.local.DataStoreManager
 import com.example.rencar_pair.data.location.DefaultLocationTracker
-import com.example.rencar_pair.data.repository.AuthRepositoryImpl
-import com.example.rencar_pair.data.repository.LicenseRepositoryImpl
-import com.example.rencar_pair.data.repository.DefaultRentalRepository
-import com.example.rencar_pair.data.repository.ReservationRepositoryImpl
-import com.example.rencar_pair.data.repository.VehicleRepositoryImpl
+import com.example.rencar_pair.data.repository.*
 import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.repository.AuthRepository
 import com.example.rencar_pair.domain.repository.LicenseRepository
@@ -56,19 +52,34 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
+const val USE_FAKE_REPOSITORIES = false
+
 val appModule = module {
 
     single { DataStoreManager(androidContext()) }
 
-    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get()) }
-    single<LicenseRepository> { LicenseRepositoryImpl(get(), androidContext()) }
-    single<VehicleRepository> { VehicleRepositoryImpl(get()) }
-    single<ReservationRepository> { ReservationRepositoryImpl(get()) }
-
-    single<RentalRepository> { DefaultRentalRepository() }
-
-    single<PaymentRepository> { com.example.rencar_pair.data.repository.PaymentRepositoryImpl() }
-    single<WalletRepository> { com.example.rencar_pair.data.repository.WalletRepositoryImpl() }
+    // Repositories
+    single<AuthRepository> {
+        if (USE_FAKE_REPOSITORIES) FakeAuthRepository() else DefaultAuthRepository(get(), get(), get())
+    }
+    single<LicenseRepository> {
+        if (USE_FAKE_REPOSITORIES) FakeLicenseRepository() else DefaultLicenseRepository(get(), androidContext())
+    }
+    single<VehicleRepository> {
+        if (USE_FAKE_REPOSITORIES) FakeVehicleRepository() else DefaultVehicleRepository(get())
+    }
+    single<ReservationRepository> {
+        if (USE_FAKE_REPOSITORIES) FakeReservationRepository() else DefaultReservationRepository(get())
+    }
+    single<RentalRepository> {
+        if (USE_FAKE_REPOSITORIES) FakeRentalRepository() else DefaultRentalRepository()
+    }
+    single<PaymentRepository> {
+        if (USE_FAKE_REPOSITORIES) FakePaymentRepository() else DefaultPaymentRepository()
+    }
+    single<WalletRepository> {
+        if (USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository()
+    }
 
     single { LocationServices.getFusedLocationProviderClient(androidContext()) }
 

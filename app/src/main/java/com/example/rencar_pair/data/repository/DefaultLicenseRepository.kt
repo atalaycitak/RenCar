@@ -17,7 +17,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
-class LicenseRepositoryImpl(
+class DefaultLicenseRepository(
     private val api: RenCarApi,
     private val context: Context
 ) : LicenseRepository {
