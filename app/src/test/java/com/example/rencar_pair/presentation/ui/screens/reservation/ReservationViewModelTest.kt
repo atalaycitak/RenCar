@@ -3,6 +3,8 @@ package com.example.rencar_pair.presentation.ui.screens.reservation
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehicleStatus
+import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
@@ -21,7 +23,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import java.time.Instant
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ReservationViewModelTest {
 
     @get:Rule
@@ -72,16 +76,20 @@ private class FakeVehicleRepositoryForTest : VehicleRepository {
         plate = "34 TST 001",
         brand = "Renault",
         model = "Clio",
-        type = "HATCHBACK",
+        type = VehicleType.Hatchback,
         pricePerDay = 1000.0,
-        status = "AVAILABLE",
+        status = VehicleStatus.Available,
         latitude = 41.0,
         longitude = 29.0,
         rangeKm = 320,
         locationName = "Test lokasyon"
     )
 
-    override suspend fun getAvailableVehicles(): NetworkResult<List<Vehicle>> {
+    override suspend fun getAvailableVehicles(
+        type: String?,
+        page: Int?,
+        limit: Int?
+    ): NetworkResult<List<Vehicle>> {
         return NetworkResult.Success(listOf(vehicle))
     }
 
@@ -98,9 +106,10 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
         createdVehicleId = vehicleId
         rental = Rental(
             id = "rental-1",
+            userId = "user-1",
             vehicleId = vehicleId,
-            startDate = "now",
-            endDate = endDate,
+            startDate = Instant.parse("2026-01-01T10:00:00Z"),
+            endDate = Instant.parse(endDate),
             totalPrice = 1230.0,
             status = "ACTIVE"
         )
@@ -115,9 +124,10 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
         return NetworkResult.Success(
             rental ?: Rental(
                 id = id,
+                userId = "user-1",
                 vehicleId = "vehicle-1",
-                startDate = "now",
-                endDate = "later",
+                startDate = Instant.parse("2026-01-01T10:00:00Z"),
+                endDate = Instant.parse("2026-01-02T10:00:00Z"),
                 totalPrice = 1230.0,
                 status = "ACTIVE"
             )
@@ -127,9 +137,10 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
     override suspend fun returnRental(id: String): NetworkResult<Rental> {
         val completed = (rental ?: Rental(
             id = id,
+            userId = "user-1",
             vehicleId = "vehicle-1",
-            startDate = "now",
-            endDate = "later",
+            startDate = Instant.parse("2026-01-01T10:00:00Z"),
+            endDate = Instant.parse("2026-01-02T10:00:00Z"),
             totalPrice = 1230.0,
             status = "ACTIVE"
         )).copy(status = "COMPLETED")
