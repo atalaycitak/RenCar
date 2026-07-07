@@ -33,9 +33,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,15 +47,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.presentation.ui.components.RenCarMap
+import com.example.rencar_pair.presentation.ui.components.RenCarMapDefaults
 import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
 import com.example.rencar_pair.presentation.ui.components.VehicleDetailBottomSheet
 import com.example.rencar_pair.ui.theme.RenCarTheme
@@ -66,6 +71,13 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val locationPermissions = remember {
+        arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    }
+    var locationPermissionRequested by rememberSaveable { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
@@ -74,8 +86,21 @@ fun HomeScreen(
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+    fun hasLocationPermission(): Boolean {
+        return locationPermissions.any { permission ->
+            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    fun requestLocationPermission() {
+        locationPermissionRequested = true
+        permissionLauncher.launch(locationPermissions)
+    }
+
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
+
             val fineGranted = ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -87,20 +112,30 @@ fun HomeScreen(
 
             if (fineGranted || coarseGranted) {
                 viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
+            } else if (!locationPermissionRequested) {
+                requestLocationPermission()
             } else {
-                permissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    )
-                )
+                viewModel.onIntent(HomeIntent.LocationPermissionChanged(false))
             }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(Unit) {
+        if (hasLocationPermission()) {
+            viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
+        } else if (!locationPermissionRequested) {
+            requestLocationPermission()
+        } else {
+            viewModel.onIntent(HomeIntent.LocationPermissionChanged(false))
         }
     }
 
     HomeScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
+        onRequestLocationPermission = ::requestLocationPermission,
         onVehicleDetails = onVehicleDetails,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile
@@ -111,6 +146,7 @@ fun HomeScreen(
 fun HomeScreenContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
+    onRequestLocationPermission: () -> Unit,
     onVehicleDetails: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
@@ -145,11 +181,11 @@ fun HomeScreenContent(
                 val centerLat = state.selectedVehicle?.latitude
                     ?: state.userLocation?.latitude
                     ?: visibleVehicles.firstOrNull()?.latitude
-                    ?: 41.0082
+                    ?: RenCarMapDefaults.DefaultLatitude
                 val centerLng = state.selectedVehicle?.longitude
                     ?: state.userLocation?.longitude
                     ?: visibleVehicles.firstOrNull()?.longitude
-                    ?: 28.9784
+                    ?: RenCarMapDefaults.DefaultLongitude
 
                 val mapMarkers = remember(visibleVehicles) {
                     visibleVehicles.map { vehicle ->
@@ -193,7 +229,13 @@ fun HomeScreenContent(
                 }
 
                 FloatingActionButton(
-                    onClick = { onIntent(HomeIntent.FetchUserLocation) },
+                    onClick = {
+                        if (state.locationPermissionGranted) {
+                            onIntent(HomeIntent.FetchUserLocation)
+                        } else {
+                            onRequestLocationPermission()
+                        }
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(16.dp),
@@ -464,6 +506,7 @@ private fun HomeScreenPreview() {
                 locationPermissionGranted = true
             ),
             onIntent = {},
+            onRequestLocationPermission = {},
             onVehicleDetails = {},
             onNavigateToHistory = {},
             onNavigateToProfile = {}

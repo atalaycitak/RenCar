@@ -6,11 +6,15 @@ import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 import com.example.rencar_pair.presentation.mvi.NoEffect
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
 
 class HomeViewModel(
     private val vehicleUseCases: VehicleUseCases,
     private val locationTracker: LocationTracker
 ) : BaseMviViewModel<HomeState, HomeIntent, NoEffect>(HomeState()) {
+
+    private var locationUpdatesJob: Job? = null
 
     init {
         onIntent(HomeIntent.LoadVehicles)
@@ -52,13 +56,22 @@ class HomeViewModel(
             }
             is HomeIntent.LocationPermissionChanged -> {
                 updateState {
-                    it.copy(locationPermissionGranted = intent.granted)
+                    it.copy(
+                        locationPermissionGranted = intent.granted,
+                        userLocation = if (intent.granted) it.userLocation else null
+                    )
                 }
                 if (intent.granted) {
+                    startLocationUpdates()
+                } else {
+                    stopLocationUpdates()
+                }
+            }
+            HomeIntent.FetchUserLocation -> {
+                if (currentState().locationPermissionGranted) {
                     fetchUserLocation()
                 }
             }
-            HomeIntent.FetchUserLocation -> fetchUserLocation()
         }
     }
 
@@ -71,7 +84,11 @@ class HomeViewModel(
                         vehicles = result.data,
                         isLoading = false
                     )
-                    next.copy(selectedVehicleId = next.firstVisibleVehicleId())
+                    if (next.filteredVehicles.any { vehicle -> vehicle.id == next.selectedVehicleId }) {
+                        next
+                    } else {
+                        next.copy(selectedVehicleId = null)
+                    }
                 }
                 is NetworkResult.Error -> updateState {
                     it.copy(isLoading = false, errorMessage = result.message)
@@ -85,6 +102,25 @@ class HomeViewModel(
             val location = locationTracker.getCurrentLocation()
             updateState { it.copy(userLocation = location) }
         }
+    }
+
+    private fun startLocationUpdates() {
+        if (locationUpdatesJob?.isActive == true) return
+
+        locationUpdatesJob = launchCoroutine {
+            locationTracker.observeLocationUpdates()
+                .catch {
+                    updateState { state -> state.copy(userLocation = null) }
+                }
+                .collect { location ->
+                    updateState { it.copy(userLocation = location) }
+                }
+        }
+    }
+
+    private fun stopLocationUpdates() {
+        locationUpdatesJob?.cancel()
+        locationUpdatesJob = null
     }
 
     private fun updateFilterState(transform: (HomeState) -> HomeState) {
