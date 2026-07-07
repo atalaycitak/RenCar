@@ -2,18 +2,23 @@ package com.example.rencar_pair.presentation.ui.screens.active_rental
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.usecase.RentalUseCases
+import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import java.time.Duration
+import java.time.Instant
 
 class ActiveRentalViewModel(
-    private val rentalUseCases: RentalUseCases
+    private val rentalUseCases: RentalUseCases,
+    private val vehicleUseCases: VehicleUseCases
 ) : BaseMviViewModel<ActiveRentalState, ActiveRentalIntent, ActiveRentalEffect>(
     ActiveRentalState()
 ) {
 
     private var timerJob: Job? = null
+    private var timerEnabled: Boolean = true
 
     override fun onIntent(intent: ActiveRentalIntent) {
         when (intent) {
@@ -28,15 +33,17 @@ class ActiveRentalViewModel(
             updateState { it.copy(isLoading = true, errorMessage = null) }
             when (val result = rentalUseCases.getRental(rentalId)) {
                 is NetworkResult.Success -> {
+                    val elapsedMinutes = result.data.startDate.elapsedMinutesUntilNow()
                     updateState {
                         it.copy(
                             isLoading = false,
                             rental = result.data,
-                            elapsedMinutes = 0,
+                            elapsedMinutes = elapsedMinutes,
                             distanceKm = 0.0,
-                            currentCost = result.data.totalPrice
+                            currentCost = result.data.estimatedCurrentCost(elapsedMinutes)
                         )
                     }
+                    loadVehicle(result.data.vehicleId)
                     startTimer()
                 }
                 is NetworkResult.Error -> {
@@ -46,7 +53,17 @@ class ActiveRentalViewModel(
         }
     }
 
+    private fun loadVehicle(vehicleId: String) {
+        launchCoroutine {
+            when (val result = vehicleUseCases.getVehicleDetail(vehicleId)) {
+                is NetworkResult.Success -> updateState { it.copy(vehicle = result.data) }
+                is NetworkResult.Error -> emitEffect(ActiveRentalEffect.ShowError(result.message))
+            }
+        }
+    }
+
     private fun startTimer() {
+        if (!timerEnabled) return
         timerJob?.cancel()
         timerJob = launchCoroutine {
             while (isActive) {
@@ -77,6 +94,22 @@ class ActiveRentalViewModel(
                 )
             }
         }
+    }
+
+    internal fun setTimerEnabled(enabled: Boolean) {
+        timerEnabled = enabled
+        if (!enabled) {
+            timerJob?.cancel()
+            timerJob = null
+        }
+    }
+
+    private fun Instant.elapsedMinutesUntilNow(): Int {
+        return Duration.between(this, Instant.now()).toMinutes().coerceAtLeast(0).toInt()
+    }
+
+    private fun com.example.rencar_pair.domain.model.Rental.estimatedCurrentCost(elapsedMinutes: Int): Double {
+        return totalPrice + elapsedMinutes * COST_PER_MINUTE
     }
 
     private companion object {
