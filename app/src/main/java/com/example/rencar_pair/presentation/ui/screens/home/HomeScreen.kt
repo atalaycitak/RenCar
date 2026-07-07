@@ -65,6 +65,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     onVehicleDetails: (String) -> Unit,
+    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
@@ -137,6 +138,7 @@ fun HomeScreen(
         onIntent = viewModel::onIntent,
         onRequestLocationPermission = ::requestLocationPermission,
         onVehicleDetails = onVehicleDetails,
+        onReserveVehicle = onReserveVehicle,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile
     )
@@ -148,6 +150,7 @@ fun HomeScreenContent(
     onIntent: (HomeIntent) -> Unit,
     onRequestLocationPermission: () -> Unit,
     onVehicleDetails: (String) -> Unit,
+    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
@@ -268,7 +271,7 @@ fun HomeScreenContent(
                     onDismissRequest = { onIntent(HomeIntent.SelectVehicle(null)) },
                     onRentClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
-                        onVehicleDetails(vehicle.id)
+                        onReserveVehicle(vehicle.id)
                     }
                 )
             }
@@ -531,6 +534,7 @@ private fun HomeScreenPreview() {
             onIntent = {},
             onRequestLocationPermission = {},
             onVehicleDetails = {},
+            onReserveVehicle = {},
             onNavigateToHistory = {},
             onNavigateToProfile = {}
         )

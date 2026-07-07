@@ -22,6 +22,7 @@ sealed interface ReservationIntent : MviIntent {
     data object LoadVehicle : ReservationIntent
     data object IncreaseDays : ReservationIntent
     data object DecreaseDays : ReservationIntent
+    data class SelectDays(val days: Int) : ReservationIntent
     data object ConfirmReservation : ReservationIntent
 }
 
