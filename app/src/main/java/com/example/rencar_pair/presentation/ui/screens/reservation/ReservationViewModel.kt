@@ -39,6 +39,14 @@ class ReservationViewModel(
                     quote = current.vehicle?.let { calculateReservationQuoteUseCase(it, newDays) }
                 )
             }
+            is ReservationIntent.SelectDays -> updateState { current ->
+                val newDays = intent.days.coerceIn(1, 30)
+                current.copy(
+                    selectedDays = newDays,
+                    quote = current.vehicle?.let { calculateReservationQuoteUseCase(it, newDays) },
+                    errorMessage = null
+                )
+            }
             ReservationIntent.ConfirmReservation -> confirmReservation()
         }
     }

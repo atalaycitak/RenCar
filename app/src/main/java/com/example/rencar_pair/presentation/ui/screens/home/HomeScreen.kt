@@ -65,6 +65,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     onVehicleDetails: (String) -> Unit,
+    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
@@ -137,6 +138,7 @@ fun HomeScreen(
         onIntent = viewModel::onIntent,
         onRequestLocationPermission = ::requestLocationPermission,
         onVehicleDetails = onVehicleDetails,
+        onReserveVehicle = onReserveVehicle,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile
     )
@@ -148,10 +150,11 @@ fun HomeScreenContent(
     onIntent: (HomeIntent) -> Unit,
     onRequestLocationPermission: () -> Unit,
     onVehicleDetails: (String) -> Unit,
+    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
-    val visibleVehicles = state.filteredVehicles
+    val visibleVehicles = state.nearbyVehicles
 
     Scaffold(
         bottomBar = {
@@ -187,14 +190,20 @@ fun HomeScreenContent(
                     ?: visibleVehicles.firstOrNull()?.longitude
                     ?: RenCarMapDefaults.DefaultLongitude
 
-                val mapMarkers = remember(visibleVehicles) {
+                val mapMarkers = remember(visibleVehicles, state.selectedVehicleId, state.userLocation) {
                     visibleVehicles.map { vehicle ->
+                        val distance = state.distanceKmTo(vehicle)?.formatDistance()
                         RenCarMapMarker(
                             id = vehicle.id,
                             latitude = vehicle.latitude,
                             longitude = vehicle.longitude,
                             title = vehicle.title,
-                            snippet = "${vehicle.pricePerDay.toInt()} TL/gun"
+                            snippet = listOfNotNull(
+                                "${vehicle.pricePerDay.toInt()} TL/gün",
+                                "${vehicle.rangeKm} km menzil",
+                                distance
+                            ).joinToString(" • "),
+                            selected = vehicle.id == state.selectedVehicleId
                         )
                     }
                 }
@@ -231,7 +240,7 @@ fun HomeScreenContent(
                 FloatingActionButton(
                     onClick = {
                         if (state.locationPermissionGranted) {
-                            onIntent(HomeIntent.FetchUserLocation)
+                            onIntent(HomeIntent.FocusUserLocation)
                         } else {
                             onRequestLocationPermission()
                         }
@@ -258,10 +267,11 @@ fun HomeScreenContent(
             state.selectedVehicle?.let { vehicle ->
                 VehicleDetailBottomSheet(
                     vehicle = vehicle,
+                    distanceLabel = state.distanceKmTo(vehicle)?.formatDistance(),
                     onDismissRequest = { onIntent(HomeIntent.SelectVehicle(null)) },
                     onRentClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
-                        onVehicleDetails(vehicle.id)
+                        onReserveVehicle(vehicle.id)
                     }
                 )
             }
@@ -349,7 +359,7 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Text(
-            text = "Konum izni verilmedi. Araclar varsayilan Istanbul konumunda gosteriliyor.",
+            text = "Konum izni verilmedi. Araçlar varsayılan İstanbul konumunda gösteriliyor.",
             modifier = Modifier.padding(14.dp),
             style = MaterialTheme.typography.bodyMedium
         )
@@ -368,7 +378,7 @@ private fun VehiclePanel(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Yakindaki araclar (${visibleVehicles.size})",
+            text = "Yakındaki araçlar (${visibleVehicles.size})",
             style = MaterialTheme.typography.titleLarge
         )
         state.errorMessage?.let {
@@ -379,9 +389,9 @@ private fun VehiclePanel(
         } else if (visibleVehicles.isEmpty()) {
             Text(
                 text = if (state.hasActiveFilters) {
-                    "Bu filtrelere uygun arac bulunamadi."
+                    "Bu filtrelere uygun araç bulunamadı."
                 } else {
-                    "Yakinda arac bulunamadi. Lutfen daha sonra tekrar deneyin."
+                    "Yakında araç bulunamadı. Lütfen daha sonra tekrar deneyin."
                 },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -393,6 +403,7 @@ private fun VehiclePanel(
                     VehicleRow(
                         vehicle = vehicle,
                         selected = vehicle.id == state.selectedVehicle?.id,
+                        distanceLabel = state.distanceKmTo(vehicle)?.formatDistance(),
                         onClick = { onSelect(vehicle.id) },
                         onDetailsClick = { onVehicleDetails(vehicle.id) }
                     )
@@ -406,6 +417,7 @@ private fun VehiclePanel(
 private fun VehicleRow(
     vehicle: Vehicle,
     selected: Boolean,
+    distanceLabel: String?,
     onClick: () -> Unit,
     onDetailsClick: () -> Unit
 ) {
@@ -430,10 +442,16 @@ private fun VehicleRow(
             Column {
                 Text(text = "${vehicle.brand} ${vehicle.model}", style = MaterialTheme.typography.titleMedium)
                 Text(text = "${vehicle.plate} - ${vehicle.type}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${vehicle.rangeKm} km menzil", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = listOfNotNull(
+                        "${vehicle.rangeKm} km menzil",
+                        distanceLabel
+                    ).joinToString(" • "),
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = "${vehicle.pricePerDay.toInt()} TL/gun")
+                Text(text = "${vehicle.pricePerDay.toInt()} TL/gün")
                 TextButton(onClick = onDetailsClick) {
                     Text(text = "Detay")
                 }
@@ -448,7 +466,7 @@ private data class FilterOption<T>(
 )
 
 private val vehicleTypeOptions = listOf(
-    FilterOption<VehicleType>(null, "Tum tipler"),
+    FilterOption<VehicleType>(null, "Tüm tipler"),
     FilterOption(VehicleType.Sedan, "Sedan"),
     FilterOption(VehicleType.Suv, "SUV"),
     FilterOption(VehicleType.Hatchback, "Hatchback"),
@@ -456,19 +474,27 @@ private val vehicleTypeOptions = listOf(
 )
 
 private val priceOptions = listOf(
-    FilterOption<Int>(null, "Tum fiyatlar"),
-    FilterOption(1000, "1000 TL alti"),
-    FilterOption(1500, "1500 TL alti"),
-    FilterOption(2500, "2500 TL alti"),
-    FilterOption(4000, "4000 TL alti")
+    FilterOption<Int>(null, "Tüm fiyatlar"),
+    FilterOption(1000, "1000 TL altı"),
+    FilterOption(1500, "1500 TL altı"),
+    FilterOption(2500, "2500 TL altı"),
+    FilterOption(4000, "4000 TL altı")
 )
 
 private val rangeOptions = listOf(
-    FilterOption<Int>(null, "Tum menziller"),
+    FilterOption<Int>(null, "Tüm menziller"),
     FilterOption(300, "300+ km"),
     FilterOption(400, "400+ km"),
     FilterOption(500, "500+ km")
 )
+
+private fun Double.formatDistance(): String {
+    return if (this < 1.0) {
+        "${(this * 1000).toInt()} m"
+    } else {
+        "%.1f km".format(this)
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -508,6 +534,7 @@ private fun HomeScreenPreview() {
             onIntent = {},
             onRequestLocationPermission = {},
             onVehicleDetails = {},
+            onReserveVehicle = {},
             onNavigateToHistory = {},
             onNavigateToProfile = {}
         )

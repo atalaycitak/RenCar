@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,25 +19,32 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.ReservationQuote
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarTopBar
 import com.example.rencar_pair.ui.theme.RenCarTheme
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.Locale
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -111,42 +120,89 @@ private fun ReservationView(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(text = vehicle.title, style = MaterialTheme.typography.titleLarge)
-                Text(text = vehicle.plate, style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${vehicle.locationName} teslim noktası")
-            }
+        VehicleSummaryCard(vehicle = vehicle)
+
+        DurationPicker(
+            selectedDays = state.selectedDays,
+            onIntent = onIntent
+        )
+
+        ReservationDateCard(quote = quote)
+
+        QuoteCard(quote = quote)
+
+        CancellationPolicyCard()
+
+        state.errorMessage?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp)
+        PrimaryButton(
+            text = if (state.isSubmitting) "Rezervasyon oluşturuluyor" else "Rezervasyonu onayla",
+            onClick = { onIntent(ReservationIntent.ConfirmReservation) },
+            enabled = !state.isSubmitting
+        )
+    }
+}
+
+@Composable
+private fun VehicleSummaryCard(vehicle: Vehicle) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = vehicle.title, style = MaterialTheme.typography.titleLarge)
+            Text(text = vehicle.plate, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "${vehicle.locationName} teslim noktası",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "${vehicle.rangeKm} km şarj menzili",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun DurationPicker(
+    selectedDays: Int,
+    onIntent: (ReservationIntent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
                     Text(text = "Kiralama süresi", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "1-30 gün arası seçilebilir")
+                    Text(
+                        text = "1-30 gün arasında seçilebilir",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { onIntent(ReservationIntent.DecreaseDays) }) {
                         Icon(Icons.Default.Remove, contentDescription = "Azalt")
                     }
                     Text(
-                        text = "${state.selectedDays}",
+                        text = "$selectedDays gün",
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                     IconButton(onClick = { onIntent(ReservationIntent.IncreaseDays) }) {
@@ -154,25 +210,39 @@ private fun ReservationView(
                     }
                 }
             }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                durationOptions.forEach { days ->
+                    FilterChip(
+                        selected = selectedDays == days,
+                        onClick = { onIntent(ReservationIntent.SelectDays(days)) },
+                        label = { Text("$days gün") }
+                    )
+                }
+            }
         }
+    }
+}
 
-        QuoteCard(quote = quote)
-
-        state.errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+@Composable
+private fun ReservationDateCard(quote: ReservationQuote) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(text = "Tarih özeti", style = MaterialTheme.typography.titleMedium)
+            QuoteRow("Teslim alma", Instant.now().formatReservationDate())
+            QuoteRow("İade tarihi", quote.endDateIso.formatReservationDate())
+            Text(
+                text = "Kiralama isteği gerçek API'ye araç kimliği ve iade tarihi ile gönderilir.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-
-        Text(
-            text = "Not: Fiyat hesaplama istemci tarafında fake use case ile gösterilir; backend kiralama oluştururken kendi toplam fiyatını kilitler.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        PrimaryButton(
-            text = if (state.isSubmitting) "Oluşturuluyor" else "Rezervasyonu onayla",
-            onClick = { onIntent(ReservationIntent.ConfirmReservation) },
-            enabled = !state.isSubmitting
-        )
     }
 }
 
@@ -187,11 +257,35 @@ private fun QuoteCard(quote: ReservationQuote) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuoteRow("Günlük fiyat", "${quote.pricePerDay.toInt()} TL")
+            Text(text = "Fiyat özeti", style = MaterialTheme.typography.titleMedium)
+            QuoteRow("Günlük fiyat", quote.pricePerDay.formatCurrency())
             QuoteRow("Süre", "${quote.days} gün")
-            QuoteRow("Servis bedeli", "${quote.serviceFee.toInt()} TL")
-            QuoteRow("Teslim ücreti", "${quote.deliveryFee.toInt()} TL")
-            QuoteRow("Toplam", "${quote.totalPrice.toInt()} TL", strong = true)
+            QuoteRow("Ara toplam", quote.subtotal.formatCurrency())
+            QuoteRow("Servis bedeli", quote.serviceFee.formatCurrency())
+            QuoteRow("Teslim ücreti", quote.deliveryFee.formatCurrency())
+            Spacer(modifier = Modifier.height(2.dp))
+            QuoteRow("Toplam", quote.totalPrice.formatCurrency(), strong = true)
+        }
+    }
+}
+
+@Composable
+private fun CancellationPolicyCard() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(text = "İptal koşulu", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = "Teslim saatinden 2 saat öncesine kadar ücretsiz iptal edilebilir. Teslim sonrası ücretlendirme başlar.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -214,6 +308,29 @@ private fun QuoteRow(
     }
 }
 
+private val durationOptions = listOf(1, 3, 7, 14)
+
+private val reservationDateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm")
+        .withLocale(Locale.forLanguageTag("tr-TR"))
+        .withZone(ZoneId.systemDefault())
+
+private fun String.formatReservationDate(): String {
+    return try {
+        Instant.parse(this).formatReservationDate()
+    } catch (_: DateTimeParseException) {
+        this
+    }
+}
+
+private fun Instant.formatReservationDate(): String {
+    return reservationDateFormatter.format(this)
+}
+
+private fun Double.formatCurrency(): String {
+    return "₺${"%.2f".format(this)}"
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ReservationScreenPreview() {
@@ -234,7 +351,7 @@ private fun ReservationScreenPreview() {
                 ),
                 quote = ReservationQuote(
                     vehicleId = "1",
-                    endDateIso = "2024-01-01T00:00:00Z",
+                    endDateIso = "2026-01-01T00:00:00Z",
                     pricePerDay = 600.0,
                     days = 3,
                     serviceFee = 100.0,

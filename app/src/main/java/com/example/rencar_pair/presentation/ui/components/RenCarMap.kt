@@ -2,6 +2,10 @@
 
 package com.example.rencar_pair.presentation.ui.components
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,6 +22,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.annotations.Icon
+import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
@@ -39,7 +45,8 @@ data class RenCarMapMarker(
     val latitude: Double,
     val longitude: Double,
     val title: String,
-    val snippet: String
+    val snippet: String,
+    val selected: Boolean = false
 )
 
 @Composable
@@ -60,6 +67,12 @@ fun RenCarMap(
 
     var mapLibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
     var lastCameraTarget by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    val defaultVehicleIcon = remember(context) {
+        createVehicleMarkerIcon(context, fillColor = "#1FA463", strokeColor = "#FFFFFF")
+    }
+    val selectedVehicleIcon = remember(context) {
+        createVehicleMarkerIcon(context, fillColor = "#F59E0B", strokeColor = "#111827")
+    }
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -136,12 +149,13 @@ fun RenCarMap(
 
                 val markerIdMap = mutableMapOf<org.maplibre.android.annotations.Marker, String>()
 
-                markers.forEach { marker ->
+                markers.sortedBy { it.selected }.forEach { marker ->
                     val addedMarker = map.addMarker(
                         MarkerOptions()
                             .position(LatLng(marker.latitude, marker.longitude))
                             .title(marker.title)
                             .snippet(marker.snippet)
+                            .icon(if (marker.selected) selectedVehicleIcon else defaultVehicleIcon)
                     )
                     markerIdMap[addedMarker] = marker.id
                 }
@@ -151,11 +165,7 @@ fun RenCarMap(
                     style.updateUserLocation(userLatitude, userLongitude)
                 }
 
-                val cameraLatLng = if (userLatitude != null && userLongitude != null) {
-                    LatLng(userLatitude, userLongitude)
-                } else {
-                    LatLng(latitude, longitude)
-                }
+                val cameraLatLng = LatLng(latitude, longitude)
                 val cameraTarget = cameraLatLng.latitude to cameraLatLng.longitude
                 if (lastCameraTarget != cameraTarget) {
                     map.animateCamera(
@@ -224,4 +234,25 @@ private fun Style.updateUserLocation(latitude: Double?, longitude: Double?) {
 
 private fun emptyUserLocationFeatureCollection(): FeatureCollection {
     return FeatureCollection.fromFeatures(emptyArray<Feature>())
+}
+
+private fun createVehicleMarkerIcon(
+    context: android.content.Context,
+    fillColor: String,
+    strokeColor: String
+): Icon {
+    val bitmap = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    paint.color = Color.parseColor(fillColor)
+    paint.style = Paint.Style.FILL
+    canvas.drawCircle(24f, 24f, 15f, paint)
+
+    paint.color = Color.parseColor(strokeColor)
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = 5f
+    canvas.drawCircle(24f, 24f, 15f, paint)
+
+    return IconFactory.getInstance(context).fromBitmap(bitmap)
 }

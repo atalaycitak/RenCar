@@ -1,9 +1,23 @@
 package com.example.rencar_pair.presentation.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +30,7 @@ import com.example.rencar_pair.domain.model.Vehicle
 @Composable
 fun VehicleDetailBottomSheet(
     vehicle: Vehicle,
+    distanceLabel: String? = null,
     onDismissRequest: () -> Unit,
     onRentClick: () -> Unit
 ) {
@@ -34,7 +49,6 @@ fun VehicleDetailBottomSheet(
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Image Placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -51,7 +65,6 @@ fun VehicleDetailBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Title & Price
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -89,7 +102,14 @@ fun VehicleDetailBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Rent Button
+            VehicleQuickFacts(
+                vehicle = vehicle,
+                distanceLabel = distanceLabel,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(
                 onClick = onRentClick,
                 modifier = Modifier
@@ -103,6 +123,71 @@ fun VehicleDetailBottomSheet(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun VehicleQuickFacts(
+    vehicle: Vehicle,
+    distanceLabel: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            VehicleFactChip(
+                label = "Şarj menzili",
+                value = "${vehicle.rangeKm} km",
+                modifier = Modifier.weight(1f)
+            )
+            VehicleFactChip(
+                label = "Mesafe",
+                value = distanceLabel ?: "Konum bekleniyor",
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            VehicleFactChip(
+                label = "Plaka",
+                value = vehicle.plate,
+                modifier = Modifier.weight(1f)
+            )
+            VehicleFactChip(
+                label = "Tip",
+                value = vehicle.type.name,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun VehicleFactChip(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }

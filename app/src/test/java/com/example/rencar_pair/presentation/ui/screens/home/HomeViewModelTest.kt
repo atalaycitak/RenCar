@@ -54,6 +54,19 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `nearby vehicles are sorted by user location`() = runTest {
+        val locationTracker = FakeLocationTrackerForHomeTest()
+        val viewModel = createViewModel(locationTracker = locationTracker)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
+        locationTracker.emitLocation(UserLocation(latitude = 41.0, longitude = 29.0))
+        advanceUntilIdle()
+
+        assertEquals("sedan-1", viewModel.state.value.nearbyVehicles.first().id)
+    }
+
+    @Test
     fun `type filter reloads vehicles with api query`() = runTest {
         val repository = FakeVehicleRepositoryForHomeTest()
         val viewModel = createViewModel(repository)
@@ -111,6 +124,19 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `focus user location clears selected vehicle`() = runTest {
+        val locationTracker = FakeLocationTrackerForHomeTest()
+        val viewModel = createViewModel(locationTracker = locationTracker)
+        advanceUntilIdle()
+        viewModel.onIntent(HomeIntent.SelectVehicle("suv-1"))
+
+        viewModel.onIntent(HomeIntent.FocusUserLocation)
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.state.value.selectedVehicleId)
+    }
+
+    @Test
     fun `location permission denied clears observed location`() = runTest {
         val locationTracker = FakeLocationTrackerForHomeTest()
         val viewModel = createViewModel(locationTracker = locationTracker)
@@ -141,9 +167,9 @@ private class FakeVehicleRepositoryForHomeTest : VehicleRepository {
 
     private val vehicles = listOf(
         testVehicle("sedan-1", VehicleType.Sedan, 900.0, 420),
-        testVehicle("sedan-2", VehicleType.Sedan, 1400.0, 350),
-        testVehicle("suv-1", VehicleType.Suv, 2200.0, 410),
-        testVehicle("hatch-1", VehicleType.Hatchback, 1800.0, 260)
+        testVehicle("sedan-2", VehicleType.Sedan, 1400.0, 350, latitude = 41.03, longitude = 29.03),
+        testVehicle("suv-1", VehicleType.Suv, 2200.0, 410, latitude = 41.06, longitude = 29.06),
+        testVehicle("hatch-1", VehicleType.Hatchback, 1800.0, 260, latitude = 41.09, longitude = 29.09)
     )
 
     override suspend fun getAvailableVehicles(
@@ -187,7 +213,9 @@ private fun testVehicle(
     id: String,
     type: VehicleType,
     price: Double,
-    rangeKm: Int
+    rangeKm: Int,
+    latitude: Double = 41.0,
+    longitude: Double = 29.0
 ): Vehicle {
     return Vehicle(
         id = id,
@@ -197,8 +225,8 @@ private fun testVehicle(
         type = type,
         pricePerDay = price,
         status = VehicleStatus.Available,
-        latitude = 41.0,
-        longitude = 29.0,
+        latitude = latitude,
+        longitude = longitude,
         rangeKm = rangeKm
     )
 }

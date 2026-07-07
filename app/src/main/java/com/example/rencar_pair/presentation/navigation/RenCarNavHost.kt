@@ -122,6 +122,9 @@ fun RenCarNavHost(
                 onVehicleDetails = { vehicleId ->
                     navController.navigate(VehicleDetailRoute(vehicleId))
                 },
+                onReserveVehicle = { vehicleId ->
+                    navController.navigate(ReservationRoute(vehicleId))
+                },
                 onNavigateToHistory = {
                     navController.navigate(TripHistoryListRoute) {
                         popUpTo(navController.graph.startDestinationId)
@@ -152,7 +155,10 @@ fun RenCarNavHost(
             ReservationScreen(
                 onBack = { navController.popBackStack() },
                 onDeliveryChecklist = { rentalId, vehicleId ->
-                    navController.navigate(DeliveryChecklistRoute(rentalId, vehicleId))
+                    navController.navigate(DeliveryChecklistRoute(rentalId, vehicleId)) {
+                        popUpTo<ReservationRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
