@@ -10,6 +10,8 @@ import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -81,12 +83,55 @@ class HomeViewModelTest {
         assertTrue(!viewModel.state.value.hasActiveFilters)
     }
 
+    @Test
+    fun `location permission granted observes user location updates`() = runTest {
+        val locationTracker = FakeLocationTrackerForHomeTest()
+        val viewModel = createViewModel(locationTracker = locationTracker)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
+        locationTracker.emitLocation(UserLocation(latitude = 41.0, longitude = 29.0))
+        advanceUntilIdle()
+
+        assertEquals(UserLocation(latitude = 41.0, longitude = 29.0), viewModel.state.value.userLocation)
+        assertEquals(1, locationTracker.observeCount)
+    }
+
+    @Test
+    fun `fetch user location is ignored until permission is granted`() = runTest {
+        val locationTracker = FakeLocationTrackerForHomeTest()
+        val viewModel = createViewModel(locationTracker = locationTracker)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.FetchUserLocation)
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.state.value.userLocation)
+        assertEquals(0, locationTracker.fetchCount)
+    }
+
+    @Test
+    fun `location permission denied clears observed location`() = runTest {
+        val locationTracker = FakeLocationTrackerForHomeTest()
+        val viewModel = createViewModel(locationTracker = locationTracker)
+        advanceUntilIdle()
+
+        viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
+        locationTracker.emitLocation(UserLocation(latitude = 41.0, longitude = 29.0))
+        advanceUntilIdle()
+        viewModel.onIntent(HomeIntent.LocationPermissionChanged(false))
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.state.value.userLocation)
+    }
+
     private fun createViewModel(
-        vehicleRepository: VehicleRepository = FakeVehicleRepositoryForHomeTest()
+        vehicleRepository: VehicleRepository = FakeVehicleRepositoryForHomeTest(),
+        locationTracker: LocationTracker = FakeLocationTrackerForHomeTest()
     ): HomeViewModel {
         return HomeViewModel(
             vehicleUseCases = VehicleUseCases(vehicleRepository),
-            locationTracker = FakeLocationTrackerForHomeTest()
+            locationTracker = locationTracker
         )
     }
 }
@@ -119,8 +164,22 @@ private class FakeVehicleRepositoryForHomeTest : VehicleRepository {
 }
 
 private class FakeLocationTrackerForHomeTest : LocationTracker {
+    var fetchCount: Int = 0
+    var observeCount: Int = 0
+    private val locationUpdates = MutableSharedFlow<UserLocation>(replay = 1)
+
     override suspend fun getCurrentLocation(): UserLocation {
+        fetchCount += 1
         return UserLocation(latitude = 41.0, longitude = 29.0)
+    }
+
+    override fun observeLocationUpdates(): Flow<UserLocation> {
+        observeCount += 1
+        return locationUpdates
+    }
+
+    suspend fun emitLocation(location: UserLocation) {
+        locationUpdates.emit(location)
     }
 }
 
