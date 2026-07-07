@@ -72,6 +72,12 @@ class HomeViewModel(
                     fetchUserLocation()
                 }
             }
+            HomeIntent.FocusUserLocation -> {
+                updateState { it.copy(selectedVehicleId = null) }
+                if (currentState().locationPermissionGranted) {
+                    fetchUserLocation()
+                }
+            }
         }
     }
 
