@@ -47,16 +47,30 @@ class ReservationViewModelTest {
     }
 
     @Test
+    fun `select days recalculates quote for quick duration options`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onIntent(ReservationIntent.SelectDays(7))
+
+        val state = viewModel.state.value
+        assertEquals(7, state.selectedDays)
+        assertEquals(7560.0, state.quote?.totalPrice ?: 0.0, 0.0)
+    }
+
+    @Test
     fun `confirm reservation creates rental after quote is ready`() = runTest {
         val reservationRepository = FakeReservationRepositoryForTest()
         val viewModel = createViewModel(reservationRepository = reservationRepository)
 
         advanceUntilIdle()
+        val expectedEndDate = viewModel.state.value.quote?.endDateIso
         viewModel.onIntent(ReservationIntent.ConfirmReservation)
         advanceUntilIdle()
 
         assertEquals("rental-1", viewModel.state.value.rentalId)
         assertEquals("vehicle-1", reservationRepository.createdVehicleId)
+        assertEquals(expectedEndDate, reservationRepository.createdEndDate)
     }
 
     private fun createViewModel(
@@ -103,10 +117,12 @@ private class FakeVehicleRepositoryForTest : VehicleRepository {
 
 private class FakeReservationRepositoryForTest : ReservationRepository {
     var createdVehicleId: String? = null
+    var createdEndDate: String? = null
     private var rental: Rental? = null
 
     override suspend fun createRental(vehicleId: String, endDate: String): NetworkResult<Rental> {
         createdVehicleId = vehicleId
+        createdEndDate = endDate
         rental = Rental(
             id = "rental-1",
             userId = "user-1",
