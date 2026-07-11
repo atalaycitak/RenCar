@@ -1,24 +1,24 @@
 package com.example.rencar_pair.presentation.ui.screens.delivery
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,12 +27,15 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.rencar_pair.R
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
-import com.example.rencar_pair.presentation.ui.components.RenCarTopBar
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -59,104 +62,250 @@ fun DeliveryChecklistScreenContent(
     onDone: () -> Unit
 ) {
     Scaffold(
-        topBar = { RenCarTopBar(onBackClick = onBack, title = "Teslim kontrolü") }
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(bottom = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 6.dp)
+                        .padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(13.dp))
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_media_previous),
+                            contentDescription = "Geri",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Araç durumu",
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontSize = 19.sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        )
+                        Text(
+                            text = "Başlamadan önce 4 yönü çek",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    }
+                }
+            }
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(horizontal = 18.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            // Vehicle info and counter
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = if (state.isCompleted) "Teslim tamamlandı" else "Teslim onayı bekliyor",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Renault Clio · 34 RNC 022", // Mock
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(text = "Kiralama: ${state.rentalId}")
-                }
+                )
+                Text(
+                    text = "${state.completedPhotoCount} / 4 çekildi",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
             }
 
-            ChecklistRow(
-                icon = Icons.Default.DirectionsCar,
-                title = "Araç durumu",
-                description = "Dış hasar, yakıt/şarj ve temizlik kontrol edildi.",
-                checked = state.vehicleConditionChecked,
-                onToggle = { onIntent(DeliveryChecklistIntent.ToggleVehicleCondition) }
-            )
-            ChecklistRow(
-                icon = Icons.Default.PhotoCamera,
-                title = "Fotoğraf kaydı",
-                description = "Araç teslim fotoğrafları kullanıcı tarafından onaylandı.",
-                checked = state.photosChecked,
-                onToggle = { onIntent(DeliveryChecklistIntent.TogglePhotos) }
-            )
-            ChecklistRow(
-                icon = Icons.Default.Key,
-                title = "Anahtar ve kapılar",
-                description = "Kapılar ve anahtar teslimi kontrol edildi.",
-                checked = state.doorsAndKeyChecked,
-                onToggle = { onIntent(DeliveryChecklistIntent.ToggleDoorsAndKey) }
-            )
+            // Grid
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PhotoBox(
+                    modifier = Modifier.weight(1f),
+                    title = "Ön",
+                    isTaken = state.frontPhotoTaken,
+                    onClick = { onIntent(DeliveryChecklistIntent.TakeFrontPhoto) }
+                )
+                PhotoBox(
+                    modifier = Modifier.weight(1f),
+                    title = "Arka",
+                    isTaken = state.backPhotoTaken,
+                    onClick = { onIntent(DeliveryChecklistIntent.TakeBackPhoto) }
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PhotoBox(
+                    modifier = Modifier.weight(1f),
+                    title = "Sol",
+                    isTaken = state.leftPhotoTaken,
+                    onClick = { onIntent(DeliveryChecklistIntent.TakeLeftPhoto) }
+                )
+                PhotoBox(
+                    modifier = Modifier.weight(1f),
+                    title = "Sağ",
+                    isTaken = state.rightPhotoTaken,
+                    onClick = { onIntent(DeliveryChecklistIntent.TakeRightPhoto) }
+                )
+            }
 
-            Text(
-                text = "Not: Teslim kontrol adımları şu an local state ile tutulur; backend bu adımlar için ayrı endpoint sunmuyor.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Spacer(modifier = Modifier.weight(1f))
 
-            PrimaryButton(
-                text = if (state.isCompleted) "Haritaya dön" else "Kontrolü tamamla",
-                onClick = {
-                    if (state.isCompleted) {
-                        onDone()
-                    } else {
-                        onIntent(DeliveryChecklistIntent.CompleteChecklist)
-                    }
-                },
-                enabled = state.canComplete || state.isCompleted
-            )
+            // Warning message
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_dialog_alert), // Yellow alert icon
+                    contentDescription = null,
+                    tint = Color(0xFFE6A700),
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "Hasarları net çek — teslim sonrası anlaşmazlığı önler.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+
+            // Bottom Action
+            if (state.isCompleted) {
+                PrimaryButton(
+                    text = "Haritaya Dön",
+                    onClick = onDone,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                PrimaryButton(
+                    text = if (state.canComplete) "Kiralamayı Başlat" else "Kiralamayı Başlat · ${4 - state.completedPhotoCount} foto kaldı",
+                    onClick = {
+                        if (state.canComplete) {
+                            onIntent(DeliveryChecklistIntent.CompleteChecklist)
+                            onDone()
+                        }
+                    },
+                    enabled = state.canComplete,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
 
 @Composable
-private fun ChecklistRow(
-    icon: ImageVector,
+private fun PhotoBox(
+    modifier: Modifier = Modifier,
     title: String,
-    description: String,
-    checked: Boolean,
-    onToggle: () -> Unit
+    isTaken: Boolean,
+    onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+    if (isTaken) {
+        Box(
+            modifier = modifier
+                .height(158.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable(onClick = onClick)
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(text = description, style = MaterialTheme.typography.bodyMedium)
+            Box(
+                modifier = Modifier.padding(8.dp).background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(7.dp)).padding(horizontal = 9.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.background)
+                )
             }
-            Checkbox(checked = checked, onCheckedChange = { onToggle() })
-            if (checked) {
-                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Box(
+                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(24.dp).background(Color(0xFF1FB370), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp)
+                )
+            }
+        }
+    } else {
+        Box(
+            modifier = modifier
+                .height(158.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(7.dp)).padding(horizontal = 9.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Text(
+                    text = "Fotoğraf çek",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
             }
         }
     }
@@ -168,12 +317,12 @@ private fun DeliveryChecklistScreenPreview() {
     RenCarTheme {
         DeliveryChecklistScreenContent(
             state = DeliveryChecklistState(
-                rentalId = "RNT-12345",
-                vehicleId = "VHC-987",
-                vehicleConditionChecked = true,
-                photosChecked = false,
-                doorsAndKeyChecked = false,
-                isCompleted = false
+                rentalId = "RNT-123",
+                vehicleId = "VHC-123",
+                frontPhotoTaken = true,
+                backPhotoTaken = true,
+                leftPhotoTaken = false,
+                rightPhotoTaken = false
             ),
             onIntent = {},
             onBack = {},

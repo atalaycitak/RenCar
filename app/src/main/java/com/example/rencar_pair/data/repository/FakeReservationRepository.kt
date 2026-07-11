@@ -20,7 +20,7 @@ class FakeReservationRepository : ReservationRepository {
             vehicleId = vehicleId,
             startDate = Instant.now(),
             endDate = parseEndDate(endDate),
-            totalPrice = 0.0,
+            totalPrice = 1500.0,
             status = RentalStatus.Active
         )
         rentals.add(0, rental)

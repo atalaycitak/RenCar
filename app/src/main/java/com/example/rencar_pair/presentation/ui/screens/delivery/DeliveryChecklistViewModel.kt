@@ -14,14 +14,17 @@ class DeliveryChecklistViewModel(
 
     override fun onIntent(intent: DeliveryChecklistIntent) {
         when (intent) {
-            DeliveryChecklistIntent.ToggleVehicleCondition -> updateState {
-                it.copy(vehicleConditionChecked = !it.vehicleConditionChecked)
+            DeliveryChecklistIntent.TakeFrontPhoto -> updateState {
+                it.copy(frontPhotoTaken = true)
             }
-            DeliveryChecklistIntent.TogglePhotos -> updateState {
-                it.copy(photosChecked = !it.photosChecked)
+            DeliveryChecklistIntent.TakeBackPhoto -> updateState {
+                it.copy(backPhotoTaken = true)
             }
-            DeliveryChecklistIntent.ToggleDoorsAndKey -> updateState {
-                it.copy(doorsAndKeyChecked = !it.doorsAndKeyChecked)
+            DeliveryChecklistIntent.TakeLeftPhoto -> updateState {
+                it.copy(leftPhotoTaken = true)
+            }
+            DeliveryChecklistIntent.TakeRightPhoto -> updateState {
+                it.copy(rightPhotoTaken = true)
             }
             DeliveryChecklistIntent.CompleteChecklist -> updateState {
                 if (it.canComplete) it.copy(isCompleted = true) else it

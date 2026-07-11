@@ -3,31 +3,51 @@ package com.example.rencar_pair.presentation.ui.screens.trip_summary
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
-import com.example.rencar_pair.ui.theme.Blue50
-import com.example.rencar_pair.ui.theme.Error50
-import com.example.rencar_pair.ui.theme.Neutral10
-import com.example.rencar_pair.ui.theme.Neutral90
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
+import java.time.Duration
 
 @Composable
 fun TripSummaryScreen(
@@ -59,12 +79,16 @@ fun TripSummaryScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         TripSummaryScreenContent(
             state = state,
             onIntent = viewModel::onIntent,
             onNavigateToHome = onNavigateToHome,
-            modifier = modifier.padding(padding)
+            modifier = Modifier.padding(padding)
         )
     }
 }
@@ -83,140 +107,281 @@ fun TripSummaryScreenContent(
         return
     }
 
+    if (state.rental == null) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(text = state.errorMessage ?: "Kiralama bilgileri yüklenemedi.", color = MaterialTheme.colorScheme.error)
+                PrimaryButton(text = "Tekrar Dene", onClick = { onIntent(TripSummaryIntent.LoadSummary(state.rentalId ?: "")) })
+            }
+        }
+        return
+    }
+
+    val rentalDurationMins = Duration.between(state.rental.startDate, state.rental.endDate ?: Instant.now()).toMinutes()
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Neutral90)
-            .padding(24.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(18.dp)
     ) {
-        Text(
-            text = "Yolculuk Özeti",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Neutral10
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        state.errorMessage?.let {
-            Text(
-                text = it,
-                color = Error50,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Card(
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Success Header
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                ReceiptRow(
-                    label = "Araç Bedeli",
-                    value = "₺${"%.2f".format(state.rental?.totalPrice ?: 0.0)}"
-                )
-                ReceiptRow(label = "İndirim", value = "-₺0.00", valueColor = Color(0xFF10B981))
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+            Box(
+                modifier = Modifier
+                    .size(62.dp)
+                    .background(Color(0xFFE7F4EC), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(Color(0xFF1FB370), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("Toplam Tutar", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text(
-                        "₺${"%.2f".format(state.rental?.totalPrice ?: 0.0)}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_menu_agenda), // Mock checkmark
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Text("Ödeme Yöntemi", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Yolculuk tamamlandı",
+                style = MaterialTheme.typography.displayMedium.copy(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                ),
+                modifier = Modifier.padding(top = 12.dp)
+            )
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (state.savedCards.isEmpty()) {
-                item {
-                    Text(
-                        "Kayitli odeme yontemi bulunamadi.",
-                        color = Color.Gray,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-                }
-            } else {
-                items(state.savedCards, key = { it.cardToken }) { card ->
-                    PaymentCardItem(
-                        card = card,
-                        isSelected = state.selectedCardToken == card.cardToken,
-                        onClick = { onIntent(TripSummaryIntent.SelectCard(card.cardToken)) }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (state.isPaying) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        } else {
-            PrimaryButton(
-                text = "Ödemeyi Tamamla",
-                onClick = { onIntent(TripSummaryIntent.Pay) },
-                modifier = Modifier.fillMaxWidth()
+            Text(
+                text = "Renault Clio · 34 RNC 022", // Mocked as per design
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // Time and Distance Cards
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                    .padding(13.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Süre",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                Text(
+                    text = "\$rentalDurationMins dk",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                    .padding(13.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Mesafe",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                Text(
+                    text = "12,4 km", // Mock
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    modifier = Modifier.padding(top = 3.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Receipt Card
+        val totalPrice = state.rental?.totalPrice ?: 0.0
+        val formattedTotalPrice = String.format(java.util.Locale.US, "%.2f", totalPrice)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+                .padding(16.dp)
+        ) {
+            ReceiptRow(label = "Kiralama ücreti ($rentalDurationMins dk)", value = "₺$formattedTotalPrice")
+            ReceiptRow(label = "Başlangıç ücreti", value = "₺15,00") // Mock
+            ReceiptRow(label = "Hizmet bedeli", value = "₺7,50") // Mock
+            ReceiptRow(label = "İndirim · İLKSÜRÜŞ", value = "−₺20,00", valueColor = Color(0xFF1A9E63)) // Mock
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Toplam",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+                Text(
+                    text = "₺$formattedTotalPrice",
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Payment Method Card
+        val selectedCard = state.savedCards.find { it.cardToken == state.selectedCardToken } ?: state.savedCards.firstOrNull()
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                .clickable { /* Select payment */ }
+                .padding(horizontal = 14.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 40.dp, height = 28.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = selectedCard?.cardAssociation ?: "VISA",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White
+                    )
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (selectedCard != null) "•••• \${selectedCard.binNumber.takeLast(4)}" else "Kart seçilmedi",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+                Text(
+                    text = selectedCard?.cardAlias ?: "Kişisel kart",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+            Text(
+                text = "Değiştir",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Primary Button
+        val finalPrice = state.rental?.totalPrice ?: 0.0
+        val formattedButtonPrice = String.format(java.util.Locale.US, "%.2f", finalPrice)
+        val buttonText = if (state.isPaying) "İşleniyor..." else "₺$formattedButtonPrice Öde"
+        PrimaryButton(
+            text = buttonText,
+            onClick = {
+                if (!state.isPaying) onIntent(TripSummaryIntent.Pay)
+            },
+            enabled = !state.isPaying,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
 @Composable
-fun ReceiptRow(label: String, value: String, valueColor: Color = Color.Black) {
+fun ReceiptRow(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onBackground) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(bottom = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = Color.Gray)
-        Text(value, color = valueColor, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun PaymentCardItem(
-    card: PaymentMethod,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val borderColor = if (isSelected) Blue50 else Color(0xFFE2E8F0)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(2.dp, borderColor, RoundedCornerShape(8.dp))
-            .background(Color.White, RoundedCornerShape(8.dp))
-            .clickable { onClick() }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
         Text(
-            card.cardAssociation,
-            fontWeight = FontWeight.Bold,
-            color = Blue50,
-            modifier = Modifier.width(60.dp)
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(card.cardAlias, fontWeight = FontWeight.Medium)
-            Text("**** **** **** ${card.binNumber}", color = Color.Gray, fontSize = 12.sp)
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        RadioButton(selected = isSelected, onClick = onClick)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
+        )
     }
 }
 
@@ -230,16 +395,16 @@ private fun TripSummaryScreenPreview() {
                     id = "RNT-12345",
                     userId = "USR-1",
                     vehicleId = "VHC-1",
-                    startDate = Instant.now(),
-                    endDate = Instant.now().plusSeconds(86400),
+                    startDate = Instant.now().minus(Duration.ofMinutes(24)),
+                    endDate = Instant.now(),
                     status = RentalStatus.Completed,
-                    totalPrice = 1500.0
+                    totalPrice = 110.50
                 ),
                 savedCards = listOf(
                     PaymentMethod(
                         cardToken = "token1",
-                        cardAlias = "İş Bankası Kartım",
-                        binNumber = "123456",
+                        cardAlias = "Kişisel kart",
+                        binNumber = "4291",
                         cardAssociation = "VISA"
                     )
                 ),

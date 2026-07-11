@@ -23,11 +23,12 @@ suspend fun <T, R> safeApiCall(
         throw e
     } catch (e: Exception) {
         val msg = when (e) {
-            is java.net.UnknownHostException, is java.net.ConnectException -> "İnternet bağlantınızı kontrol edin."
-            is java.net.SocketTimeoutException -> "Sunucuya bağlanılamadı, lütfen tekrar deneyin."
-            is java.io.IOException -> "Ağ hatası oluştu, lütfen internetinizi kontrol edin."
+            is java.net.UnknownHostException, is java.net.ConnectException -> "Bağlantı hatası: ${e.message}"
+            is java.net.SocketTimeoutException -> "Sunucuya bağlanılamadı (Timeout)"
+            is java.io.IOException -> "Ağ hatası (${e.javaClass.simpleName}): ${e.message}"
             else -> "Beklenmeyen bir hata oluştu: ${e.localizedMessage}"
         }
+        android.util.Log.e("SafeApiCall", "API Error: $msg", e)
         NetworkResult.Error(msg)
     }
 }

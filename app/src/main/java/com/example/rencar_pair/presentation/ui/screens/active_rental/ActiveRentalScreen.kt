@@ -1,6 +1,8 @@
 package com.example.rencar_pair.presentation.ui.screens.active_rental
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,9 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -23,17 +28,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.rencar_pair.presentation.ui.components.PrimaryButton
-import com.example.rencar_pair.ui.theme.Blue50
-import com.example.rencar_pair.ui.theme.Error50
-import com.example.rencar_pair.ui.theme.Neutral10
-import com.example.rencar_pair.ui.theme.Neutral90
+import com.example.rencar_pair.R
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -83,91 +87,232 @@ fun ActiveRentalScreenContent(
     onNavigateToReturnVehicle: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Neutral90)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(Color(0xFFE9EDF2)) // Placeholder for Map background
     ) {
-        Text(
-            text = "Aktif Surus",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Neutral10
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        state.errorMessage?.let {
-            Text(
-                text = it,
-                color = Error50,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
+        // Map Placeholder Graphic
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_dialog_map),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                modifier = Modifier.size(120.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        // Top Status Pill
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 52.dp)
+                .shadow(elevation = 20.dp, shape = RoundedCornerShape(30.dp), spotColor = Color.Black.copy(alpha = 0.25f))
+                .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(30.dp))
+                .padding(horizontal = 18.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Gecen Sure",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = "${state.elapsedMinutes} Dk",
-                    fontSize = 36.sp,
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(Color(0xFF34C98A), CircleShape)
+            )
+            Text(
+                text = "Kiralama aktif · Renault Clio",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Blue50
+                    color = MaterialTheme.colorScheme.background
+                )
+            )
+        }
+
+        // Central Car Icon / Marker (Mock)
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(34.dp)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .border(4.dp, MaterialTheme.colorScheme.background, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_menu_directions), // Car
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        // Bottom Info Sheet
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .shadow(elevation = 40.dp, shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp), spotColor = Color.Black.copy(alpha = 0.14f))
+                .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 22.dp, vertical = 18.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Drag Handle Indicator
+                Box(
+                    modifier = Modifier
+                        .padding(bottom = 18.dp)
+                        .size(width = 42.dp, height = 5.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(3.dp))
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                // Timer
+                Text(
+                    text = "Geçen süre",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                
+                val hours = state.elapsedMinutes / 60
+                val minutes = state.elapsedMinutes % 60
+                val formattedTime = String.format("%02d:%02d:00", hours, minutes) // Mock seconds as 00
+                Text(
+                    text = formattedTime,
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 46.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    modifier = Modifier.padding(top = 2.dp)
+                )
 
+                // Cards (Cost & Distance)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(11.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Gidilen Mesafe", color = Color.Gray, fontSize = 12.sp)
+                    // Cost Card
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+                            .padding(13.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
-                            text = "%.1f km".format(state.distanceKm),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold
+                            text = "Anlık ücret",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                        Text(
+                            text = "₺${String.format("%.2f", state.currentCost)}",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Guncel Tutar", color = Color.Gray, fontSize = 12.sp)
+
+                    // Distance Card
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+                            .padding(13.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
-                            text = "TL %.2f".format(state.currentCost),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold
+                            text = "Mesafe",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                        Text(
+                            text = "${String.format("%.1f", state.distanceKm)} km",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            ),
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
+
+                // Actions (Lock/Unlock & End Rental)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 14.dp, bottom = 12.dp), // Extra padding for safe area
+                    horizontalArrangement = Arrangement.spacedBy(11.dp)
+                ) {
+                    // Lock / Unlock Button
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(54.dp)
+                            .border(1.7.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                            .clickable { /* Toggle Lock */ },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_lock_lock), // Lock
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(19.dp)
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Kilitle / Aç",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        )
+                    }
+
+                    // End Rental Button
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(54.dp)
+                            .shadow(elevation = 24.dp, shape = RoundedCornerShape(16.dp), spotColor = Color(0xFFE5484D).copy(alpha = 0.3f))
+                            .background(Color(0xFFE5484D), RoundedCornerShape(16.dp))
+                            .clickable { if (!state.isFinishing) onIntent(ActiveRentalIntent.FinishRental) },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        if (state.isFinishing) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        } else {
+                            Text(
+                                text = "Kiralamayı Bitir",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 14.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
             }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        if (state.isFinishing) {
-            CircularProgressIndicator(color = Error50)
-        } else {
-            PrimaryButton(
-                text = "Iade Surecini Baslat",
-                onClick = { onIntent(ActiveRentalIntent.FinishRental) },
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
@@ -179,9 +324,9 @@ private fun ActiveRentalScreenPreview() {
         ActiveRentalScreenContent(
             state = ActiveRentalState(
                 rental = null,
-                elapsedMinutes = 45,
-                distanceKm = 12.5,
-                currentCost = 150.0,
+                elapsedMinutes = 24,
+                distanceKm = 12.4,
+                currentCost = 108.0,
                 isFinishing = false,
                 errorMessage = null
             ),
