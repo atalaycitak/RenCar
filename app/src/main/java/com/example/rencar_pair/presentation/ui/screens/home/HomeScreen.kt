@@ -6,79 +6,74 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
+import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.presentation.ui.components.RenCarMap
-import com.example.rencar_pair.presentation.ui.components.RenCarMapDefaults
 import com.example.rencar_pair.presentation.ui.components.RenCarMapMarker
 import com.example.rencar_pair.presentation.ui.components.VehicleDetailBottomSheet
+import com.example.rencar_pair.presentation.ui.components.rememberRencarMapController
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
+import org.maplibre.android.geometry.LatLng
 
 @Composable
 fun HomeScreen(
     onVehicleDetails: (String) -> Unit,
-    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val locationPermissions = remember {
-        arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-    }
-    var locationPermissionRequested by rememberSaveable { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
@@ -87,21 +82,8 @@ fun HomeScreen(
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    fun hasLocationPermission(): Boolean {
-        return locationPermissions.any { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        }
-    }
-
-    fun requestLocationPermission() {
-        locationPermissionRequested = true
-        permissionLauncher.launch(locationPermissions)
-    }
-
-    DisposableEffect(lifecycleOwner, context) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event != Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
-
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             val fineGranted = ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -113,32 +95,21 @@ fun HomeScreen(
 
             if (fineGranted || coarseGranted) {
                 viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
-            } else if (!locationPermissionRequested) {
-                requestLocationPermission()
             } else {
-                viewModel.onIntent(HomeIntent.LocationPermissionChanged(false))
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
             }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    LaunchedEffect(Unit) {
-        if (hasLocationPermission()) {
-            viewModel.onIntent(HomeIntent.LocationPermissionChanged(true))
-        } else if (!locationPermissionRequested) {
-            requestLocationPermission()
-        } else {
-            viewModel.onIntent(HomeIntent.LocationPermissionChanged(false))
         }
     }
 
     HomeScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
-        onRequestLocationPermission = ::requestLocationPermission,
         onVehicleDetails = onVehicleDetails,
-        onReserveVehicle = onReserveVehicle,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile
     )
@@ -148,130 +119,149 @@ fun HomeScreen(
 fun HomeScreenContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
-    onRequestLocationPermission: () -> Unit,
     onVehicleDetails: (String) -> Unit,
-    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
-    val visibleVehicles = state.nearbyVehicles
+    val visibleVehicles = state.filteredVehicles
 
     Scaffold(
-        bottomBar = {
-            RenCarBottomNavigation(
-                currentRoute = BottomNavRoute.HOME,
-                onNavigate = { route ->
-                    when (route) {
-                        BottomNavRoute.HISTORY -> onNavigateToHistory()
-                        BottomNavRoute.PROFILE -> onNavigateToProfile()
-                        else -> {}
-                    }
-                }
-            )
-        }
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
+            val centerLat = state.selectedVehicle?.latitude
+                ?: state.userLocation?.latitude
+                ?: visibleVehicles.firstOrNull()?.latitude
+                ?: 41.0082
+            val centerLng = state.selectedVehicle?.longitude
+                ?: state.userLocation?.longitude
+                ?: visibleVehicles.firstOrNull()?.longitude
+                ?: 28.9784
+
+            val mapMarkers = remember(visibleVehicles) {
+                visibleVehicles.map { vehicle ->
+                    RenCarMapMarker(
+                        id = vehicle.id,
+                        latitude = vehicle.latitude,
+                        longitude = vehicle.longitude,
+                        title = vehicle.title,
+                        snippet = "",
+                        text = "₺${vehicle.pricePerDay.toInt()}",
+                        colorHex = getHexColorForVehicle(vehicle)
+                    )
+                }
+            }
+
+            val mapController = rememberRencarMapController()
+
+            RenCarMap(
+                myLocation = state.userLocation?.let { LatLng(it.latitude, it.longitude) },
+                modifier = Modifier.fillMaxSize(),
+                initialCenter = LatLng(centerLat, centerLng),
+                initialZoom = 13.0,
+                controller = mapController,
+                markers = mapMarkers,
+                onMarkerClick = { id ->
+                    onIntent(HomeIntent.SelectVehicle(id))
+                }
+            )
+
+            // Top Gradient for status bar readability
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(380.dp)
-            ) {
-                val centerLat = state.selectedVehicle?.latitude
-                    ?: state.userLocation?.latitude
-                    ?: visibleVehicles.firstOrNull()?.latitude
-                    ?: RenCarMapDefaults.DefaultLatitude
-                val centerLng = state.selectedVehicle?.longitude
-                    ?: state.userLocation?.longitude
-                    ?: visibleVehicles.firstOrNull()?.longitude
-                    ?: RenCarMapDefaults.DefaultLongitude
+                    .height(160.dp)
+                    .align(Alignment.TopCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.95f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
 
-                val mapMarkers = remember(visibleVehicles, state.selectedVehicleId, state.userLocation) {
-                    visibleVehicles.map { vehicle ->
-                        val distance = state.distanceKmTo(vehicle)?.formatDistance()
-                        RenCarMapMarker(
-                            id = vehicle.id,
-                            latitude = vehicle.latitude,
-                            longitude = vehicle.longitude,
-                            title = vehicle.title,
-                            snippet = listOfNotNull(
-                                "${vehicle.pricePerDay.toInt()} TL/gün",
-                                "${vehicle.rangeKm} km menzil",
-                                distance
-                            ).joinToString(" • "),
-                            selected = vehicle.id == state.selectedVehicleId
+            // Top Search Bar
+            TopSearchBar(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 54.dp, start = 18.dp, end = 18.dp)
+            )
+
+            if (!state.locationPermissionGranted) {
+                PermissionNotice(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(start = 18.dp, end = 18.dp, top = 130.dp)
+                )
+            }
+
+            // Bottom Navigation and Sheet Container
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            ) {
+                // FAB container
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 18.dp, bottom = 16.dp),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            onIntent(HomeIntent.FetchUserLocation)
+                            state.userLocation?.let { loc ->
+                                mapController.animateTo(LatLng(loc.latitude, loc.longitude))
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .size(46.dp)
+                            .shadow(18.dp, RoundedCornerShape(14.dp), spotColor = Color.Black.copy(alpha = 0.16f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = "Konumuma git"
                         )
                     }
                 }
 
-                RenCarMap(
-                    modifier = Modifier.fillMaxSize(),
-                    latitude = centerLat,
-                    longitude = centerLng,
-                    zoom = 13.0,
-                    userLatitude = state.userLocation?.latitude,
-                    userLongitude = state.userLocation?.longitude,
-                    markers = mapMarkers,
-                    onMarkerClick = { id ->
-                        onIntent(HomeIntent.SelectVehicle(id))
+                HomeBottomSheet(
+                    vehicleCount = visibleVehicles.size,
+                    onFindNearestClick = {
+                        // Action for finding nearest
                     }
                 )
 
-                MapFilterBar(
-                    state = state,
-                    onIntent = onIntent,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(12.dp)
-                )
-
-                if (!state.locationPermissionGranted) {
-                    PermissionNotice(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(start = 16.dp, end = 16.dp, top = 122.dp)
-                    )
-                }
-
-                FloatingActionButton(
-                    onClick = {
-                        if (state.locationPermissionGranted) {
-                            onIntent(HomeIntent.FocusUserLocation)
-                        } else {
-                            onRequestLocationPermission()
+                RenCarBottomNavigation(
+                    currentRoute = BottomNavRoute.HOME,
+                    onNavigate = { route ->
+                        when (route) {
+                            BottomNavRoute.HISTORY -> onNavigateToHistory()
+                            BottomNavRoute.PROFILE -> onNavigateToProfile()
+                            else -> {}
                         }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MyLocation,
-                        contentDescription = "Konumuma git"
-                    )
-                }
+                    }
+                )
             }
-
-            VehiclePanel(
-                state = state,
-                visibleVehicles = visibleVehicles,
-                onSelect = { onIntent(HomeIntent.SelectVehicle(it)) },
-                onVehicleDetails = onVehicleDetails
-            )
 
             state.selectedVehicle?.let { vehicle ->
                 VehicleDetailBottomSheet(
                     vehicle = vehicle,
-                    distanceLabel = state.distanceKmTo(vehicle)?.formatDistance(),
                     onDismissRequest = { onIntent(HomeIntent.SelectVehicle(null)) },
                     onRentClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
-                        onReserveVehicle(vehicle.id)
+                        onVehicleDetails(vehicle.id)
                     }
                 )
             }
@@ -280,74 +270,196 @@ fun HomeScreenContent(
 }
 
 @Composable
-private fun MapFilterBar(
-    state: HomeState,
-    onIntent: (HomeIntent) -> Unit,
-    modifier: Modifier = Modifier
-) {
+private fun TopSearchBar(modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 4.dp,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+        modifier = modifier
+            .fillMaxWidth()
+            .height(54.dp)
+            .shadow(24.dp, RoundedCornerShape(18.dp), spotColor = Color.Black.copy(alpha = 0.12f)),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            FilterChipRow(
-                options = vehicleTypeOptions,
-                selectedValue = state.selectedVehicleType,
-                onSelected = { onIntent(HomeIntent.UpdateVehicleTypeFilter(it)) }
-            )
-            FilterChipRow(
-                options = priceOptions,
-                selectedValue = state.maxDailyPrice,
-                onSelected = { onIntent(HomeIntent.UpdateMaxPriceFilter(it)) }
-            )
-            Row(
+            // Target icon
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .size(20.dp)
+                    .background(Color.Transparent),
+                contentAlignment = Alignment.Center
             ) {
-                rangeOptions.forEach { option ->
-                    FilterChip(
-                        selected = state.minRangeKm == option.value,
-                        onClick = { onIntent(HomeIntent.UpdateMinRangeFilter(option.value)) },
-                        label = { Text(option.label) }
+                androidx.compose.foundation.Canvas(modifier = Modifier.size(20.dp)) {
+                    drawCircle(
+                        color = Color(0xFF5C6675),
+                        radius = size.minDimension / 2,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
                     )
                 }
-                if (state.hasActiveFilters) {
-                    TextButton(onClick = { onIntent(HomeIntent.ClearFilters) }) {
-                        Text("Temizle")
-                    }
-                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Nereden araç alacaksın?",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(11.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                // Settings/Filter icon placeholder
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_manage),
+                    contentDescription = "Filtreler",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun <T> FilterChipRow(
-    options: List<FilterOption<T>>,
-    selectedValue: T?,
-    onSelected: (T?) -> Unit
+private fun HomeBottomSheet(
+    vehicleCount: Int,
+    onFindNearestClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 30.dp
     ) {
-        options.forEach { option ->
-            FilterChip(
-                selected = selectedValue == option.value,
-                onClick = { onSelected(option.value) },
-                label = { Text(option.label) }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 22.dp, end = 22.dp, top = 14.dp, bottom = 16.dp)
+        ) {
+            // Drag handle
+            Box(
+                modifier = Modifier
+                    .width(42.dp)
+                    .height(5.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(3.dp))
+                    .align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Yakınında $vehicleCount araç",
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontSize = 20.sp,
+                            letterSpacing = (-0.4).sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "Kadıköy çevresinde · 3 dk uzaklıkta",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_menu_sort_by_size), // list icon
+                        contentDescription = "Liste görünümü",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChipCustom("Tümü", null, isSelected = true)
+                FilterChipCustom("Ekonomik", Color(0xFFF5821F), isSelected = false)
+                FilterChipCustom("Konfor", Color(0xFF7C5CE6), isSelected = false)
+                FilterChipCustom("SUV", Color(0xFFE6A700), isSelected = false)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PrimaryButton(
+                text = "En Yakın Aracı Bul",
+                onClick = onFindNearestClick,
+                modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+@Composable
+private fun FilterChipCustom(
+    text: String,
+    dotColor: Color?,
+    isSelected: Boolean
+) {
+    val bgColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+
+    Row(
+        modifier = Modifier
+            .background(bgColor, RoundedCornerShape(12.dp))
+            .padding(horizontal = if (isSelected) 14.dp else 13.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (dotColor != null) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(dotColor, CircleShape)
+            )
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                color = textColor
+            )
+        )
+    }
+}
+
+private fun getHexColorForVehicle(vehicle: Vehicle): String {
+    if (vehicle.status == VehicleStatus.Rented) {
+        return "#9AA3AE"
+    }
+    return when (vehicle.type) {
+        VehicleType.Hatchback -> "#F5821F" // Ekonomik
+        VehicleType.Sedan -> "#7C5CE6" // Konfor
+        VehicleType.Suv -> "#E6A700" // SUV
+        VehicleType.Minivan -> "#0AB5A6"
+        else -> "#0AB5A6"
     }
 }
 
@@ -366,136 +478,6 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun VehiclePanel(
-    state: HomeState,
-    visibleVehicles: List<Vehicle>,
-    onSelect: (String) -> Unit,
-    onVehicleDetails: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = "Yakındaki araçlar (${visibleVehicles.size})",
-            style = MaterialTheme.typography.titleLarge
-        )
-        state.errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
-        }
-        if (state.isLoading) {
-            CircularProgressIndicator()
-        } else if (visibleVehicles.isEmpty()) {
-            Text(
-                text = if (state.hasActiveFilters) {
-                    "Bu filtrelere uygun araç bulunamadı."
-                } else {
-                    "Yakında araç bulunamadı. Lütfen daha sonra tekrar deneyin."
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(visibleVehicles, key = { it.id }) { vehicle ->
-                    VehicleRow(
-                        vehicle = vehicle,
-                        selected = vehicle.id == state.selectedVehicle?.id,
-                        distanceLabel = state.distanceKmTo(vehicle)?.formatDistance(),
-                        onClick = { onSelect(vehicle.id) },
-                        onDetailsClick = { onVehicleDetails(vehicle.id) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun VehicleRow(
-    vehicle: Vehicle,
-    selected: Boolean,
-    distanceLabel: String?,
-    onClick: () -> Unit,
-    onDetailsClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(text = "${vehicle.brand} ${vehicle.model}", style = MaterialTheme.typography.titleMedium)
-                Text(text = "${vehicle.plate} - ${vehicle.type}", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = listOfNotNull(
-                        "${vehicle.rangeKm} km menzil",
-                        distanceLabel
-                    ).joinToString(" • "),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(text = "${vehicle.pricePerDay.toInt()} TL/gün")
-                TextButton(onClick = onDetailsClick) {
-                    Text(text = "Detay")
-                }
-            }
-        }
-    }
-}
-
-private data class FilterOption<T>(
-    val value: T?,
-    val label: String
-)
-
-private val vehicleTypeOptions = listOf(
-    FilterOption<VehicleType>(null, "Tüm tipler"),
-    FilterOption(VehicleType.Sedan, "Sedan"),
-    FilterOption(VehicleType.Suv, "SUV"),
-    FilterOption(VehicleType.Hatchback, "Hatchback"),
-    FilterOption(VehicleType.Minivan, "Minivan")
-)
-
-private val priceOptions = listOf(
-    FilterOption<Int>(null, "Tüm fiyatlar"),
-    FilterOption(1000, "1000 TL altı"),
-    FilterOption(1500, "1500 TL altı"),
-    FilterOption(2500, "2500 TL altı"),
-    FilterOption(4000, "4000 TL altı")
-)
-
-private val rangeOptions = listOf(
-    FilterOption<Int>(null, "Tüm menziller"),
-    FilterOption(300, "300+ km"),
-    FilterOption(400, "400+ km"),
-    FilterOption(500, "500+ km")
-)
-
-private fun Double.formatDistance(): String {
-    return if (this < 1.0) {
-        "${(this * 1000).toInt()} m"
-    } else {
-        "%.1f km".format(this)
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenPreview() {
@@ -509,7 +491,7 @@ private fun HomeScreenPreview() {
                         brand = "Renault",
                         model = "Clio",
                         plate = "34 ABC 123",
-                        type = VehicleType.Sedan,
+                        type = VehicleType.Hatchback,
                         status = VehicleStatus.Available,
                         pricePerDay = 600.0,
                         latitude = 41.0082,
@@ -532,9 +514,7 @@ private fun HomeScreenPreview() {
                 locationPermissionGranted = true
             ),
             onIntent = {},
-            onRequestLocationPermission = {},
             onVehicleDetails = {},
-            onReserveVehicle = {},
             onNavigateToHistory = {},
             onNavigateToProfile = {}
         )

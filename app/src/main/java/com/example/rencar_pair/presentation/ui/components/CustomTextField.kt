@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun CustomTextField(
@@ -40,7 +41,7 @@ fun CustomTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             placeholder = {
                 if (placeholder != null) {
                     Text(text = placeholder, color = MaterialTheme.colorScheme.outline)
@@ -49,14 +50,20 @@ fun CustomTextField(
             keyboardOptions = keyboardOptions,
             visualTransformation = visualTransformation,
             isError = isError,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(15.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
             ),
-            singleLine = true
+            singleLine = true,
+            textStyle = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                letterSpacing = 0.5.sp
+            )
         )
         
         if (isError && errorMessage != null) {

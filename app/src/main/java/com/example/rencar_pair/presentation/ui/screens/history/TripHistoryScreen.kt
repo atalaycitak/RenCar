@@ -1,18 +1,38 @@
 package com.example.rencar_pair.presentation.ui.screens.history
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.model.RentalStatus
@@ -23,6 +43,7 @@ import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun TripHistoryScreen(
@@ -57,34 +78,42 @@ fun TripHistoryScreenContent(
                     }
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
             // Header
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(horizontal = 22.dp, vertical = 6.dp)
             ) {
+                Spacer(modifier = Modifier.height(18.dp))
                 Text(
                     text = "Kiralamalarım",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.5).sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 )
                 
                 val totalSpent = state.totalSpent
                 Text(
-                    text = "Toplam ${state.rentals.size} yolculuk · ₺${totalSpent.toInt()} harcama",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
+                    text = "Bu ay ${state.rentals.size} yolculuk · ₺${totalSpent.toInt()} harcama",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.padding(top = 3.dp)
                 )
+                Spacer(modifier = Modifier.height(12.dp))
             }
             
             if (state.isLoading) {
@@ -102,12 +131,13 @@ fun TripHistoryScreenContent(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(state.rentals, key = { it.id }) { rental ->
                         TripHistoryCard(rental = rental)
                     }
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
                 }
             }
         }
@@ -116,69 +146,101 @@ fun TripHistoryScreenContent(
 
 @Composable
 fun TripHistoryCard(rental: Rental) {
-    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm").withZone(ZoneId.systemDefault())
+    val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy · HH:mm", Locale("tr")).withZone(ZoneId.systemDefault())
     val formattedDate = formatter.format(rental.startDate)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(elevation = 14.dp, shape = RoundedCornerShape(20.dp), spotColor = Color.Black.copy(alpha = 0.05f))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(13.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        // Map Placeholder Graphic
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .background(Color(0xFFE6EBF1), RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center
         ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_dialog_map),
+                contentDescription = null,
+                tint = Color(0xFF0B6BCB).copy(alpha = 0.3f),
+                modifier = Modifier.size(32.dp)
+            )
+        }
+
+        // Details
+        Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = formattedDate,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Renault Clio", // Mocked as per design
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 15.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 )
                 
-                val statusColor = when(rental.status) {
-                    RentalStatus.Active -> MaterialTheme.colorScheme.primary
-                    RentalStatus.Completed -> MaterialTheme.colorScheme.secondary
-                    RentalStatus.Cancelled -> MaterialTheme.colorScheme.error
-                    RentalStatus.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
-                
+                val formattedPrice = String.format(Locale.US, "%.2f", rental.totalPrice)
                 Text(
-                    text = rental.status.name,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = statusColor,
-                    fontWeight = FontWeight.Bold
+                    text = "₺$formattedPrice",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 )
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
-            
+            Text(
+                text = formattedDate,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier.padding(top = 3.dp)
+            )
+
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
+                modifier = Modifier.padding(top = 9.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFF1F4F8), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
                     Text(
-                        text = "Araç Kiralama", // We don't have vehicle brand/model directly in Rental without joining, so generic text for now
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "ID: ${rental.id.take(8)}...",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "24 dk", // Mock
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
-                
-                Text(
-                    text = "₺${rental.totalPrice.toInt()}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFF1F4F8), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "12,4 km", // Mock
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
             }
         }
     }
@@ -193,22 +255,22 @@ private fun TripHistoryScreenPreview() {
                 isLoading = false,
                 rentals = listOf(
                     Rental(
-                        id = "RNT-1234567890",
+                        id = "RNT-1",
                         userId = "USR-1",
                         vehicleId = "VHC-1",
                         startDate = Instant.now().minusSeconds(86400 * 2),
                         endDate = Instant.now().minusSeconds(86400 * 1),
                         status = RentalStatus.Completed,
-                        totalPrice = 1200.0
+                        totalPrice = 110.50
                     ),
                     Rental(
-                        id = "RNT-0987654321",
+                        id = "RNT-2",
                         userId = "USR-1",
                         vehicleId = "VHC-2",
                         startDate = Instant.now(),
                         endDate = Instant.now().plusSeconds(86400),
                         status = RentalStatus.Active,
-                        totalPrice = 600.0
+                        totalPrice = 86.00
                     )
                 )
             ),

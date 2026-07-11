@@ -1,14 +1,10 @@
-@file:Suppress("DEPRECATION")
-
 package com.example.rencar_pair.presentation.ui.components
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
-import android.view.ViewGroup
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,239 +16,238 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.Marker
+import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
-import org.maplibre.android.annotations.Icon
-import org.maplibre.android.annotations.IconFactory
-import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.MapLibreMapOptions
+import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.CircleLayer
-import org.maplibre.android.style.layers.PropertyFactory.circleColor
-import org.maplibre.android.style.layers.PropertyFactory.circleRadius
-import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
-import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
-import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
+
+val DEFAULT_CENTER: LatLng = LatLng(41.0082, 28.9784)
+
+private val ME_MARKER_COLOR = Color.parseColor("#4285F4")
 
 data class RenCarMapMarker(
     val id: String,
     val latitude: Double,
     val longitude: Double,
-    val title: String,
-    val snippet: String,
-    val selected: Boolean = false
+    val text: String,
+    val colorHex: String,
+    val title: String = "",
+    val snippet: String = ""
 )
+
+class RencarMapController internal constructor() {
+    internal var map: MapLibreMap? = null
+
+    fun animateTo(target: LatLng, zoom: Double = 13.0) {
+        map?.animateCamera(CameraUpdateFactory.newLatLngZoom(target, zoom))
+    }
+}
+
+@Composable
+fun rememberRencarMapController(): RencarMapController = remember { RencarMapController() }
 
 @Composable
 fun RenCarMap(
+    myLocation: LatLng?,
     modifier: Modifier = Modifier,
-    styleJson: String = RenCarMapDefaults.OsmRasterStyleJson,
-    latitude: Double = 41.0082,
-    longitude: Double = 28.9784,
-    zoom: Double = 12.0,
-    userLatitude: Double? = null,
-    userLongitude: Double? = null,
+    initialCenter: LatLng = DEFAULT_CENTER,
+    initialZoom: Double = 13.0,
+    controller: RencarMapController? = null,
     markers: List<RenCarMapMarker> = emptyList(),
-    onMarkerClick: ((String) -> Unit)? = null,
-    onMapCreated: ((org.maplibre.android.maps.MapLibreMap) -> Unit)? = null
+    onMarkerClick: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    var mapLibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
-    var lastCameraTarget by remember { mutableStateOf<Pair<Double, Double>?>(null) }
-    val defaultVehicleIcon = remember(context) {
-        createVehicleMarkerIcon(context, fillColor = "#1FA463", strokeColor = "#FFFFFF")
-    }
-    val selectedVehicleIcon = remember(context) {
-        createVehicleMarkerIcon(context, fillColor = "#F59E0B", strokeColor = "#111827")
-    }
-
     val mapView = remember {
         MapLibre.getInstance(context)
-        val options = MapLibreMapOptions.createFromAttributes(context, null).apply {
-            camera(
-                CameraPosition.Builder()
-                    .target(LatLng(latitude, longitude))
-                    .zoom(zoom)
-                    .build()
-            )
-        }
-        MapView(context, options).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            onCreate(null)
-        }
+        MapView(context).apply { onCreate(null) }
     }
 
-    DisposableEffect(mapView, lifecycleOwner) {
-        val lifecycle = lifecycleOwner.lifecycle
-        var destroyed = false
+    var mapAndStyle by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
 
-        fun destroyMapView() {
-            if (!destroyed) {
-                mapView.onDestroy()
-                destroyed = true
-            }
-        }
-
+    DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
                 Lifecycle.Event.ON_STOP -> mapView.onStop()
-                Lifecycle.Event.ON_DESTROY -> destroyMapView()
-                else -> Unit
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                else -> {}
             }
         }
-
-        lifecycle.addObserver(observer)
-        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-            mapView.onStart()
-        }
-        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-            mapView.onResume()
-        }
+        lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
-            lifecycle.removeObserver(observer)
-            destroyMapView()
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            mapView.onDestroy()
         }
     }
 
-    DisposableEffect(mapView, styleJson) {
+    LaunchedEffect(Unit) {
         mapView.getMapAsync { map ->
-            map.setStyle(Style.Builder().fromJson(styleJson)) { style ->
-                style.ensureUserLocationLayer()
-                mapLibreMap = map
-                onMapCreated?.invoke(map)
+            controller?.map = map
+            map.cameraPosition = CameraPosition.Builder().target(initialCenter).zoom(initialZoom).build()
+            map.setStyle(Style.Builder().fromJson(OSM_STYLE_JSON)) { loaded ->
+                loaded.addSource(GeoJsonSource("me"))
+                loaded.addLayer(
+                    CircleLayer("me-halo-layer", "me").withProperties(
+                        PropertyFactory.circleColor(ME_MARKER_COLOR),
+                        PropertyFactory.circleRadius(20f),
+                        PropertyFactory.circleOpacity(0.2f),
+                        PropertyFactory.circleBlur(0.4f)
+                    )
+                )
+                loaded.addLayer(
+                    CircleLayer("me-layer", "me").withProperties(
+                        PropertyFactory.circleColor(ME_MARKER_COLOR),
+                        PropertyFactory.circleRadius(9f),
+                        PropertyFactory.circleStrokeColor(Color.WHITE),
+                        PropertyFactory.circleStrokeWidth(3f)
+                    )
+                )
+                mapAndStyle = map to loaded
             }
         }
-        onDispose { mapLibreMap = null }
     }
 
-    AndroidView(
-        factory = { mapView },
-        modifier = modifier,
-        update = {
-            mapLibreMap?.let { map ->
-                map.clear()
-
-                val markerIdMap = mutableMapOf<org.maplibre.android.annotations.Marker, String>()
-
-                markers.sortedBy { it.selected }.forEach { marker ->
-                    val addedMarker = map.addMarker(
-                        MarkerOptions()
-                            .position(LatLng(marker.latitude, marker.longitude))
-                            .title(marker.title)
-                            .snippet(marker.snippet)
-                            .icon(if (marker.selected) selectedVehicleIcon else defaultVehicleIcon)
-                    )
-                    markerIdMap[addedMarker] = marker.id
-                }
-
-                map.getStyle { style ->
-                    style.ensureUserLocationLayer()
-                    style.updateUserLocation(userLatitude, userLongitude)
-                }
-
-                val cameraLatLng = LatLng(latitude, longitude)
-                val cameraTarget = cameraLatLng.latitude to cameraLatLng.longitude
-                if (lastCameraTarget != cameraTarget) {
-                    map.animateCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            cameraLatLng,
-                            zoom
-                        ),
-                        CameraAnimationDurationMs
-                    )
-                    lastCameraTarget = cameraTarget
-                }
-
-                map.setOnMarkerClickListener { clickedMarker ->
-                    val id = markerIdMap[clickedMarker]
-                    if (id != null) {
-                        onMarkerClick?.invoke(id)
-                        true
-                    } else {
-                        false
-                    }
-                }
-            }
-        }
-    )
-}
-
-object RenCarMapDefaults {
-    const val DefaultLatitude: Double = 41.0082
-    const val DefaultLongitude: Double = 28.9784
-
-    const val OsmRasterStyleJson: String =
-        """{"version":8,"sources":{"osm":{"type":"raster","tiles":["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png","https://b.tile.openstreetmap.org/{z}/{x}/{y}.png","https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"],"tileSize":256,"attribution":"OpenStreetMap contributors"}},"layers":[{"id":"osm-tiles","type":"raster","source":"osm","minzoom":0,"maxzoom":19}]}"""
-}
-
-private const val UserLocationSourceId = "rencar-user-location-source"
-private const val UserLocationLayerId = "rencar-user-location-layer"
-private const val CameraAnimationDurationMs = 700
-
-private fun Style.ensureUserLocationLayer() {
-    if (getSource(UserLocationSourceId) == null) {
-        addSource(GeoJsonSource(UserLocationSourceId, emptyUserLocationFeatureCollection()))
+    // Update me marker when location changes
+    LaunchedEffect(mapAndStyle, myLocation) {
+        val (_, style) = mapAndStyle ?: return@LaunchedEffect
+        updateMe(style, myLocation)
     }
-    if (getLayer(UserLocationLayerId) == null) {
-        addLayer(
-            CircleLayer(UserLocationLayerId, UserLocationSourceId).withProperties(
-                circleColor("#1E88E5"),
-                circleRadius(8f),
-                circleStrokeColor("#FFFFFF"),
-                circleStrokeWidth(3f)
+
+    // Zoom once to the user when map is loaded and location is found
+    var hasZoomedToUser by remember { mutableStateOf(false) }
+    LaunchedEffect(mapAndStyle, myLocation) {
+        if (hasZoomedToUser) return@LaunchedEffect
+        val (map, _) = mapAndStyle ?: return@LaunchedEffect
+        val location = myLocation ?: return@LaunchedEffect
+
+        hasZoomedToUser = true
+        Log.d("MAP", "First zoom -> lat: ${location.latitude}, lng: ${location.longitude}, zoom: 13.0")
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13.0))
+    }
+
+    // Update car markers
+    LaunchedEffect(mapAndStyle, markers) {
+        val (map, _) = mapAndStyle ?: return@LaunchedEffect
+        map.clear()
+        
+        val markerIdMap = mutableMapOf<Marker, String>()
+        
+        val iconFactory = org.maplibre.android.annotations.IconFactory.getInstance(context)
+
+        markers.forEach { marker ->
+            val bitmap = createPriceMarkerBitmap(context, marker.text, marker.colorHex)
+            val icon = iconFactory.fromBitmap(bitmap)
+            val addedMarker = map.addMarker(
+                MarkerOptions()
+                    .position(LatLng(marker.latitude, marker.longitude))
+                    .title(marker.title)
+                    .snippet(marker.snippet)
+                    .icon(icon)
             )
-        )
+            markerIdMap[addedMarker] = marker.id
+        }
+
+        map.setOnMarkerClickListener { clickedMarker ->
+            val id = markerIdMap[clickedMarker]
+            if (id != null) {
+                onMarkerClick?.invoke(id)
+                true
+            } else {
+                false
+            }
+        }
     }
+
+    AndroidView(factory = { mapView }, modifier = modifier)
 }
 
-private fun Style.updateUserLocation(latitude: Double?, longitude: Double?) {
-    val source = getSource(UserLocationSourceId) as? GeoJsonSource ?: return
-    val featureCollection = if (latitude != null && longitude != null) {
-        FeatureCollection.fromFeature(
-            Feature.fromGeometry(Point.fromLngLat(longitude, latitude))
-        )
+private fun updateMe(style: Style, myLocation: LatLng?) {
+    val source = style.getSourceAs<GeoJsonSource>("me") ?: return
+    if (myLocation == null) {
+        source.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
     } else {
-        emptyUserLocationFeatureCollection()
+        source.setGeoJson(Point.fromLngLat(myLocation.longitude, myLocation.latitude))
     }
-    source.setGeoJson(featureCollection)
 }
 
-private fun emptyUserLocationFeatureCollection(): FeatureCollection {
-    return FeatureCollection.fromFeatures(emptyArray<Feature>())
-}
+private fun createPriceMarkerBitmap(context: android.content.Context, text: String, colorHex: String): android.graphics.Bitmap {
+    val scale = context.resources.displayMetrics.density
+    
+    // Convert dp to px
+    val paddingHorizontal = 8f * scale
+    val paddingVertical = 6f * scale
+    val textSize = 13f * scale
+    val cornerRadius = 13f * scale
+    val triangleHeight = 6f * scale
+    val triangleWidth = 10f * scale
+    val shadowRadius = 6f * scale
+    val shadowDy = 4f * scale
 
-private fun createVehicleMarkerIcon(
-    context: android.content.Context,
-    fillColor: String,
-    strokeColor: String
-): Icon {
-    val bitmap = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    paint.textSize = textSize
+    paint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+    
+    val textWidth = paint.measureText(text)
+    
+    // Box dimensions
+    val boxWidth = textWidth + (paddingHorizontal * 2)
+    val boxHeight = textSize + (paddingVertical * 2)
 
-    paint.color = Color.parseColor(fillColor)
-    paint.style = Paint.Style.FILL
-    canvas.drawCircle(24f, 24f, 15f, paint)
+    // Total bitmap dimensions (box + triangle + shadow padding)
+    val bitmapWidth = (boxWidth + shadowRadius * 2).toInt()
+    val bitmapHeight = (boxHeight + triangleHeight + shadowRadius * 2 + shadowDy).toInt()
 
-    paint.color = Color.parseColor(strokeColor)
-    paint.style = Paint.Style.STROKE
-    paint.strokeWidth = 5f
-    canvas.drawCircle(24f, 24f, 15f, paint)
+    val bitmap = android.graphics.Bitmap.createBitmap(bitmapWidth, bitmapHeight, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
 
-    return IconFactory.getInstance(context).fromBitmap(bitmap)
+    // Calculate drawing offsets to center within the shadow padding
+    val dx = shadowRadius
+    val dy = shadowRadius
+
+    // Draw shadow
+    paint.color = android.graphics.Color.TRANSPARENT
+    val shadowColor = android.graphics.Color.parseColor(colorHex)
+    paint.setShadowLayer(shadowRadius, 0f, shadowDy, shadowColor and 0x7FFFFFFF) // 50% alpha shadow
+
+    // Path for the badge (rounded rect + downward triangle)
+    val path = android.graphics.Path()
+    val rectF = android.graphics.RectF(dx, dy, dx + boxWidth, dy + boxHeight)
+    path.addRoundRect(rectF, cornerRadius, cornerRadius, android.graphics.Path.Direction.CW)
+    
+    // Triangle at the bottom center
+    val centerX = dx + (boxWidth / 2f)
+    val triangleTopY = dy + boxHeight - 1f // Slight overlap to avoid gaps
+    
+    path.moveTo(centerX - (triangleWidth / 2f), triangleTopY)
+    path.lineTo(centerX + (triangleWidth / 2f), triangleTopY)
+    path.lineTo(centerX, triangleTopY + triangleHeight)
+    path.close()
+
+    // Draw solid color path
+    paint.color = android.graphics.Color.parseColor(colorHex)
+    canvas.drawPath(path, paint)
+    
+    // Clear shadow for text
+    paint.clearShadowLayer()
+
+    // Draw Text
+    paint.color = android.graphics.Color.WHITE
+    val fontMetrics = paint.fontMetrics
+    val textBaselineY = dy + paddingVertical - fontMetrics.ascent
+    canvas.drawText(text, dx + paddingHorizontal, textBaselineY, paint)
+
+    return bitmap
 }
