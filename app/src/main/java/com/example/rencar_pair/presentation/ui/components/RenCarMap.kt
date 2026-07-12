@@ -5,13 +5,22 @@ package com.example.rencar_pair.presentation.ui.components
 import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMapOptions
 
@@ -37,6 +46,7 @@ fun RenCarMap(
     onMapCreated: ((org.maplibre.android.maps.MapLibreMap) -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(Unit) {
         MapLibre.getInstance(context)
@@ -53,22 +63,60 @@ fun RenCarMap(
             )
         }
         MapView(context, options).apply {
+            onCreate(null)
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         }
     }
+    var mapLibreMap by remember { mutableStateOf<MapLibreMap?>(null) }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(mapView, styleUrl) {
         mapView.getMapAsync { map ->
             map.setStyle(styleUrl) {
+                mapLibreMap = map
                 onMapCreated?.invoke(map)
             }
         }
-        onDispose {
-            mapView.onDestroy()
+        onDispose { }
+    }
+
+    DisposableEffect(lifecycleOwner, mapView) {
+        var destroyed = false
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> {
+                    destroyed = true
+                    mapView.onDestroy()
+                }
+                else -> Unit
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            mapView.onStart()
+        }
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            mapView.onResume()
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            if (!destroyed) {
+                mapView.onDestroy()
+            }
+        }
+    }
+
+    LaunchedEffect(mapLibreMap, latitude, longitude, zoom) {
+        mapLibreMap?.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), zoom),
+            CAMERA_ANIMATION_MS
+        )
     }
 
     AndroidView(
@@ -97,15 +145,6 @@ fun RenCarMap(
                             .position(LatLng(userLatitude, userLongitude))
                             .title("Sizin Konumunuz")
                     )
-                    
-                    // Animate camera to user location if it changed recently
-                    // (For simplicity in this component, we just set the camera)
-                    mapboxMap.animateCamera(
-                        org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                            LatLng(userLatitude, userLongitude), zoom
-                        ),
-                        1000
-                    )
                 }
 
                 mapboxMap.setOnMarkerClickListener { clickedMarker ->
@@ -122,3 +161,5 @@ fun RenCarMap(
         }
     )
 }
+
+private const val CAMERA_ANIMATION_MS = 750
