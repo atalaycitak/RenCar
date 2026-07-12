@@ -2,6 +2,10 @@
 
 package com.example.rencar_pair.presentation.ui.components
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
 import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,6 +22,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.Icon
+import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
@@ -29,7 +35,9 @@ data class RenCarMapMarker(
     val latitude: Double,
     val longitude: Double,
     val title: String,
-    val snippet: String
+    val snippet: String,
+    val markerColor: Int = DEFAULT_MARKER_COLOR,
+    val selected: Boolean = false
 )
 
 @Composable
@@ -47,6 +55,7 @@ fun RenCarMap(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val iconFactory = remember(context) { IconFactory.getInstance(context) }
 
     DisposableEffect(Unit) {
         MapLibre.getInstance(context)
@@ -128,12 +137,24 @@ fun RenCarMap(
                 
                 val markerIdMap = mutableMapOf<org.maplibre.android.annotations.Marker, String>()
                 
+                val iconCache = mutableMapOf<String, Icon>()
+
                 markers.forEach { marker ->
+                    val iconKey = "${marker.markerColor}-${marker.selected}"
+                    val icon = iconCache.getOrPut(iconKey) {
+                        iconFactory.fromBitmap(
+                            createVehicleMarkerBitmap(
+                                color = marker.markerColor,
+                                selected = marker.selected
+                            )
+                        )
+                    }
                     val addedMarker = mapboxMap.addMarker(
                         MarkerOptions()
                             .position(LatLng(marker.latitude, marker.longitude))
                             .title(marker.title)
                             .snippet(marker.snippet)
+                            .icon(icon)
                     )
                     markerIdMap[addedMarker] = marker.id
                 }
@@ -163,3 +184,49 @@ fun RenCarMap(
 }
 
 private const val CAMERA_ANIMATION_MS = 750
+private const val DEFAULT_MARKER_COLOR = 0xFF0066CC.toInt()
+
+private fun createVehicleMarkerBitmap(
+    color: Int,
+    selected: Boolean
+): Bitmap {
+    val size = if (selected) 72 else 56
+    val circleRadius = if (selected) 24f else 18f
+    val center = size / 2f
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    paint.color = 0x33000000
+    canvas.drawCircle(center, center + 5f, circleRadius + 5f, paint)
+
+    paint.color = color
+    val pinPath = Path().apply {
+        moveTo(center, size - 8f)
+        cubicTo(center - 18f, center + 16f, center - circleRadius, center, center, center)
+        cubicTo(center + circleRadius, center, center + 18f, center + 16f, center, size - 8f)
+        close()
+    }
+    canvas.drawPath(pinPath, paint)
+
+    paint.style = Paint.Style.STROKE
+    paint.strokeWidth = if (selected) 6f else 4f
+    paint.color = android.graphics.Color.WHITE
+    canvas.drawCircle(center, center, circleRadius, paint)
+
+    paint.style = Paint.Style.FILL
+    paint.color = color
+    canvas.drawCircle(center, center, circleRadius - paint.strokeWidth, paint)
+
+    paint.color = android.graphics.Color.WHITE
+    paint.strokeWidth = 5f
+    paint.style = Paint.Style.STROKE
+    paint.strokeCap = Paint.Cap.ROUND
+    val carTop = center - 5f
+    canvas.drawLine(center - 8f, carTop, center + 8f, carTop, paint)
+    canvas.drawLine(center - 12f, center + 5f, center + 12f, center + 5f, paint)
+    canvas.drawPoint(center - 8f, center + 10f, paint)
+    canvas.drawPoint(center + 8f, center + 10f, paint)
+
+    return bitmap
+}

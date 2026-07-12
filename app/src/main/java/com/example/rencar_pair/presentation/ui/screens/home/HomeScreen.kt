@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -116,6 +117,7 @@ fun HomeScreenContent(
     onNavigateToProfile: () -> Unit
 ) {
     val visibleVehicles = state.filteredVehicles
+    val highlightedVehicle = state.highlightedVehicle
 
     Scaffold(
         bottomBar = {
@@ -143,22 +145,26 @@ fun HomeScreenContent(
                     .height(380.dp)
             ) {
                 val centerLat = state.selectedVehicle?.latitude
+                    ?: highlightedVehicle?.latitude
                     ?: state.userLocation?.latitude
-                    ?: visibleVehicles.firstOrNull()?.latitude
                     ?: 41.0082
                 val centerLng = state.selectedVehicle?.longitude
+                    ?: highlightedVehicle?.longitude
                     ?: state.userLocation?.longitude
-                    ?: visibleVehicles.firstOrNull()?.longitude
                     ?: 28.9784
 
-                val mapMarkers = remember(visibleVehicles) {
+                val selectedVehicleId = state.selectedVehicle?.id ?: highlightedVehicle?.id
+                val mapMarkers = remember(visibleVehicles, selectedVehicleId, state.userLocation) {
                     visibleVehicles.map { vehicle ->
+                        val distanceInfo = state.distanceInfoFor(vehicle)
                         RenCarMapMarker(
                             id = vehicle.id,
                             latitude = vehicle.latitude,
                             longitude = vehicle.longitude,
                             title = vehicle.title,
-                            snippet = "${vehicle.pricePerDay.toInt()} TL/gun"
+                            snippet = buildMarkerSnippet(vehicle, distanceInfo),
+                            markerColor = vehicle.markerColor(),
+                            selected = vehicle.id == selectedVehicleId
                         )
                     }
                 }
@@ -189,6 +195,17 @@ fun HomeScreenContent(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(start = 16.dp, end = 16.dp, top = 122.dp)
+                    )
+                }
+
+                highlightedVehicle?.let { vehicle ->
+                    MapInsightCard(
+                        vehicle = vehicle,
+                        distanceInfo = state.distanceInfoFor(vehicle),
+                        isSelected = vehicle.id == state.selectedVehicle?.id,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 16.dp, bottom = 16.dp, end = 88.dp)
                     )
                 }
 
@@ -315,6 +332,43 @@ private fun PermissionNotice(modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun MapInsightCard(
+    vehicle: Vehicle,
+    distanceInfo: VehicleDistanceInfo?,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.widthIn(max = 280.dp),
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 6.dp,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = if (isSelected) "Secili arac" else "En yakin uygun arac",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = vehicle.title,
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                text = distanceInfo?.let {
+                    "${it.distanceLabel} - ${it.walkingMinutes} dk yurume"
+                } ?: "${vehicle.pricePerDay.toInt()} TL/gun - ${vehicle.rangeKm} km menzil",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
 private fun VehiclePanel(
     state: HomeState,
     visibleVehicles: List<Vehicle>,
@@ -351,6 +405,7 @@ private fun VehiclePanel(
                     VehicleRow(
                         vehicle = vehicle,
                         selected = vehicle.id == state.selectedVehicle?.id,
+                        distanceInfo = state.distanceInfoFor(vehicle),
                         onClick = { onSelect(vehicle.id) },
                         onDetailsClick = { onVehicleDetails(vehicle.id) }
                     )
@@ -364,6 +419,7 @@ private fun VehiclePanel(
 private fun VehicleRow(
     vehicle: Vehicle,
     selected: Boolean,
+    distanceInfo: VehicleDistanceInfo?,
     onClick: () -> Unit,
     onDetailsClick: () -> Unit
 ) {
@@ -388,7 +444,12 @@ private fun VehicleRow(
             Column {
                 Text(text = "${vehicle.brand} ${vehicle.model}", style = MaterialTheme.typography.titleMedium)
                 Text(text = "${vehicle.plate} - ${vehicle.type}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "${vehicle.rangeKm} km menzil", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = distanceInfo?.let {
+                        "${it.distanceLabel} uzaklik - ${it.walkingMinutes} dk yurume"
+                    } ?: "${vehicle.rangeKm} km menzil",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(text = "${vehicle.pricePerDay.toInt()} TL/gun")
@@ -427,6 +488,24 @@ private val rangeOptions = listOf(
     FilterOption(400, "400+ km"),
     FilterOption(500, "500+ km")
 )
+
+private fun buildMarkerSnippet(
+    vehicle: Vehicle,
+    distanceInfo: VehicleDistanceInfo?
+): String {
+    val price = "${vehicle.pricePerDay.toInt()} TL/gun"
+    val distance = distanceInfo?.let { "${it.distanceLabel}, ${it.walkingMinutes} dk yurume" }
+    return listOfNotNull(price, distance).joinToString(" - ")
+}
+
+private fun Vehicle.markerColor(): Int = when (type) {
+    VehicleType.Sedan -> 0xFF0066CC.toInt()
+    VehicleType.Suv -> 0xFF2E7D32.toInt()
+    VehicleType.Hatchback -> 0xFFAD1457.toInt()
+    VehicleType.Station -> 0xFF6A1B9A.toInt()
+    VehicleType.Minivan -> 0xFFEF6C00.toInt()
+    VehicleType.Unknown -> 0xFF455A64.toInt()
+}
 
 @Preview(showBackground = true)
 @Composable
