@@ -5,6 +5,7 @@ import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
 import com.example.rencar_pair.domain.model.VehiclePosition
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
+import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -22,6 +23,13 @@ class DefaultVehicleLocationRepository(
     private val okHttpClient: OkHttpClient,
     private val json: Json
 ) : VehicleLocationRepository {
+
+    override val streamMode: VehicleLocationStreamMode
+        get() = if (BuildConfig.VEHICLE_LOCATION_WS_URL.isNotBlank()) {
+            VehicleLocationStreamMode.WebSocket
+        } else {
+            VehicleLocationStreamMode.Inactive
+        }
 
     override fun observeVehiclePositions(): Flow<List<VehiclePosition>> {
         val url = BuildConfig.VEHICLE_LOCATION_WS_URL.takeIf { it.isNotBlank() } ?: return emptyFlow()

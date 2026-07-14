@@ -16,7 +16,9 @@ class HomeViewModel(
     private val vehicleUseCases: VehicleUseCases,
     private val vehicleLocationRepository: VehicleLocationRepository,
     private val locationTracker: LocationTracker
-) : BaseMviViewModel<HomeState, HomeIntent, NoEffect>(HomeState()) {
+) : BaseMviViewModel<HomeState, HomeIntent, NoEffect>(
+    HomeState(vehicleLocationStreamMode = vehicleLocationRepository.streamMode)
+) {
 
     private var locationUpdatesJob: Job? = null
     private var vehicleLocationUpdatesJob: Job? = null
@@ -158,9 +160,11 @@ class HomeViewModel(
                         latitude = position.latitude,
                         longitude = position.longitude,
                         status = position.status,
+                        locationUpdatedAt = position.updatedAt ?: vehicle.locationUpdatedAt,
                         canReserve = vehicle.canReserve && position.status == VehicleStatus.Available
                     )
-                }
+                },
+                hasLiveVehicleUpdates = true
             )
         }
     }

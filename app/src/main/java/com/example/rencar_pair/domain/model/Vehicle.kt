@@ -47,6 +47,7 @@ data class Vehicle(
     val seatCount: Int? = null,
     val imageUrl: String? = null,
     val pricePerMinute: Double? = null,
+    val locationUpdatedAt: String? = null,
     val canReserve: Boolean = status == VehicleStatus.Available,
     val canUnlock: Boolean = false
 ) {

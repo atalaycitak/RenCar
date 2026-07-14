@@ -50,6 +50,7 @@ class DefaultVehicleRepository(
             seatCount = seatCount,
             imageUrl = imageUrl,
             pricePerMinute = pricePerMinute,
+            locationUpdatedAt = updatedAt,
             canReserve = canReserve ?: (vehicleStatus == VehicleStatus.Available),
             canUnlock = canUnlock ?: false
         )

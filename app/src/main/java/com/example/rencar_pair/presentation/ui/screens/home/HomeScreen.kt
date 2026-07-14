@@ -51,6 +51,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
+import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
@@ -237,6 +238,16 @@ fun HomeScreenContent(
                     }
                 }
 
+                LiveMapStatusPanel(
+                    vehicle = highlightedVehicle,
+                    distanceInfo = highlightedDistanceInfo,
+                    hasLiveVehicleUpdates = state.hasLiveVehicleUpdates,
+                    streamMode = state.vehicleLocationStreamMode,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 18.dp, end = 18.dp, bottom = 12.dp)
+                )
+
                 HomeBottomSheet(
                     vehicleCount = visibleVehicles.size,
                     featuredVehicle = highlightedVehicle,
@@ -335,6 +346,184 @@ private fun TopSearchBar(modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+@Composable
+private fun LiveMapStatusPanel(
+    vehicle: Vehicle?,
+    distanceInfo: VehicleDistanceInfo?,
+    hasLiveVehicleUpdates: Boolean,
+    streamMode: VehicleLocationStreamMode,
+    modifier: Modifier = Modifier
+) {
+    if (vehicle == null) return
+
+    Surface(
+        modifier = modifier.shadow(
+            elevation = 18.dp,
+            shape = RoundedCornerShape(18.dp),
+            spotColor = Color.Black.copy(alpha = 0.14f)
+        ),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = vehicle.title,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = buildLiveMapSubtitle(vehicle, distanceInfo),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+
+                LiveTrackingBadge(
+                    hasLiveVehicleUpdates = hasLiveVehicleUpdates,
+                    streamMode = streamMode
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LiveMapMetric(
+                    label = "Durum",
+                    value = vehicle.status.displayName(),
+                    modifier = Modifier.weight(1f)
+                )
+                LiveMapMetric(
+                    label = "Enerji",
+                    value = vehicle.fuelLevelPercent?.let { "%$it" } ?: "Bekleniyor",
+                    modifier = Modifier.weight(1f)
+                )
+                LiveMapMetric(
+                    label = "Konum",
+                    value = vehicle.locationUpdatedAt?.toMapUpdateLabel() ?: "Bekleniyor",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LiveTrackingBadge(
+    hasLiveVehicleUpdates: Boolean,
+    streamMode: VehicleLocationStreamMode,
+    modifier: Modifier = Modifier
+) {
+    val badgeColor = when {
+        streamMode == VehicleLocationStreamMode.WebSocket && hasLiveVehicleUpdates -> {
+            MaterialTheme.colorScheme.primary
+        }
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    val badgeText = when {
+        streamMode == VehicleLocationStreamMode.Demo -> "Simülasyon modu"
+        streamMode == VehicleLocationStreamMode.WebSocket && hasLiveVehicleUpdates -> "Canlı takip"
+        streamMode == VehicleLocationStreamMode.WebSocket -> "Canlı veri bekleniyor"
+        else -> "WebSocket bekleniyor"
+    }
+
+    Row(
+        modifier = modifier
+            .background(badgeColor.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .background(badgeColor, CircleShape)
+        )
+        Text(
+            text = badgeText,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = badgeColor
+            )
+        )
+    }
+}
+
+@Composable
+private fun LiveMapMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        )
+        Spacer(modifier = Modifier.height(3.dp))
+        Text(
+            text = value,
+            maxLines = 1,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        )
+    }
+}
+
+private fun buildLiveMapSubtitle(
+    vehicle: Vehicle,
+    distanceInfo: VehicleDistanceInfo?
+): String {
+    val distance = distanceInfo?.let { "${it.distanceLabel} • ${it.walkingMinutes} dk yürüyüş" }
+    return listOfNotNull(vehicle.locationName, distance).joinToString(" • ")
+}
+
+private fun VehicleStatus.displayName(): String {
+    return when (this) {
+        VehicleStatus.Available -> "Müsait"
+        VehicleStatus.Rented -> "Kirada"
+        VehicleStatus.Maintenance -> "Bakımda"
+        VehicleStatus.Unknown -> "Bilinmiyor"
+    }
+}
+
+private fun String.toMapUpdateLabel(): String {
+    val timePart = substringAfter("T", missingDelimiterValue = this)
+        .substringBefore(".")
+        .substringBefore("Z")
+    return if (timePart.length >= 5) timePart.take(5) else "Güncel"
 }
 
 @Composable

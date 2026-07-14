@@ -8,6 +8,7 @@ import com.example.rencar_pair.domain.model.VehiclePosition
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
+import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import kotlinx.coroutines.Dispatchers
@@ -166,7 +167,8 @@ class HomeViewModelTest {
                     vehicleId = "sedan-1",
                     latitude = 41.5,
                     longitude = 29.5,
-                    status = VehicleStatus.Rented
+                    status = VehicleStatus.Rented,
+                    updatedAt = "2026-07-14T11:35:00Z"
                 )
             )
         )
@@ -177,6 +179,9 @@ class HomeViewModelTest {
         assertEquals(29.5, updated.longitude, 0.0001)
         assertEquals(VehicleStatus.Rented, updated.status)
         assertEquals(false, updated.canReserve)
+        assertEquals("2026-07-14T11:35:00Z", updated.locationUpdatedAt)
+        assertEquals(true, viewModel.state.value.hasLiveVehicleUpdates)
+        assertEquals(VehicleLocationStreamMode.WebSocket, viewModel.state.value.vehicleLocationStreamMode)
     }
 
     private fun createViewModel(
@@ -245,6 +250,8 @@ private class EmptyVehicleLocationRepositoryForHomeTest : VehicleLocationReposit
 
 private class FakeVehicleLocationRepositoryForHomeTest : VehicleLocationRepository {
     private val positions = MutableSharedFlow<List<VehiclePosition>>(replay = 1)
+
+    override val streamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.WebSocket
 
     override fun observeVehiclePositions(): Flow<List<VehiclePosition>> = positions
 
