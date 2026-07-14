@@ -8,6 +8,7 @@ import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -32,34 +33,26 @@ data class HomeState(
             matchesType && matchesPrice && matchesRange
         }
 
+    val nearbyVehicles: List<Vehicle>
+        get() = userLocation?.let { location ->
+            filteredVehicles.sortedBy { vehicle -> location.distanceKmTo(vehicle) }
+        } ?: filteredVehicles
+
     val selectedVehicle: Vehicle?
         get() = filteredVehicles.firstOrNull { it.id == selectedVehicleId }
 
     val highlightedVehicle: Vehicle?
-        get() = selectedVehicle
-            ?: userLocation?.let { location ->
-                filteredVehicles.minByOrNull {
-                    distanceKm(
-                        startLatitude = location.latitude,
-                        startLongitude = location.longitude,
-                        endLatitude = it.latitude,
-                        endLongitude = it.longitude
-                    )
-                }
-            }
-            ?: filteredVehicles.firstOrNull()
+        get() = selectedVehicle ?: nearbyVehicles.firstOrNull()
 
     val hasActiveFilters: Boolean
         get() = selectedVehicleType != null || maxDailyPrice != null || minRangeKm != null
 
+    fun distanceKmTo(vehicle: Vehicle): Double? {
+        return userLocation?.distanceKmTo(vehicle)
+    }
+
     fun distanceInfoFor(vehicle: Vehicle): VehicleDistanceInfo? {
-        val location = userLocation ?: return null
-        val distanceKm = distanceKm(
-            startLatitude = location.latitude,
-            startLongitude = location.longitude,
-            endLatitude = vehicle.latitude,
-            endLongitude = vehicle.longitude
-        )
+        val distanceKm = distanceKmTo(vehicle) ?: return null
         return VehicleDistanceInfo(
             distanceKm = distanceKm,
             walkingMinutes = ((distanceKm / WALKING_SPEED_KM_PER_HOUR) * MINUTES_PER_HOUR)
@@ -90,25 +83,19 @@ sealed interface HomeIntent : MviIntent {
     data object ClearFilters : HomeIntent
     data class LocationPermissionChanged(val granted: Boolean) : HomeIntent
     data object FetchUserLocation : HomeIntent
+    data object FocusUserLocation : HomeIntent
 }
 
-private fun distanceKm(
-    startLatitude: Double,
-    startLongitude: Double,
-    endLatitude: Double,
-    endLongitude: Double
-): Double {
-    val deltaLat = Math.toRadians(endLatitude - startLatitude)
-    val deltaLng = Math.toRadians(endLongitude - startLongitude)
-    val startLat = Math.toRadians(startLatitude)
-    val endLat = Math.toRadians(endLatitude)
+private fun UserLocation.distanceKmTo(vehicle: Vehicle): Double {
+    val latitudeDelta = Math.toRadians(vehicle.latitude - latitude)
+    val longitudeDelta = Math.toRadians(vehicle.longitude - longitude)
+    val originLatitude = Math.toRadians(latitude)
+    val targetLatitude = Math.toRadians(vehicle.latitude)
 
-    val a = sin(deltaLat / 2) * sin(deltaLat / 2) +
-        cos(startLat) * cos(endLat) *
-        sin(deltaLng / 2) * sin(deltaLng / 2)
-    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    return EARTH_RADIUS_KM * c
+    val haversine = sin(latitudeDelta / 2).pow(2.0) +
+        cos(originLatitude) * cos(targetLatitude) * sin(longitudeDelta / 2).pow(2.0)
+    val centralAngle = 2 * atan2(sqrt(haversine), sqrt(1 - haversine))
+    return EARTH_RADIUS_KM * centralAngle
 }
 
 private const val EARTH_RADIUS_KM = 6371.0

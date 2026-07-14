@@ -2,12 +2,30 @@ package com.example.rencar_pair.presentation.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,12 +33,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.User
+import com.example.rencar_pair.domain.model.UserRole
 import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
 import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import com.example.rencar_pair.ui.theme.RenCarTheme
@@ -78,12 +100,12 @@ fun ProfileScreenContent(
                     }
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
             if (state.isLoading) {
@@ -91,88 +113,217 @@ fun ProfileScreenContent(
                     CircularProgressIndicator()
                 }
             } else {
-                Column(
+                LazyColumn(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxSize()
+                        .padding(horizontal = 22.dp)
                 ) {
-                    // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        val initials = state.user?.fullName?.split(" ")
-                            ?.mapNotNull { it.firstOrNull()?.toString() }
-                            ?.take(2)
-                            ?.joinToString("") ?: "?"
+                    item {
+                        Spacer(modifier = Modifier.height(18.dp))
                         Text(
-                            text = initials,
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold
+                            text = "Profil",
+                            style = MaterialTheme.typography.displayLarge.copy(
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = (-0.5).sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
                         )
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    // User Info
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            // Avatar
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val initials = state.user?.fullName?.split(" ")
+                                    ?.mapNotNull { it.firstOrNull()?.toString() }
+                                    ?.take(2)
+                                    ?.joinToString("") ?: "?"
+                                Text(
+                                    text = initials,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                )
+                            }
+                            
+                            // Names
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = state.user?.fullName ?: "Misafir",
+                                    style = MaterialTheme.typography.displayMedium.copy(
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                )
+                                Text(
+                                    text = "+90 532 000 00 00", // Mocked
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                            
+                            // Edit Icon
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .shadow(elevation = 10.dp, shape = RoundedCornerShape(12.dp), spotColor = Color.Black.copy(alpha = 0.07f))
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                    .clickable { /* Edit */ },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_edit),
+                                    contentDescription = "Edit Profile",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
 
-                    // Name
-                    Text(
-                        text = state.user?.fullName ?: "Misafir",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Statü: ${state.user?.role?.name ?: "Bilinmiyor"}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    AssistChip(
-                        onClick = {},
-                        enabled = false,
-                        label = {
+                    // License Status
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(elevation = 14.dp, shape = RoundedCornerShape(18.dp), spotColor = Color.Black.copy(alpha = 0.05f))
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(Color(0xFFE7F4EC), RoundedCornerShape(13.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_agenda), // Mock Document Icon
+                                    contentDescription = null,
+                                    tint = Color(0xFF1A9E63),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Ehliyet doğrulandı",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = 14.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                )
+                                Text(
+                                    text = "B sınıfı · geçerli",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
                             Text(
-                                text = if (state.isFakeRepositoryMode) {
-                                    "Demo modu: FAKE"
-                                } else {
-                                    "API modu: REAL"
-                                }
+                                text = "Onaylı",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFF1A9E63)
+                                ),
+                                modifier = Modifier
+                                    .background(Color(0xFFE7F4EC), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 9.dp, vertical = 4.dp)
                             )
                         }
-                    )
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
 
-                    Spacer(modifier = Modifier.height(40.dp))
-
-                    // Menu Items
-                    ProfileMenuItem(title = "Hesabım") {}
-                    ProfileMenuItem(title = "Ödeme Yöntemleri") {}
-                    ProfileMenuItem(title = "Destek & Yardım") {}
-                    ProfileMenuItem(title = "Hakkımızda") {}
-
-                    Spacer(modifier = Modifier.weight(1f))
+                    // Settings List
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(elevation = 14.dp, shape = RoundedCornerShape(18.dp), spotColor = Color.Black.copy(alpha = 0.05f))
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                        ) {
+                            ProfileMenuItem(
+                                iconId = android.R.drawable.ic_menu_today, // Mock icon
+                                title = "Ödeme yöntemleri",
+                                onClick = { /* Navigate */ }
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                            ProfileMenuItem(
+                                iconId = android.R.drawable.ic_menu_preferences, // Mock icon
+                                title = "Ayarlar",
+                                onClick = { /* Navigate */ }
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                            ProfileMenuItem(
+                                iconId = android.R.drawable.ic_menu_help, // Mock icon
+                                title = "Yardım & destek",
+                                onClick = { /* Navigate */ }
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                            ProfileMenuItem(
+                                iconId = android.R.drawable.ic_menu_share, // Mock icon
+                                title = "Davet et · ₺50 kazan",
+                                onClick = { /* Navigate */ }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
 
                     // Logout Button
-                    Button(
-                        onClick = { onIntent(ProfileIntent.Logout) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Çıkış Yap",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(elevation = 14.dp, shape = RoundedCornerShape(16.dp), spotColor = Color.Black.copy(alpha = 0.05f))
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                                .clickable { onIntent(ProfileIntent.Logout) }
+                                .padding(15.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel), // Mock Exit Icon
+                                contentDescription = "Logout",
+                                tint = Color(0xFFE5484D),
+                                modifier = Modifier.size(19.dp)
+                            )
+                            Spacer(modifier = Modifier.size(9.dp))
+                            Text(
+                                text = "Çıkış yap",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 14.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFE5484D)
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(30.dp))
                     }
                 }
             }
@@ -182,27 +333,42 @@ fun ProfileScreenContent(
 
 @Composable
 fun ProfileMenuItem(
+    iconId: Int,
     title: String,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 16.dp, horizontal = 12.dp),
+            .padding(vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(13.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = iconId),
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        }
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(18.dp)
         )
     }
 }
@@ -215,9 +381,9 @@ private fun ProfileScreenPreview() {
             state = ProfileState(
                 user = User(
                     id = "1",
-                    fullName = "John Doe",
+                    fullName = "Deniz Yılmaz",
                     token = "token",
-                    role = com.example.rencar_pair.domain.model.UserRole.Customer
+                    role = UserRole.Customer
                 ),
                 isLoading = false
             ),

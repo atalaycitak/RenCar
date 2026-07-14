@@ -83,7 +83,8 @@ dependencies {
 
     implementation(libs.coil.compose)
 
-    implementation(libs.maplibre.android.sdk)
+    implementation(libs.maplibre)
+    implementation(libs.maplibre.annotation)
 
     implementation(libs.play.services.location)
 

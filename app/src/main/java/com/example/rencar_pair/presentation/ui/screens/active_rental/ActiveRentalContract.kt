@@ -2,6 +2,7 @@ package com.example.rencar_pair.presentation.ui.screens.active_rental
 
 import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
@@ -9,6 +10,7 @@ import com.example.rencar_pair.presentation.mvi.MviState
 @Stable
 data class ActiveRentalState(
     val rental: Rental? = null,
+    val vehicle: Vehicle? = null,
     val elapsedMinutes: Int = 0,
     val distanceKm: Double = 0.0,
     val currentCost: Double = 0.0,

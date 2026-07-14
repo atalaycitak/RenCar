@@ -152,7 +152,10 @@ fun RenCarNavHost(
             ReservationScreen(
                 onBack = { navController.popBackStack() },
                 onDeliveryChecklist = { rentalId, vehicleId ->
-                    navController.navigate(DeliveryChecklistRoute(rentalId, vehicleId))
+                    navController.navigate(DeliveryChecklistRoute(rentalId, vehicleId)) {
+                        popUpTo<ReservationRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }

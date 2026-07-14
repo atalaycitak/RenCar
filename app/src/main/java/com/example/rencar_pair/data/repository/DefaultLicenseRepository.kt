@@ -84,7 +84,8 @@ class DefaultLicenseRepository(
                 ?: throw IllegalArgumentException("Image file cannot be read")
             bytes.toRequestBody(mediaType)
         } else {
-            val file = File(source)
+            val path = if (source.startsWith("file://")) Uri.parse(source).path ?: source else source
+            val file = File(path)
             if (!file.exists()) {
                 throw IllegalArgumentException("Image file not found")
             }
@@ -96,7 +97,8 @@ class DefaultLicenseRepository(
         return if (source.startsWith("content://")) {
             fallback
         } else {
-            File(source).name.ifBlank { fallback }
+            val path = if (source.startsWith("file://")) Uri.parse(source).path ?: source else source
+            File(path).name.ifBlank { fallback }
         }
     }
 }

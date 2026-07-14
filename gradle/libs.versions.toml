@@ -16,7 +16,8 @@ okhttp = "4.12.0"
 kotlinxSerializationJson = "1.7.3"
 kotlinxCoroutines = "1.9.0"
 coil = "2.7.0"
-maplibre = "11.9.0"
+maplibre = "11.7.1"
+maplibreAnnotation = "3.0.2"
 playServicesLocation = "21.3.0"
 retrofitSerializationConverter = "1.0.0"
 openapiGenerator = "7.5.0"
@@ -55,7 +56,8 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
-maplibre-android-sdk = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
+maplibre = { group = "org.maplibre.gl", name = "android-sdk", version.ref = "maplibre" }
+maplibre-annotation = { group = "org.maplibre.gl", name = "android-plugin-annotation-v9", version.ref = "maplibreAnnotation" }
 
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 

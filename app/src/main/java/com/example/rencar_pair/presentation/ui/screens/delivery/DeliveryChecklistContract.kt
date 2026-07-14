@@ -9,18 +9,21 @@ import com.example.rencar_pair.presentation.mvi.MviState
 data class DeliveryChecklistState(
     val rentalId: String,
     val vehicleId: String,
-    val vehicleConditionChecked: Boolean = false,
-    val photosChecked: Boolean = false,
-    val doorsAndKeyChecked: Boolean = false,
+    val frontPhotoTaken: Boolean = false,
+    val backPhotoTaken: Boolean = false,
+    val leftPhotoTaken: Boolean = false,
+    val rightPhotoTaken: Boolean = false,
     val isCompleted: Boolean = false
 ) : MviState {
-    val canComplete: Boolean = vehicleConditionChecked && photosChecked && doorsAndKeyChecked
+    val completedPhotoCount: Int = listOf(frontPhotoTaken, backPhotoTaken, leftPhotoTaken, rightPhotoTaken).count { it }
+    val canComplete: Boolean = completedPhotoCount == 4
 }
 
 sealed interface DeliveryChecklistIntent : MviIntent {
-    data object ToggleVehicleCondition : DeliveryChecklistIntent
-    data object TogglePhotos : DeliveryChecklistIntent
-    data object ToggleDoorsAndKey : DeliveryChecklistIntent
+    data object TakeFrontPhoto : DeliveryChecklistIntent
+    data object TakeBackPhoto : DeliveryChecklistIntent
+    data object TakeLeftPhoto : DeliveryChecklistIntent
+    data object TakeRightPhoto : DeliveryChecklistIntent
     data object CompleteChecklist : DeliveryChecklistIntent
 }
 

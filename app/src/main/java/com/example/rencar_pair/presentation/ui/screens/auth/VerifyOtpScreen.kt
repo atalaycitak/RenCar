@@ -23,11 +23,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
@@ -70,51 +77,92 @@ fun VerifyOtpScreenContent(
     onIntent: (VerifyOtpIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val bgColor = MaterialTheme.colorScheme.background
+    val surfaceVariant = if (isDark) androidx.compose.ui.graphics.Color(0xFF1B212A) else androidx.compose.ui.graphics.Color(0xFFF1F4F8)
+    val textPrimary = MaterialTheme.colorScheme.onBackground
+    val textSecondary = MaterialTheme.colorScheme.secondary
+    val borderColor = MaterialTheme.colorScheme.outline
+
+    Box(modifier = modifier.fillMaxSize().background(bgColor)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 28.dp)
+                .padding(top = 14.dp),
+            horizontalAlignment = Alignment.Start
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Message,
-                contentDescription = null,
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            // Back button icon
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(13.dp))
+                    .background(surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack, // Standard back icon
+                    contentDescription = "Geri",
+                    tint = textPrimary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "Doğrulama Kodu",
+                text = "Doğrulama kodu",
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold
+                    fontSize = 27.sp,
+                    letterSpacing = (-0.6).sp
                 ),
-                color = MaterialTheme.colorScheme.onBackground
+                color = textPrimary
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "${state.phone} numarasına gönderilen kodu girin (Simülasyon: 123456)",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = buildAnnotatedString {
+                    append("Kod ")
+                    withStyle(SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )) {
+                        append(state.phone)
+                    }
+                    append(" numarasına SMS olarak gönderildi.")
+                },
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
+                    lineHeight = 23.sp
+                ),
+                color = textSecondary
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Onay Kodu",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp
+                ),
+                color = textSecondary
+            )
+
+            Spacer(modifier = Modifier.height(9.dp))
 
             CustomTextField(
                 value = state.code,
                 onValueChange = { onIntent(VerifyOtpIntent.OnCodeChanged(it)) },
-                label = "OTP Kodu",
                 placeholder = "123456",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
-                isError = state.errorMessage != null && state.code.isBlank()
+                isError = state.errorMessage != null && state.code.isBlank(),
+                modifier = Modifier.fillMaxWidth()
             )
 
             AnimatedVisibility(
@@ -134,12 +182,45 @@ fun VerifyOtpScreenContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(22.dp))
 
             PrimaryButton(
-                text = "Doğrula",
+                text = "Onayla",
                 onClick = { onIntent(VerifyOtpIntent.OnVerifyClicked) },
                 enabled = !state.isLoading
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = buildAnnotatedString {
+                    append("Kodu almadın mı? ")
+                    withStyle(SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )) {
+                        append("Tekrar gönder")
+                    }
+                },
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                color = textSecondary,
+                modifier = Modifier
+                    .padding(bottom = 36.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+
+            // Bottom System Navigation Indicator mock style
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.35f)
+                    .height(5.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+                    .background(if (isDark) androidx.compose.ui.graphics.Color(0xFFEAEEF3).copy(alpha = 0.24f) else androidx.compose.ui.graphics.Color(0xFF141A22).copy(alpha = 0.20f))
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = 9.dp)
             )
         }
 
