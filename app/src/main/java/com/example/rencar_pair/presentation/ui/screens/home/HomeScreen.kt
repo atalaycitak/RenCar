@@ -65,6 +65,7 @@ import org.maplibre.android.geometry.LatLng
 @Composable
 fun HomeScreen(
     onVehicleDetails: (String) -> Unit,
+    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
@@ -107,6 +108,7 @@ fun HomeScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onVehicleDetails = onVehicleDetails,
+        onReserveVehicle = onReserveVehicle,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile
     )
@@ -117,6 +119,7 @@ fun HomeScreenContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
     onVehicleDetails: (String) -> Unit,
+    onReserveVehicle: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
@@ -263,7 +266,11 @@ fun HomeScreenContent(
                 VehicleDetailBottomSheet(
                     vehicle = vehicle,
                     onDismissRequest = { onIntent(HomeIntent.SelectVehicle(null)) },
-                    onRentClick = {
+                    onReserveClick = {
+                        onIntent(HomeIntent.SelectVehicle(null))
+                        onReserveVehicle(vehicle.id)
+                    },
+                    onUnlockClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
                         onVehicleDetails(vehicle.id)
                     }
@@ -549,6 +556,7 @@ private fun HomeScreenPreview() {
             ),
             onIntent = {},
             onVehicleDetails = {},
+            onReserveVehicle = {},
             onNavigateToHistory = {},
             onNavigateToProfile = {}
         )

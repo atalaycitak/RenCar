@@ -12,6 +12,7 @@ import com.example.rencar_pair.domain.repository.PaymentRepository
 import com.example.rencar_pair.domain.repository.RentalRepository
 import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
+import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.repository.WalletRepository
 import com.example.rencar_pair.domain.usecase.AuthUseCases
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
@@ -60,6 +61,9 @@ val appModule = module {
     single<VehicleRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleRepository() else DefaultVehicleRepository(get())
     }
+    single<VehicleLocationRepository> {
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleLocationRepository() else DefaultVehicleLocationRepository(get(), get())
+    }
     single<ReservationRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeReservationRepository() else DefaultReservationRepository(get())
     }
@@ -67,10 +71,10 @@ val appModule = module {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeRentalRepository() else DefaultRentalRepository(get())
     }
     single<PaymentRepository> {
-        if (BuildConfig.USE_FAKE_REPOSITORIES) FakePaymentRepository() else DefaultPaymentRepository()
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakePaymentRepository() else DefaultPaymentRepository(get())
     }
     single<WalletRepository> {
-        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository()
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository(get())
     }
 
     single { LocationServices.getFusedLocationProviderClient(androidContext()) }

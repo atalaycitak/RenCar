@@ -4,14 +4,17 @@ import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehiclePosition
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
+import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -151,12 +154,39 @@ class HomeViewModelTest {
         assertEquals(null, viewModel.state.value.userLocation)
     }
 
+    @Test
+    fun `vehicle location stream updates map vehicle coordinates`() = runTest {
+        val vehicleLocationRepository = FakeVehicleLocationRepositoryForHomeTest()
+        val viewModel = createViewModel(vehicleLocationRepository = vehicleLocationRepository)
+        advanceUntilIdle()
+
+        vehicleLocationRepository.emitPositions(
+            listOf(
+                VehiclePosition(
+                    vehicleId = "sedan-1",
+                    latitude = 41.5,
+                    longitude = 29.5,
+                    status = VehicleStatus.Rented
+                )
+            )
+        )
+        advanceUntilIdle()
+
+        val updated = viewModel.state.value.vehicles.first { it.id == "sedan-1" }
+        assertEquals(41.5, updated.latitude, 0.0001)
+        assertEquals(29.5, updated.longitude, 0.0001)
+        assertEquals(VehicleStatus.Rented, updated.status)
+        assertEquals(false, updated.canReserve)
+    }
+
     private fun createViewModel(
         vehicleRepository: VehicleRepository = FakeVehicleRepositoryForHomeTest(),
+        vehicleLocationRepository: VehicleLocationRepository = EmptyVehicleLocationRepositoryForHomeTest(),
         locationTracker: LocationTracker = FakeLocationTrackerForHomeTest()
     ): HomeViewModel {
         return HomeViewModel(
             vehicleUseCases = VehicleUseCases(vehicleRepository),
+            vehicleLocationRepository = vehicleLocationRepository,
             locationTracker = locationTracker
         )
     }
@@ -206,6 +236,20 @@ private class FakeLocationTrackerForHomeTest : LocationTracker {
 
     suspend fun emitLocation(location: UserLocation) {
         locationUpdates.emit(location)
+    }
+}
+
+private class EmptyVehicleLocationRepositoryForHomeTest : VehicleLocationRepository {
+    override fun observeVehiclePositions(): Flow<List<VehiclePosition>> = emptyFlow()
+}
+
+private class FakeVehicleLocationRepositoryForHomeTest : VehicleLocationRepository {
+    private val positions = MutableSharedFlow<List<VehiclePosition>>(replay = 1)
+
+    override fun observeVehiclePositions(): Flow<List<VehiclePosition>> = positions
+
+    suspend fun emitPositions(next: List<VehiclePosition>) {
+        positions.emit(next)
     }
 }
 

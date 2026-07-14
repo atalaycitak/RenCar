@@ -2,7 +2,10 @@ package com.example.rencar_pair.presentation.ui.screens.home
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.location.LocationTracker
+import com.example.rencar_pair.domain.model.VehiclePosition
+import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
+import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 import com.example.rencar_pair.presentation.mvi.NoEffect
@@ -11,13 +14,16 @@ import kotlinx.coroutines.flow.catch
 
 class HomeViewModel(
     private val vehicleUseCases: VehicleUseCases,
+    private val vehicleLocationRepository: VehicleLocationRepository,
     private val locationTracker: LocationTracker
 ) : BaseMviViewModel<HomeState, HomeIntent, NoEffect>(HomeState()) {
 
     private var locationUpdatesJob: Job? = null
+    private var vehicleLocationUpdatesJob: Job? = null
 
     init {
         onIntent(HomeIntent.LoadVehicles)
+        startVehicleLocationUpdates()
     }
 
     override fun onIntent(intent: HomeIntent) {
@@ -127,6 +133,36 @@ class HomeViewModel(
     private fun stopLocationUpdates() {
         locationUpdatesJob?.cancel()
         locationUpdatesJob = null
+    }
+
+    private fun startVehicleLocationUpdates() {
+        if (vehicleLocationUpdatesJob?.isActive == true) return
+
+        vehicleLocationUpdatesJob = launchCoroutine {
+            vehicleLocationRepository.observeVehiclePositions()
+                .catch { }
+                .collect { positions ->
+                    applyVehiclePositions(positions)
+                }
+        }
+    }
+
+    private fun applyVehiclePositions(positions: List<VehiclePosition>) {
+        if (positions.isEmpty()) return
+        val positionsById = positions.associateBy { it.vehicleId }
+        updateState { state ->
+            state.copy(
+                vehicles = state.vehicles.map { vehicle ->
+                    val position = positionsById[vehicle.id] ?: return@map vehicle
+                    vehicle.copy(
+                        latitude = position.latitude,
+                        longitude = position.longitude,
+                        status = position.status,
+                        canReserve = vehicle.canReserve && position.status == VehicleStatus.Available
+                    )
+                }
+            )
+        }
     }
 
     private fun updateFilterState(transform: (HomeState) -> HomeState) {

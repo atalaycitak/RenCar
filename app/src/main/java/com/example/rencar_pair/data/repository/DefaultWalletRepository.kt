@@ -1,68 +1,93 @@
 package com.example.rencar_pair.data.repository
 
+import com.example.rencar_pair.BuildConfig
+import com.example.rencar_pair.data.remote.RenCarApi
+import com.example.rencar_pair.data.remote.dto.TopUpWalletRequest
+import com.example.rencar_pair.data.remote.dto.WalletInfoResponse
+import com.example.rencar_pair.data.remote.dto.WalletTransactionDto
+import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.WalletInfo
 import com.example.rencar_pair.domain.model.WalletTransaction
 import com.example.rencar_pair.domain.model.WalletTransactionType
 import com.example.rencar_pair.domain.repository.WalletRepository
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
-/**
- * STUB implementation — holds balance and transactions in memory with Mutex.
- * REPLACE with real Retrofit calls to the wallet endpoints when available.
- */
-class DefaultWalletRepository : WalletRepository {
-    private val mutex = Mutex()
-    private var currentBalance = 1500.0
-    private val transactions = mutableListOf(
-        WalletTransaction(
-            id = "wtx_001",
-            amount = 500.0,
-            date = System.currentTimeMillis() - 86400000L,
-            type = WalletTransactionType.TOP_UP
-        )
-    )
+class DefaultWalletRepository(
+    private val api: RenCarApi
+) : WalletRepository {
+    private val endpointFallback = FakeWalletRepository()
 
     override suspend fun getWalletInfo(): NetworkResult<WalletInfo> {
-        delay(800)
-        return mutex.withLock {
-            NetworkResult.Success(
-                WalletInfo(
-                    balance = currentBalance,
-                    transactions = transactions.toList().sortedByDescending { it.date }
-                )
-            )
+        val result = safeApiCall(
+            call = { api.getWalletInfo() },
+            transform = { it.toDomain() }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.getWalletInfo()
         }
     }
 
     override suspend fun getBalance(): NetworkResult<Double> {
-        delay(500)
-        return mutex.withLock { NetworkResult.Success(currentBalance) }
+        val result = safeApiCall(
+            call = { api.getWalletBalance() },
+            transform = { it.currentBalance ?: it.balance ?: 0.0 }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.getBalance()
+        }
     }
 
     override suspend fun topUp(amount: Double, cardToken: String): NetworkResult<WalletInfo> {
-        delay(1200)
         if (amount <= 0) {
-            return NetworkResult.Error("Geçersiz tutar")
+            return NetworkResult.Error("Gecersiz tutar")
         }
-        return mutex.withLock {
-            currentBalance += amount
-            transactions.add(
-                WalletTransaction(
-                    id = "wtx_${System.currentTimeMillis()}",
-                    amount = amount,
-                    date = System.currentTimeMillis(),
-                    type = WalletTransactionType.TOP_UP
+        val result = safeApiCall(
+            call = {
+                api.topUpWallet(
+                    TopUpWalletRequest(
+                        amount = amount,
+                        cardToken = cardToken
+                    )
                 )
-            )
-            NetworkResult.Success(
-                WalletInfo(
-                    balance = currentBalance,
-                    transactions = transactions.toList().sortedByDescending { it.date }
-                )
-            )
+            },
+            transform = { it.toDomain() }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.topUp(amount, cardToken)
         }
+    }
+
+    private fun WalletInfoResponse.toDomain(): WalletInfo {
+        return WalletInfo(
+            balance = currentBalance ?: balance ?: 0.0,
+            transactions = transactions.map { it.toDomain() }.sortedByDescending { it.date }
+        )
+    }
+
+    private fun WalletTransactionDto.toDomain(): WalletTransaction {
+        return WalletTransaction(
+            id = id,
+            amount = amount,
+            date = date,
+            type = when (type.uppercase()) {
+                "TOP_UP" -> WalletTransactionType.TOP_UP
+                "RENTAL_PAYMENT" -> WalletTransactionType.RENTAL_PAYMENT
+                else -> WalletTransactionType.RENTAL_PAYMENT
+            }
+        )
+    }
+
+    private suspend fun <T> NetworkResult<T>.withEndpointFallback(
+        fallback: suspend () -> NetworkResult<T>
+    ): NetworkResult<T> {
+        return if (BuildConfig.DEBUG && this is NetworkResult.Error && code in ENDPOINT_NOT_READY_CODES) {
+            fallback()
+        } else {
+            this
+        }
+    }
+
+    private companion object {
+        val ENDPOINT_NOT_READY_CODES = setOf(404, 405, 501)
     }
 }

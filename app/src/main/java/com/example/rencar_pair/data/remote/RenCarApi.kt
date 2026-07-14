@@ -11,8 +11,13 @@ import com.example.rencar_pair.data.remote.dto.LicenseStatusResponse
 import com.example.rencar_pair.data.remote.dto.LicenseUploadResponse
 import com.example.rencar_pair.data.remote.dto.MessageResponse
 import com.example.rencar_pair.data.remote.dto.OtpRequiredResponseDto
+import com.example.rencar_pair.data.remote.dto.AddCardRequest
 import com.example.rencar_pair.data.remote.dto.RefreshTokenRequest
 import com.example.rencar_pair.data.remote.dto.RejectLicenseRequest
+import com.example.rencar_pair.data.remote.dto.IyzicoCardTokenResponse
+import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
+import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
+import com.example.rencar_pair.data.remote.dto.TopUpWalletRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.RentalResponse
@@ -20,6 +25,8 @@ import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.UpdateVehicleRequest
 import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
+import com.example.rencar_pair.data.remote.dto.WalletBalanceResponse
+import com.example.rencar_pair.data.remote.dto.WalletInfoResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -83,6 +90,24 @@ interface RenCarApi {
 
     @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
+
+    @POST("payments/process")
+    suspend fun processPayment(@Body request: ProcessPaymentRequest): Response<ProcessPaymentResponse>
+
+    @POST("payments/cards")
+    suspend fun addPaymentCard(@Body request: AddCardRequest): Response<IyzicoCardTokenResponse>
+
+    @GET("payments/cards")
+    suspend fun getPaymentCards(): Response<List<IyzicoCardTokenResponse>>
+
+    @GET("wallet")
+    suspend fun getWalletInfo(): Response<WalletInfoResponse>
+
+    @GET("wallet/balance")
+    suspend fun getWalletBalance(): Response<WalletBalanceResponse>
+
+    @POST("wallet/top-up")
+    suspend fun topUpWallet(@Body request: TopUpWalletRequest): Response<WalletInfoResponse>
 
     @GET("health")
     suspend fun health(): Response<EmptyResponse>

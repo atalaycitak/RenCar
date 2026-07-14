@@ -1,51 +1,46 @@
 package com.example.rencar_pair.data.repository
 
+import com.example.rencar_pair.BuildConfig
+import com.example.rencar_pair.data.remote.RenCarApi
+import com.example.rencar_pair.data.remote.dto.AddCardRequest
+import com.example.rencar_pair.data.remote.dto.IyzicoCardTokenResponse
+import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
+import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
+import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
 import com.example.rencar_pair.domain.model.PaymentStatus
 import com.example.rencar_pair.domain.repository.PaymentRepository
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
-/**
- * STUB implementation — holds cards and payment in memory with Mutex.
- * REPLACE with real Retrofit calls to the payment endpoints when available.
- */
-class DefaultPaymentRepository : PaymentRepository {
-    private val mutex = Mutex()
-    private val fakeCards = mutableListOf(
-        PaymentMethod(
-            cardToken = "tok_12345",
-            cardAlias = "Garanti Bonus",
-            binNumber = "493827",
-            cardAssociation = "VISA"
-        ),
-        PaymentMethod(
-            cardToken = "tok_67890",
-            cardAlias = "IsBankasi Maximum",
-            binNumber = "543210",
-            cardAssociation = "MASTER_CARD"
-        )
-    )
+class DefaultPaymentRepository(
+    private val api: RenCarApi
+) : PaymentRepository {
+    private val endpointFallback = FakePaymentRepository()
 
     override suspend fun processPayment(
         rentalId: String,
         cardToken: String,
         amount: Double
     ): NetworkResult<PaymentResult> {
-        delay(1000)
         if (amount <= 0) {
-            return NetworkResult.Error("Geçersiz tutar")
+            return NetworkResult.Error("Gecersiz tutar")
         }
-        return NetworkResult.Success(
-            PaymentResult(
-                status = PaymentStatus.Success,
-                transactionId = "tx_${System.currentTimeMillis()}",
-                errorMessage = null
-            )
+        val result = safeApiCall(
+            call = {
+                api.processPayment(
+                    ProcessPaymentRequest(
+                        rentalId = rentalId,
+                        cardToken = cardToken,
+                        amount = amount
+                    )
+                )
+            },
+            transform = { it.toDomain() }
         )
+        return result.withEndpointFallback {
+            endpointFallback.processPayment(rentalId, cardToken, amount)
+        }
     }
 
     override suspend fun addCard(
@@ -55,22 +50,66 @@ class DefaultPaymentRepository : PaymentRepository {
         cvc: String,
         cardHolderName: String
     ): NetworkResult<PaymentMethod> {
-        delay(1500)
         if (cardNumber.length < 16) {
-            return NetworkResult.Error("Geçersiz kart numarası")
+            return NetworkResult.Error("Gecersiz kart numarasi")
         }
-        val newCard = PaymentMethod(
-            cardToken = "tok_${System.currentTimeMillis()}",
-            cardAlias = cardHolderName,
-            binNumber = cardNumber.take(6),
-            cardAssociation = if (cardNumber.startsWith("4")) "VISA" else "MASTER_CARD"
+        val result = safeApiCall(
+            call = {
+                api.addPaymentCard(
+                    AddCardRequest(
+                        cardNumber = cardNumber,
+                        expireMonth = expireMonth,
+                        expireYear = expireYear,
+                        cvc = cvc,
+                        cardHolderName = cardHolderName
+                    )
+                )
+            },
+            transform = { it.toDomain() }
         )
-        mutex.withLock { fakeCards.add(newCard) }
-        return NetworkResult.Success(newCard)
+        return result.withEndpointFallback {
+            endpointFallback.addCard(cardNumber, expireMonth, expireYear, cvc, cardHolderName)
+        }
     }
 
     override suspend fun getSavedCards(): NetworkResult<List<PaymentMethod>> {
-        delay(800)
-        return mutex.withLock { NetworkResult.Success(fakeCards.toList()) }
+        val result = safeApiCall(
+            call = { api.getPaymentCards() },
+            transform = { cards -> cards.orEmpty().map { it.toDomain() } }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.getSavedCards()
+        }
+    }
+
+    private fun ProcessPaymentResponse.toDomain(): PaymentResult {
+        return PaymentResult(
+            status = PaymentStatus.fromApiString(status),
+            transactionId = transactionId,
+            errorMessage = errorMessage
+        )
+    }
+
+    private fun IyzicoCardTokenResponse.toDomain(): PaymentMethod {
+        return PaymentMethod(
+            cardToken = cardToken,
+            cardAlias = cardAlias,
+            binNumber = binNumber,
+            cardAssociation = cardAssociation
+        )
+    }
+
+    private suspend fun <T> NetworkResult<T>.withEndpointFallback(
+        fallback: suspend () -> NetworkResult<T>
+    ): NetworkResult<T> {
+        return if (BuildConfig.DEBUG && this is NetworkResult.Error && code in ENDPOINT_NOT_READY_CODES) {
+            fallback()
+        } else {
+            this
+        }
+    }
+
+    private companion object {
+        val ENDPOINT_NOT_READY_CODES = setOf(404, 405, 501)
     }
 }

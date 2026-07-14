@@ -151,7 +151,11 @@ private fun VehicleDetailView(
             }
         }
 
-        PrimaryButton(text = "Rezervasyon oluştur", onClick = onReserve)
+        PrimaryButton(
+            text = "Rezervasyon oluştur",
+            onClick = onReserve,
+            enabled = vehicle.canReserve
+        )
     }
 }
 

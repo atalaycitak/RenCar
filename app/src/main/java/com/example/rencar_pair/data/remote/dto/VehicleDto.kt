@@ -13,6 +13,15 @@ data class VehicleResponse(
     val status: String,
     val latitude: Double,
     val longitude: Double,
+    val rangeKm: Int? = null,
+    val locationName: String? = null,
+    val fuelLevelPercent: Int? = null,
+    val transmission: String? = null,
+    val seatCount: Int? = null,
+    val imageUrl: String? = null,
+    val pricePerMinute: Double? = null,
+    val canReserve: Boolean? = null,
+    val canUnlock: Boolean? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
