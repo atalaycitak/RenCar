@@ -23,9 +23,12 @@ import com.example.rencar_pair.domain.model.VehicleStatus
 fun VehicleDetailBottomSheet(
     vehicle: Vehicle,
     onDismissRequest: () -> Unit,
-    onRentClick: () -> Unit
+    onReserveClick: () -> Unit,
+    onUnlockClick: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val fuelPercent = vehicle.fuelLevelPercent?.coerceIn(0, 100)
+    val minutePrice = vehicle.pricePerMinute
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -113,7 +116,7 @@ fun VehicleDetailBottomSheet(
                 SpecCardLarge(
                     modifier = Modifier.weight(1f),
                     title = "Yakıt",
-                    value = "%72",
+                    value = fuelPercent?.let { "%$it" } ?: "Bilinmiyor",
                     iconRes = android.R.drawable.ic_menu_compass, // placeholder icon
                     bottomContent = {
                         Box(
@@ -125,7 +128,7 @@ fun VehicleDetailBottomSheet(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.72f)
+                                    .fillMaxWidth((fuelPercent ?: 0) / 100f)
                                     .fillMaxHeight()
                                     .background(Color(0xFF1FB370))
                             )
@@ -156,13 +159,13 @@ fun VehicleDetailBottomSheet(
                 SpecCardSmall(
                     modifier = Modifier.weight(1f),
                     title = "Vites",
-                    value = "Otomatik", // mock
+                    value = vehicle.transmission ?: "Bilinmiyor",
                     iconRes = android.R.drawable.ic_menu_preferences // placeholder icon
                 )
                 SpecCardSmall(
                     modifier = Modifier.weight(1f),
                     title = "Koltuk",
-                    value = "5 kişi", // mock
+                    value = vehicle.seatCount?.let { "$it kişi" } ?: "Bilinmiyor",
                     iconRes = android.R.drawable.ic_menu_report_image // placeholder icon
                 )
             }
@@ -189,7 +192,8 @@ fun VehicleDetailBottomSheet(
             ) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = "₺4,50", // mock per minute
+                        text = minutePrice?.let { "₺${String.format("%.2f", it)}" }
+                            ?: "₺${vehicle.pricePerDay.toInt()}",
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -197,7 +201,7 @@ fun VehicleDetailBottomSheet(
                         )
                     )
                     Text(
-                        text = " /dk",
+                        text = if (minutePrice != null) " /dk" else " /gün",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -219,7 +223,8 @@ fun VehicleDetailBottomSheet(
             Spacer(modifier = Modifier.height(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(11.dp)) {
                 Button(
-                    onClick = { /* Todo: Reserve */ },
+                    onClick = onReserveClick,
+                    enabled = vehicle.canReserve,
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     border = androidx.compose.foundation.BorderStroke(1.7.dp, MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(18.dp),
@@ -237,8 +242,13 @@ fun VehicleDetailBottomSheet(
                 }
                 
                 Button(
-                    onClick = onRentClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    onClick = onUnlockClick,
+                    enabled = vehicle.canUnlock,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                        disabledContentColor = Color.White.copy(alpha = 0.7f)
+                    ),
                     shape = RoundedCornerShape(18.dp),
                     modifier = Modifier
                         .weight(1f)

@@ -20,7 +20,13 @@ class FakeVehicleRepository : VehicleRepository {
             latitude = 41.0082,
             longitude = 28.9784,
             rangeKm = 420,
-            locationName = "Sultanahmet, Istanbul"
+            locationName = "Sultanahmet, Istanbul",
+            fuelLevelPercent = 72,
+            transmission = "Otomatik",
+            seatCount = 5,
+            pricePerMinute = 4.50,
+            canReserve = true,
+            canUnlock = false
         ),
         Vehicle(
             id = "v2",
@@ -33,7 +39,13 @@ class FakeVehicleRepository : VehicleRepository {
             latitude = 41.0390,
             longitude = 28.9835,
             rangeKm = 510,
-            locationName = "Taksim, Istanbul"
+            locationName = "Taksim, Istanbul",
+            fuelLevelPercent = 86,
+            transmission = "Otomatik",
+            seatCount = 5,
+            pricePerMinute = 8.75,
+            canReserve = true,
+            canUnlock = true
         ),
         Vehicle(
             id = "v3",
@@ -46,7 +58,13 @@ class FakeVehicleRepository : VehicleRepository {
             latitude = 41.0565,
             longitude = 29.0320,
             rangeKm = 380,
-            locationName = "Besiktas, Istanbul"
+            locationName = "Besiktas, Istanbul",
+            fuelLevelPercent = 64,
+            transmission = "Otomatik",
+            seatCount = 5,
+            pricePerMinute = 6.25,
+            canReserve = true,
+            canUnlock = false
         ),
         Vehicle(
             id = "v4",
@@ -59,7 +77,13 @@ class FakeVehicleRepository : VehicleRepository {
             latitude = 40.9909,
             longitude = 29.0302,
             rangeKm = 300,
-            locationName = "Kadikoy, Istanbul"
+            locationName = "Kadikoy, Istanbul",
+            fuelLevelPercent = 55,
+            transmission = "Manuel",
+            seatCount = 5,
+            pricePerMinute = 3.90,
+            canReserve = true,
+            canUnlock = false
         ),
         Vehicle(
             id = "v5",
@@ -72,7 +96,13 @@ class FakeVehicleRepository : VehicleRepository {
             latitude = 41.0151,
             longitude = 28.9795,
             rangeKm = 460,
-            locationName = "Karakoy, Istanbul"
+            locationName = "Karakoy, Istanbul",
+            fuelLevelPercent = 78,
+            transmission = "Otomatik",
+            seatCount = 8,
+            pricePerMinute = 7.40,
+            canReserve = true,
+            canUnlock = false
         )
     )
 

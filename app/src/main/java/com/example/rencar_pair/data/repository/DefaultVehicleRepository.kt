@@ -32,6 +32,7 @@ class DefaultVehicleRepository(
     }
 
     private fun VehicleResponse.toDomain(): Vehicle {
+        val vehicleStatus = VehicleStatus.fromApiString(status)
         return Vehicle(
             id = id,
             plate = plate,
@@ -39,9 +40,19 @@ class DefaultVehicleRepository(
             model = model,
             type = VehicleType.fromApiString(type),
             pricePerDay = pricePerDay,
-            status = VehicleStatus.fromApiString(status),
+            status = vehicleStatus,
             latitude = latitude,
-            longitude = longitude
+            longitude = longitude,
+            rangeKm = rangeKm ?: 320,
+            locationName = locationName ?: "Istanbul",
+            fuelLevelPercent = fuelLevelPercent?.coerceIn(0, 100),
+            transmission = transmission,
+            seatCount = seatCount,
+            imageUrl = imageUrl,
+            pricePerMinute = pricePerMinute,
+            locationUpdatedAt = updatedAt,
+            canReserve = canReserve ?: (vehicleStatus == VehicleStatus.Available),
+            canUnlock = canUnlock ?: false
         )
     }
 }

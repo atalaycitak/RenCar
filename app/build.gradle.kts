@@ -10,6 +10,9 @@ val repositoryMode = providers.gradleProperty("rencar.repositoryMode")
     .get()
     .lowercase()
 val useFakeRepositories = repositoryMode == "fake"
+val vehicleLocationWsUrl = providers.gradleProperty("rencar.vehicleLocationWsUrl")
+    .orElse("")
+    .get()
 
 android {
     namespace = "com.example.rencar_pair"
@@ -29,6 +32,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("boolean", "USE_FAKE_REPOSITORIES", useFakeRepositories.toString())
         buildConfigField("String", "REPOSITORY_MODE", "\"${if (useFakeRepositories) "fake" else "real"}\"")
+        buildConfigField("String", "VEHICLE_LOCATION_WS_URL", "\"$vehicleLocationWsUrl\"")
     }
 
     buildTypes {

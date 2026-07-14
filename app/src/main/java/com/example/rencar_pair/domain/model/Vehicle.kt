@@ -41,7 +41,15 @@ data class Vehicle(
     val latitude: Double,
     val longitude: Double,
     val rangeKm: Int = 320,
-    val locationName: String = "Istanbul"
+    val locationName: String = "Istanbul",
+    val fuelLevelPercent: Int? = null,
+    val transmission: String? = null,
+    val seatCount: Int? = null,
+    val imageUrl: String? = null,
+    val pricePerMinute: Double? = null,
+    val locationUpdatedAt: String? = null,
+    val canReserve: Boolean = status == VehicleStatus.Available,
+    val canUnlock: Boolean = false
 ) {
     val title: String = "$brand $model"
 }

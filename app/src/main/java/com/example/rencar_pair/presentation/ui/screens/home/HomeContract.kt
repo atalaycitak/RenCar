@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleType
+import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
 import kotlin.math.atan2
@@ -23,7 +24,9 @@ data class HomeState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val locationPermissionGranted: Boolean = false,
-    val userLocation: UserLocation? = null
+    val userLocation: UserLocation? = null,
+    val hasLiveVehicleUpdates: Boolean = false,
+    val vehicleLocationStreamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.Inactive
 ) : MviState {
     val filteredVehicles: List<Vehicle>
         get() = vehicles.filter { vehicle ->

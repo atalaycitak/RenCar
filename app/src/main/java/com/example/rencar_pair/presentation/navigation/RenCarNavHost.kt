@@ -122,6 +122,9 @@ fun RenCarNavHost(
                 onVehicleDetails = { vehicleId ->
                     navController.navigate(VehicleDetailRoute(vehicleId))
                 },
+                onReserveVehicle = { vehicleId ->
+                    navController.navigate(ReservationRoute(vehicleId))
+                },
                 onNavigateToHistory = {
                     navController.navigate(TripHistoryListRoute) {
                         popUpTo(navController.graph.startDestinationId)
