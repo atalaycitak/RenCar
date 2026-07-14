@@ -1,7 +1,6 @@
 package com.example.rencar_pair.presentation.ui.components
 
 import android.graphics.Color
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -41,7 +40,8 @@ data class RenCarMapMarker(
     val text: String,
     val colorHex: String,
     val title: String = "",
-    val snippet: String = ""
+    val snippet: String = "",
+    val selected: Boolean = false
 )
 
 class RencarMapController internal constructor() {
@@ -75,21 +75,34 @@ fun RenCarMap(
 
     var mapAndStyle by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
 
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, mapView) {
+        var destroyed = false
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
                 Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                else -> {}
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> {
+                    destroyed = true
+                    mapView.onDestroy()
+                }
+                else -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            mapView.onStart()
+        }
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            mapView.onResume()
+        }
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            mapView.onDestroy()
+            if (!destroyed) {
+                mapView.onDestroy()
+            }
         }
     }
 
@@ -120,13 +133,16 @@ fun RenCarMap(
         }
     }
 
-    // Update me marker when location changes
+    LaunchedEffect(mapAndStyle, initialCenter, initialZoom) {
+        val (map, _) = mapAndStyle ?: return@LaunchedEffect
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(initialCenter, initialZoom))
+    }
+
     LaunchedEffect(mapAndStyle, myLocation) {
         val (_, style) = mapAndStyle ?: return@LaunchedEffect
         updateMe(style, myLocation)
     }
 
-    // Zoom once to the user when map is loaded and location is found
     var hasZoomedToUser by remember { mutableStateOf(false) }
     LaunchedEffect(mapAndStyle, myLocation) {
         if (hasZoomedToUser) return@LaunchedEffect
@@ -134,21 +150,23 @@ fun RenCarMap(
         val location = myLocation ?: return@LaunchedEffect
 
         hasZoomedToUser = true
-        Log.d("MAP", "First zoom -> lat: ${location.latitude}, lng: ${location.longitude}, zoom: 13.0")
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13.0))
     }
 
-    // Update car markers
     LaunchedEffect(mapAndStyle, markers) {
         val (map, _) = mapAndStyle ?: return@LaunchedEffect
         map.clear()
-        
+
         val markerIdMap = mutableMapOf<Marker, String>()
-        
         val iconFactory = org.maplibre.android.annotations.IconFactory.getInstance(context)
 
         markers.forEach { marker ->
-            val bitmap = createPriceMarkerBitmap(context, marker.text, marker.colorHex)
+            val bitmap = createPriceMarkerBitmap(
+                context = context,
+                text = marker.text,
+                colorHex = marker.colorHex,
+                selected = marker.selected
+            )
             val icon = iconFactory.fromBitmap(bitmap)
             val addedMarker = map.addMarker(
                 MarkerOptions()
@@ -183,67 +201,76 @@ private fun updateMe(style: Style, myLocation: LatLng?) {
     }
 }
 
-private fun createPriceMarkerBitmap(context: android.content.Context, text: String, colorHex: String): android.graphics.Bitmap {
+private fun createPriceMarkerBitmap(
+    context: android.content.Context,
+    text: String,
+    colorHex: String,
+    selected: Boolean
+): android.graphics.Bitmap {
     val scale = context.resources.displayMetrics.density
-    
-    // Convert dp to px
-    val paddingHorizontal = 8f * scale
-    val paddingVertical = 6f * scale
-    val textSize = 13f * scale
-    val cornerRadius = 13f * scale
-    val triangleHeight = 6f * scale
-    val triangleWidth = 10f * scale
-    val shadowRadius = 6f * scale
-    val shadowDy = 4f * scale
+
+    val paddingHorizontal = if (selected) 11f * scale else 8f * scale
+    val paddingVertical = if (selected) 8f * scale else 6f * scale
+    val textSize = if (selected) 14f * scale else 13f * scale
+    val cornerRadius = if (selected) 16f * scale else 13f * scale
+    val triangleHeight = if (selected) 8f * scale else 6f * scale
+    val triangleWidth = if (selected) 13f * scale else 10f * scale
+    val shadowRadius = if (selected) 9f * scale else 6f * scale
+    val shadowDy = if (selected) 5f * scale else 4f * scale
+    val strokeWidth = if (selected) 3f * scale else 0f
 
     val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
     paint.textSize = textSize
-    paint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-    
+    paint.typeface = android.graphics.Typeface.create(
+        android.graphics.Typeface.DEFAULT,
+        android.graphics.Typeface.BOLD
+    )
+
     val textWidth = paint.measureText(text)
-    
-    // Box dimensions
     val boxWidth = textWidth + (paddingHorizontal * 2)
     val boxHeight = textSize + (paddingVertical * 2)
+    val bitmapWidth = (boxWidth + shadowRadius * 2 + strokeWidth * 2).toInt()
+    val bitmapHeight = (boxHeight + triangleHeight + shadowRadius * 2 + shadowDy + strokeWidth * 2).toInt()
 
-    // Total bitmap dimensions (box + triangle + shadow padding)
-    val bitmapWidth = (boxWidth + shadowRadius * 2).toInt()
-    val bitmapHeight = (boxHeight + triangleHeight + shadowRadius * 2 + shadowDy).toInt()
-
-    val bitmap = android.graphics.Bitmap.createBitmap(bitmapWidth, bitmapHeight, android.graphics.Bitmap.Config.ARGB_8888)
+    val bitmap = android.graphics.Bitmap.createBitmap(
+        bitmapWidth,
+        bitmapHeight,
+        android.graphics.Bitmap.Config.ARGB_8888
+    )
     val canvas = android.graphics.Canvas(bitmap)
 
-    // Calculate drawing offsets to center within the shadow padding
-    val dx = shadowRadius
-    val dy = shadowRadius
+    val dx = shadowRadius + strokeWidth
+    val dy = shadowRadius + strokeWidth
 
-    // Draw shadow
     paint.color = android.graphics.Color.TRANSPARENT
     val shadowColor = android.graphics.Color.parseColor(colorHex)
-    paint.setShadowLayer(shadowRadius, 0f, shadowDy, shadowColor and 0x7FFFFFFF) // 50% alpha shadow
+    paint.setShadowLayer(shadowRadius, 0f, shadowDy, shadowColor and 0x7FFFFFFF)
 
-    // Path for the badge (rounded rect + downward triangle)
     val path = android.graphics.Path()
     val rectF = android.graphics.RectF(dx, dy, dx + boxWidth, dy + boxHeight)
     path.addRoundRect(rectF, cornerRadius, cornerRadius, android.graphics.Path.Direction.CW)
-    
-    // Triangle at the bottom center
+
     val centerX = dx + (boxWidth / 2f)
-    val triangleTopY = dy + boxHeight - 1f // Slight overlap to avoid gaps
-    
+    val triangleTopY = dy + boxHeight - 1f
+
     path.moveTo(centerX - (triangleWidth / 2f), triangleTopY)
     path.lineTo(centerX + (triangleWidth / 2f), triangleTopY)
     path.lineTo(centerX, triangleTopY + triangleHeight)
     path.close()
 
-    // Draw solid color path
     paint.color = android.graphics.Color.parseColor(colorHex)
+    paint.style = android.graphics.Paint.Style.FILL
     canvas.drawPath(path, paint)
-    
-    // Clear shadow for text
     paint.clearShadowLayer()
 
-    // Draw Text
+    if (selected) {
+        paint.style = android.graphics.Paint.Style.STROKE
+        paint.strokeWidth = strokeWidth
+        paint.color = android.graphics.Color.WHITE
+        canvas.drawPath(path, paint)
+    }
+
+    paint.style = android.graphics.Paint.Style.FILL
     paint.color = android.graphics.Color.WHITE
     val fontMetrics = paint.fontMetrics
     val textBaselineY = dy + paddingVertical - fontMetrics.ascent

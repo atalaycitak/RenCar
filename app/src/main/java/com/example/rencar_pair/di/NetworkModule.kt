@@ -1,5 +1,6 @@
 package com.example.rencar_pair.di
 
+import com.example.rencar_pair.BuildConfig
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.AuthInterceptor
 import com.example.rencar_pair.data.remote.TokenExpiredAuthenticator
@@ -19,7 +20,11 @@ val networkModule = module {
 
     single {
         HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BASIC
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
     }
 

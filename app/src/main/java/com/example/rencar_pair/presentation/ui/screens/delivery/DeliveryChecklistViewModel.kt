@@ -26,21 +26,6 @@ class DeliveryChecklistViewModel(
             DeliveryChecklistIntent.TakeRightPhoto -> updateState {
                 it.copy(rightPhotoTaken = true)
             }
-            is DeliveryChecklistIntent.UpdateOdometer -> updateState {
-                it.copy(odometerKm = intent.value.filter(Char::isDigit).take(7))
-            }
-            is DeliveryChecklistIntent.UpdateBatteryPercent -> updateState {
-                it.copy(batteryPercent = intent.value.filter(Char::isDigit).take(3))
-            }
-            is DeliveryChecklistIntent.UpdateDamageNote -> updateState {
-                it.copy(damageNote = intent.value.take(240))
-            }
-            DeliveryChecklistIntent.AddPhoto -> updateState {
-                it.copy(photoCount = (it.photoCount + 1).coerceAtMost(12))
-            }
-            DeliveryChecklistIntent.RemovePhoto -> updateState {
-                it.copy(photoCount = (it.photoCount - 1).coerceAtLeast(0))
-            }
             DeliveryChecklistIntent.CompleteChecklist -> updateState {
                 if (it.canComplete) it.copy(isCompleted = true) else it
             }

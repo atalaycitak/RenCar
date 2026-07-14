@@ -9,6 +9,7 @@ import com.example.rencar_pair.presentation.mvi.MviState
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -40,12 +41,37 @@ data class HomeState(
     val selectedVehicle: Vehicle?
         get() = filteredVehicles.firstOrNull { it.id == selectedVehicleId }
 
+    val highlightedVehicle: Vehicle?
+        get() = selectedVehicle ?: nearbyVehicles.firstOrNull()
+
     val hasActiveFilters: Boolean
         get() = selectedVehicleType != null || maxDailyPrice != null || minRangeKm != null
 
     fun distanceKmTo(vehicle: Vehicle): Double? {
         return userLocation?.distanceKmTo(vehicle)
     }
+
+    fun distanceInfoFor(vehicle: Vehicle): VehicleDistanceInfo? {
+        val distanceKm = distanceKmTo(vehicle) ?: return null
+        return VehicleDistanceInfo(
+            distanceKm = distanceKm,
+            walkingMinutes = ((distanceKm / WALKING_SPEED_KM_PER_HOUR) * MINUTES_PER_HOUR)
+                .roundToInt()
+                .coerceAtLeast(1)
+        )
+    }
+}
+
+data class VehicleDistanceInfo(
+    val distanceKm: Double,
+    val walkingMinutes: Int
+) {
+    val distanceLabel: String
+        get() = if (distanceKm < 1.0) {
+            "${(distanceKm * 1000).roundToInt()} m"
+        } else {
+            "${(distanceKm * 10).roundToInt() / 10.0} km"
+        }
 }
 
 sealed interface HomeIntent : MviIntent {
@@ -61,7 +87,6 @@ sealed interface HomeIntent : MviIntent {
 }
 
 private fun UserLocation.distanceKmTo(vehicle: Vehicle): Double {
-    val earthRadiusKm = 6371.0
     val latitudeDelta = Math.toRadians(vehicle.latitude - latitude)
     val longitudeDelta = Math.toRadians(vehicle.longitude - longitude)
     val originLatitude = Math.toRadians(latitude)
@@ -70,5 +95,9 @@ private fun UserLocation.distanceKmTo(vehicle: Vehicle): Double {
     val haversine = sin(latitudeDelta / 2).pow(2.0) +
         cos(originLatitude) * cos(targetLatitude) * sin(longitudeDelta / 2).pow(2.0)
     val centralAngle = 2 * atan2(sqrt(haversine), sqrt(1 - haversine))
-    return earthRadiusKm * centralAngle
+    return EARTH_RADIUS_KM * centralAngle
 }
+
+private const val EARTH_RADIUS_KM = 6371.0
+private const val WALKING_SPEED_KM_PER_HOUR = 4.8
+private const val MINUTES_PER_HOUR = 60

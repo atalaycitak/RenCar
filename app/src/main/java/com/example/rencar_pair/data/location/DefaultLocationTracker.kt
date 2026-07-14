@@ -25,24 +25,29 @@ class DefaultLocationTracker(
     private val context: Context
 ) : LocationTracker {
 
+    @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(): UserLocation? = suspendCancellableCoroutine { continuation ->
         if (!hasLocationPermission()) {
             continuation.resume(null)
             return@suspendCancellableCoroutine
         }
 
-        fusedLocationClient.getCurrentLocation(
-            Priority.PRIORITY_HIGH_ACCURACY,
-            null
-        ).addOnSuccessListener { location ->
-            if (location != null) {
-                continuation.resume(UserLocation(location.latitude, location.longitude))
-            } else {
+        try {
+            fusedLocationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                null
+            ).addOnSuccessListener { location ->
+                if (location != null) {
+                    continuation.resume(UserLocation(location.latitude, location.longitude))
+                } else {
+                    continuation.resume(null)
+                }
+            }.addOnFailureListener {
+                continuation.resume(null)
+            }.addOnCanceledListener {
                 continuation.resume(null)
             }
-        }.addOnFailureListener {
-            continuation.resume(null)
-        }.addOnCanceledListener {
+        } catch (_: SecurityException) {
             continuation.resume(null)
         }
     }
