@@ -11,6 +11,19 @@ class PaymentUseCases(
     suspend fun getWalletBalance() = walletRepository.getBalance()
     suspend fun topUpWallet(amount: Double, cardToken: String) = walletRepository.topUp(amount, cardToken)
     suspend fun getSavedCards() = paymentRepository.getSavedCards()
+    suspend fun addCard(
+        cardNumber: String,
+        expireMonth: String,
+        expireYear: String,
+        cvc: String,
+        cardHolderName: String
+    ) = paymentRepository.addCard(
+        cardNumber = cardNumber,
+        expireMonth = expireMonth,
+        expireYear = expireYear,
+        cvc = cvc,
+        cardHolderName = cardHolderName
+    )
     suspend fun processPayment(rentalId: String, cardToken: String, amount: Double) =
         paymentRepository.processPayment(rentalId, cardToken, amount)
 }

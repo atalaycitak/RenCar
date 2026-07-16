@@ -18,6 +18,36 @@ class TripSummaryViewModel(
             is TripSummaryIntent.SelectCard -> updateState {
                 it.copy(selectedCardToken = intent.token)
             }
+            TripSummaryIntent.ShowAddCardDialog -> updateState {
+                it.copy(
+                    isAddCardDialogVisible = true,
+                    cardFormError = null
+                )
+            }
+            TripSummaryIntent.HideAddCardDialog -> updateState {
+                it.copy(
+                    isAddCardDialogVisible = false,
+                    isSavingCard = false,
+                    cardHolderName = "",
+                    cardNumber = "",
+                    cardExpiry = "",
+                    cardCvc = "",
+                    cardFormError = null
+                )
+            }
+            is TripSummaryIntent.UpdateCardHolderName -> updateState {
+                it.copy(cardHolderName = intent.value.take(40), cardFormError = null)
+            }
+            is TripSummaryIntent.UpdateCardNumber -> updateState {
+                it.copy(cardNumber = intent.value.onlyDigits().take(16), cardFormError = null)
+            }
+            is TripSummaryIntent.UpdateCardExpiry -> updateState {
+                it.copy(cardExpiry = intent.value.formatExpiry(), cardFormError = null)
+            }
+            is TripSummaryIntent.UpdateCardCvc -> updateState {
+                it.copy(cardCvc = intent.value.onlyDigits().take(4), cardFormError = null)
+            }
+            TripSummaryIntent.SubmitCard -> submitCard()
             TripSummaryIntent.Pay -> pay()
         }
     }
@@ -81,6 +111,74 @@ class TripSummaryViewModel(
                     emitEffect(TripSummaryEffect.ShowError(result.message))
                 }
             }
+        }
+    }
+
+    private fun submitCard() {
+        val current = currentState()
+        val cardNumber = current.cardNumber.onlyDigits()
+        val expiryParts = current.cardExpiry.split("/")
+        val expireMonth = expiryParts.getOrNull(0).orEmpty()
+        val expireYear = expiryParts.getOrNull(1).orEmpty()
+
+        val validationError = when {
+            current.cardHolderName.isBlank() -> "Kart üzerindeki isim gerekli"
+            cardNumber.length != 16 -> "Kart numarası 16 haneli olmalı"
+            expiryParts.size != 2 || expireMonth.length != 2 || expireYear.length != 2 -> "Son kullanma tarihi AA/YY formatında olmalı"
+            expireMonth.toIntOrNull() !in 1..12 -> "Son kullanma ayı geçersiz"
+            current.cardCvc.length < 3 -> "CVC en az 3 haneli olmalı"
+            else -> null
+        }
+
+        if (validationError != null) {
+            updateState { it.copy(cardFormError = validationError) }
+            return
+        }
+
+        launchCoroutine {
+            updateState { it.copy(isSavingCard = true, cardFormError = null) }
+            when (
+                val result = paymentUseCases.addCard(
+                    cardNumber = cardNumber,
+                    expireMonth = expireMonth,
+                    expireYear = "20$expireYear",
+                    cvc = current.cardCvc,
+                    cardHolderName = current.cardHolderName.trim()
+                )
+            ) {
+                is NetworkResult.Success -> {
+                    val newCard = result.data
+                    updateState {
+                        it.copy(
+                            savedCards = it.savedCards + newCard,
+                            selectedCardToken = newCard.cardToken,
+                            isAddCardDialogVisible = false,
+                            isSavingCard = false,
+                            cardHolderName = "",
+                            cardNumber = "",
+                            cardExpiry = "",
+                            cardCvc = "",
+                            cardFormError = null
+                        )
+                    }
+                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Kart kaydedildi ve ödeme için seçildi"))
+                }
+                is NetworkResult.Error -> {
+                    updateState { it.copy(isSavingCard = false, cardFormError = result.message) }
+                    emitEffect(TripSummaryEffect.ShowError(result.message))
+                }
+            }
+        }
+    }
+
+    private fun String.onlyDigits(): String = filter { it.isDigit() }
+
+    private fun String.formatExpiry(): String {
+        val digits = onlyDigits().take(4)
+        return if (digits.length <= 2) {
+            digits
+        } else {
+            "${digits.take(2)}/${digits.drop(2)}"
         }
     }
 }

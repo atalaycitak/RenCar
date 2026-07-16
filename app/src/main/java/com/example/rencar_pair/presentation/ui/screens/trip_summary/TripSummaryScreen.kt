@@ -16,15 +16,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,9 +38,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.PaymentMethod
@@ -118,6 +123,13 @@ fun TripSummaryScreenContent(
     }
 
     val rentalDurationMins = Duration.between(state.rental.startDate, state.rental.endDate ?: Instant.now()).toMinutes()
+
+    if (state.isAddCardDialogVisible) {
+        AddCardDialog(
+            state = state,
+            onIntent = onIntent
+        )
+    }
 
     Column(
         modifier = modifier
@@ -290,7 +302,7 @@ fun TripSummaryScreenContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
-                .clickable { /* Select payment */ }
+                .clickable { onIntent(TripSummaryIntent.ShowAddCardDialog) }
                 .padding(horizontal = 14.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -329,7 +341,7 @@ fun TripSummaryScreenContent(
                 )
             }
             Text(
-                text = "Değiştir",
+                text = if (selectedCard == null) "Kart ekle" else "Yeni kart",
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -348,13 +360,126 @@ fun TripSummaryScreenContent(
         PrimaryButton(
             text = buttonText,
             onClick = {
-                if (!state.isPaying) onIntent(TripSummaryIntent.Pay)
+                if (!state.isPaying) {
+                    if (state.savedCards.isEmpty()) {
+                        onIntent(TripSummaryIntent.ShowAddCardDialog)
+                    } else {
+                        onIntent(TripSummaryIntent.Pay)
+                    }
+                }
             },
             enabled = !state.isPaying,
             modifier = Modifier.fillMaxWidth()
         )
         
         Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun AddCardDialog(
+    state: TripSummaryState,
+    onIntent: (TripSummaryIntent) -> Unit
+) {
+    Dialog(
+        onDismissRequest = {
+            if (!state.isSavingCard) onIntent(TripSummaryIntent.HideAddCardDialog)
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Kart ekle",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+                Text(
+                    text = "Bu ödeme ekranından çıkmadan kartını kaydedebilirsin.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+
+            OutlinedTextField(
+                value = state.cardHolderName,
+                onValueChange = { onIntent(TripSummaryIntent.UpdateCardHolderName(it)) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Kart üzerindeki isim") },
+                singleLine = true,
+                enabled = !state.isSavingCard
+            )
+            OutlinedTextField(
+                value = state.cardNumber.chunked(4).joinToString(" "),
+                onValueChange = { onIntent(TripSummaryIntent.UpdateCardNumber(it)) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Kart numarası") },
+                singleLine = true,
+                enabled = !state.isSavingCard,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = state.cardExpiry,
+                    onValueChange = { onIntent(TripSummaryIntent.UpdateCardExpiry(it)) },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("AA/YY") },
+                    singleLine = true,
+                    enabled = !state.isSavingCard,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                OutlinedTextField(
+                    value = state.cardCvc,
+                    onValueChange = { onIntent(TripSummaryIntent.UpdateCardCvc(it)) },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("CVC") },
+                    singleLine = true,
+                    enabled = !state.isSavingCard,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
+                )
+            }
+
+            state.cardFormError?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = { onIntent(TripSummaryIntent.HideAddCardDialog) },
+                    enabled = !state.isSavingCard
+                ) {
+                    Text("Vazgeç")
+                }
+                TextButton(
+                    onClick = { onIntent(TripSummaryIntent.SubmitCard) },
+                    enabled = !state.isSavingCard
+                ) {
+                    Text(if (state.isSavingCard) "Kaydediliyor..." else "Kaydet")
+                }
+            }
+        }
     }
 }
 
