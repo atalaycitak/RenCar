@@ -125,14 +125,20 @@ class HomeViewModel(
     private fun loadActiveReservation() {
         launchCoroutine {
             when (val result = rentalUseCases.getActiveReservation()) {
-                is NetworkResult.Success -> updateState { state ->
-                    state.copy(
-                        activeReservation = result.data,
-                        vehicles = state.vehicles.withReservationState(result.data)
-                    )
+                is NetworkResult.Success -> {
+                    vehicleLocationRepository.setActiveVehicleId(result.data?.vehicleId)
+                    updateState { state ->
+                        state.copy(
+                            activeReservation = result.data,
+                            vehicles = state.vehicles.withReservationState(result.data)
+                        )
+                    }
                 }
-                is NetworkResult.Error -> updateState { state ->
-                    state.copy(activeReservation = null)
+                is NetworkResult.Error -> {
+                    vehicleLocationRepository.setActiveVehicleId(null)
+                    updateState { state ->
+                        state.copy(activeReservation = null)
+                    }
                 }
             }
         }

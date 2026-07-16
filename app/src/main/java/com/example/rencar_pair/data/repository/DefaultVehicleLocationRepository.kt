@@ -20,12 +20,19 @@ class DefaultVehicleLocationRepository(
     private val tokenHolder: TokenHolder
 ) : VehicleLocationRepository {
 
+    @Volatile
+    private var activeVehicleId: String? = null
+
     override val streamMode: VehicleLocationStreamMode
         get() = if (tokenHolder.token.isNullOrBlank()) {
             VehicleLocationStreamMode.Inactive
         } else {
             VehicleLocationStreamMode.WebSocket
         }
+
+    override fun setActiveVehicleId(vehicleId: String?) {
+        activeVehicleId = vehicleId
+    }
 
     override fun observeVehiclePositions(): Flow<List<VehiclePosition>> {
         val token = tokenHolder.token ?: return emptyFlow()
@@ -67,12 +74,17 @@ class DefaultVehicleLocationRepository(
 
         val vehicle = envelope.optJSONObject("vehicle") ?: envelope
         val vehicleId = vehicle.optString("vehicleId", vehicle.optString("id"))
+            .ifBlank { activeVehicleId.orEmpty() }
         if (vehicleId.isBlank()) return null
+
+        val latitude = vehicle.optDouble("latitude", Double.NaN)
+        val longitude = vehicle.optDouble("longitude", Double.NaN)
+        if (!latitude.isFinite() || !longitude.isFinite()) return null
 
         return VehiclePosition(
             vehicleId = vehicleId,
-            latitude = vehicle.optDouble("latitude"),
-            longitude = vehicle.optDouble("longitude"),
+            latitude = latitude,
+            longitude = longitude,
             status = VehicleStatus.fromApiString(vehicle.optString("status", "RENTED")),
             updatedAt = envelope.optString("ts", vehicle.optString("updatedAt")).takeIf { it.isNotBlank() }
         )

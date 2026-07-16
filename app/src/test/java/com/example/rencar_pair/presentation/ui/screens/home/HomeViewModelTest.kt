@@ -193,6 +193,7 @@ class HomeViewModelTest {
 
     @Test
     fun `active reservation enables unlock only for reserved vehicle`() = runTest {
+        val vehicleLocationRepository = FakeVehicleLocationRepositoryForHomeTest()
         val viewModel = createViewModel(
             reservationRepository = FakeReservationRepositoryForHomeTest(
                 activeReservation = Reservation(
@@ -204,7 +205,8 @@ class HomeViewModelTest {
                     remainingSeconds = 840,
                     createdAt = Instant.parse("2026-07-16T19:00:00Z")
                 )
-            )
+            ),
+            vehicleLocationRepository = vehicleLocationRepository
         )
         advanceUntilIdle()
 
@@ -216,6 +218,7 @@ class HomeViewModelTest {
         assertEquals(false, reserved.canReserve)
         assertEquals(false, other.canUnlock)
         assertEquals(false, other.canReserve)
+        assertEquals("sedan-1", vehicleLocationRepository.capturedActiveVehicleId)
     }
 
     private fun createViewModel(
@@ -325,8 +328,13 @@ private class EmptyVehicleLocationRepositoryForHomeTest : VehicleLocationReposit
 
 private class FakeVehicleLocationRepositoryForHomeTest : VehicleLocationRepository {
     private val positions = MutableSharedFlow<List<VehiclePosition>>(replay = 1)
+    var capturedActiveVehicleId: String? = null
 
     override val streamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.WebSocket
+
+    override fun setActiveVehicleId(vehicleId: String?) {
+        capturedActiveVehicleId = vehicleId
+    }
 
     override fun observeVehiclePositions(): Flow<List<VehiclePosition>> = positions
 
