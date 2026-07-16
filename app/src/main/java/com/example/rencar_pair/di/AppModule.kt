@@ -62,7 +62,7 @@ val appModule = module {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleRepository() else DefaultVehicleRepository(get())
     }
     single<VehicleLocationRepository> {
-        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleLocationRepository() else DefaultVehicleLocationRepository(get(), get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleLocationRepository() else DefaultVehicleLocationRepository(get())
     }
     single<ReservationRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeReservationRepository() else DefaultReservationRepository(get())

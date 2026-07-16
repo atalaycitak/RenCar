@@ -283,7 +283,7 @@ fun HomeScreenContent(
                     },
                     onUnlockClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
-                        onVehicleDetails(vehicle.id)
+                        onReserveVehicle(vehicle.id)
                     }
                 )
             }

@@ -5,8 +5,17 @@ import com.example.rencar_pair.domain.repository.ReservationRepository
 class RentalUseCases(
     private val reservationRepository: ReservationRepository
 ) {
-    suspend fun createRental(vehicleId: String, endDate: String) =
-        reservationRepository.createRental(vehicleId, endDate)
+    suspend fun createReservation(vehicleId: String) =
+        reservationRepository.createReservation(vehicleId)
+
+    suspend fun getActiveReservation() =
+        reservationRepository.getActiveReservation()
+
+    suspend fun cancelReservation(id: String) =
+        reservationRepository.cancelReservation(id)
+
+    suspend fun createRental(vehicleId: String, endDate: String? = null, plan: String? = null) =
+        reservationRepository.createRental(vehicleId, endDate, plan)
 
     suspend fun getRental(id: String) = reservationRepository.getRental(id)
 

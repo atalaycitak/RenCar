@@ -17,9 +17,11 @@ import com.example.rencar_pair.data.remote.dto.RejectLicenseRequest
 import com.example.rencar_pair.data.remote.dto.IyzicoCardTokenResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
+import com.example.rencar_pair.data.remote.dto.CreateReservationRequest
 import com.example.rencar_pair.data.remote.dto.TopUpWalletRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
+import com.example.rencar_pair.data.remote.dto.ReservationResponse
 import com.example.rencar_pair.data.remote.dto.RentalResponse
 import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.UpdateVehicleRequest
@@ -79,6 +81,15 @@ interface RenCarApi {
 
     @GET("vehicles/{id}")
     suspend fun getVehicle(@Path("id") id: String): Response<VehicleResponse>
+
+    @POST("reservations")
+    suspend fun createReservation(@Body request: CreateReservationRequest): Response<ReservationResponse>
+
+    @GET("reservations/active")
+    suspend fun getActiveReservation(): Response<ReservationResponse>
+
+    @DELETE("reservations/{id}")
+    suspend fun cancelReservation(@Path("id") id: String): Response<Unit>
 
     @POST("rentals")
     suspend fun createRental(@Body request: CreateRentalRequest): Response<RentalResponse>

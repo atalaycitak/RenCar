@@ -83,7 +83,11 @@ private class FakeReservationRepositoryForActiveRentalTest : ReservationReposito
         status = RentalStatus.Active
     )
 
-    override suspend fun createRental(vehicleId: String, endDate: String): NetworkResult<Rental> {
+    override suspend fun createRental(
+        vehicleId: String,
+        endDate: String?,
+        plan: String?
+    ): NetworkResult<Rental> {
         return NetworkResult.Success(rental)
     }
 

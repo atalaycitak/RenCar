@@ -1,6 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.home
 
 import androidx.compose.runtime.Stable
+import com.example.rencar_pair.domain.model.Reservation
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleType
@@ -25,6 +26,7 @@ data class HomeState(
     val errorMessage: String? = null,
     val locationPermissionGranted: Boolean = false,
     val userLocation: UserLocation? = null,
+    val activeReservation: Reservation? = null,
     val hasLiveVehicleUpdates: Boolean = false,
     val vehicleLocationStreamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.Inactive
 ) : MviState {
@@ -79,6 +81,7 @@ data class VehicleDistanceInfo(
 
 sealed interface HomeIntent : MviIntent {
     data object LoadVehicles : HomeIntent
+    data object LoadActiveReservation : HomeIntent
     data class SelectVehicle(val id: String?) : HomeIntent
     data class UpdateVehicleTypeFilter(val type: VehicleType?) : HomeIntent
     data class UpdateMaxPriceFilter(val maxPrice: Int?) : HomeIntent

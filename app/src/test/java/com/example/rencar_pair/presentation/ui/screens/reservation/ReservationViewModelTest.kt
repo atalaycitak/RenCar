@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.model.RentalStatus
+import com.example.rencar_pair.domain.model.Reservation
+import com.example.rencar_pair.domain.model.ReservationStatus
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
@@ -59,18 +61,33 @@ class ReservationViewModelTest {
     }
 
     @Test
-    fun `confirm reservation creates rental after quote is ready`() = runTest {
+    fun `confirm reservation creates active reservation first`() = runTest {
         val reservationRepository = FakeReservationRepositoryForTest()
         val viewModel = createViewModel(reservationRepository = reservationRepository)
 
         advanceUntilIdle()
-        val expectedEndDate = viewModel.state.value.quote?.endDateIso
+        viewModel.onIntent(ReservationIntent.ConfirmReservation)
+        advanceUntilIdle()
+
+        assertEquals("reservation-1", viewModel.state.value.activeReservation?.id)
+        assertEquals("vehicle-1", reservationRepository.reservedVehicleId)
+        assertEquals(null, viewModel.state.value.rentalId)
+    }
+
+    @Test
+    fun `confirm reservation creates preparing rental when active reservation exists`() = runTest {
+        val reservationRepository = FakeReservationRepositoryForTest(
+            initialReservation = activeReservationForTest()
+        )
+        val viewModel = createViewModel(reservationRepository = reservationRepository)
+
+        advanceUntilIdle()
         viewModel.onIntent(ReservationIntent.ConfirmReservation)
         advanceUntilIdle()
 
         assertEquals("rental-1", viewModel.state.value.rentalId)
         assertEquals("vehicle-1", reservationRepository.createdVehicleId)
-        assertEquals(expectedEndDate, reservationRepository.createdEndDate)
+        assertEquals("PER_MINUTE", reservationRepository.createdPlan)
     }
 
     private fun createViewModel(
@@ -117,21 +134,45 @@ private class FakeVehicleRepositoryForTest : VehicleRepository {
 }
 
 private class FakeReservationRepositoryForTest : ReservationRepository {
+    constructor() : this(null)
+
+    constructor(initialReservation: Reservation?) {
+        activeReservation = initialReservation
+    }
+
+    var reservedVehicleId: String? = null
     var createdVehicleId: String? = null
     var createdEndDate: String? = null
+    var createdPlan: String? = null
     private var rental: Rental? = null
+    private var activeReservation: Reservation? = null
 
-    override suspend fun createRental(vehicleId: String, endDate: String): NetworkResult<Rental> {
+    override suspend fun createReservation(vehicleId: String): NetworkResult<Reservation> {
+        reservedVehicleId = vehicleId
+        activeReservation = activeReservationForTest(vehicleId = vehicleId)
+        return NetworkResult.Success(activeReservation!!)
+    }
+
+    override suspend fun getActiveReservation(): NetworkResult<Reservation?> {
+        return NetworkResult.Success(activeReservation)
+    }
+
+    override suspend fun createRental(
+        vehicleId: String,
+        endDate: String?,
+        plan: String?
+    ): NetworkResult<Rental> {
         createdVehicleId = vehicleId
         createdEndDate = endDate
+        createdPlan = plan
         rental = Rental(
             id = "rental-1",
             userId = "user-1",
             vehicleId = vehicleId,
             startDate = Instant.parse("2026-01-01T10:00:00Z"),
-            endDate = Instant.parse(endDate),
+            endDate = endDate?.let { Instant.parse(it) } ?: Instant.parse("2026-01-01T10:00:00Z"),
             totalPrice = 1230.0,
-            status = RentalStatus.Active
+            status = if (plan == "PER_MINUTE") RentalStatus.Preparing else RentalStatus.Active
         )
         return NetworkResult.Success(rental!!)
     }
@@ -167,6 +208,18 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
         rental = completed
         return NetworkResult.Success(completed)
     }
+}
+
+private fun activeReservationForTest(vehicleId: String = "vehicle-1"): Reservation {
+    return Reservation(
+        id = "reservation-1",
+        userId = "user-1",
+        vehicleId = vehicleId,
+        status = ReservationStatus.Active,
+        expiresAt = Instant.parse("2026-01-01T10:15:00Z"),
+        remainingSeconds = 900,
+        createdAt = Instant.parse("2026-01-01T10:00:00Z")
+    )
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
