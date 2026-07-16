@@ -18,11 +18,12 @@ enum class VehicleType {
 
 /** Araç durumu — API'den gelen değerlerin tür güvenli temsili. */
 enum class VehicleStatus {
-    Available, Rented, Maintenance, Unknown;
+    Available, Reserved, Rented, Maintenance, Unknown;
 
     companion object {
         fun fromApiString(value: String?): VehicleStatus = when (value?.uppercase()) {
             "AVAILABLE"   -> Available
+            "RESERVED"    -> Reserved
             "RENTED"      -> Rented
             "MAINTENANCE" -> Maintenance
             else          -> Unknown
@@ -47,6 +48,8 @@ data class Vehicle(
     val seatCount: Int? = null,
     val imageUrl: String? = null,
     val pricePerMinute: Double? = null,
+    val pricePerHour: Double? = null,
+    val segment: String? = null,
     val locationUpdatedAt: String? = null,
     val canReserve: Boolean = status == VehicleStatus.Available,
     val canUnlock: Boolean = false

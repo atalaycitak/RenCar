@@ -92,7 +92,7 @@ class HomeViewModel(
     private fun loadVehicles(type: VehicleType? = currentState().selectedVehicleType) {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = vehicleUseCases.getAvailableVehicles(type = type?.toApiQuery())) {
+            when (val result = vehicleUseCases.getAvailableVehicles(type = type?.toApiQuery(), includeBusy = true)) {
                 is NetworkResult.Success -> updateState {
                     val next = it.copy(
                         vehicles = result.data,

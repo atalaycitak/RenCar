@@ -8,8 +8,9 @@ class VehicleUseCases(
     suspend fun getAvailableVehicles(
         type: String? = null,
         page: Int? = null,
-        limit: Int? = null
-    ) = repository.getAvailableVehicles(type, page, limit)
+        limit: Int? = null,
+        includeBusy: Boolean = false
+    ) = repository.getAvailableVehicles(type, page, limit, includeBusy)
 
     suspend fun getVehicleDetail(id: String) = repository.getVehicleDetail(id)
 }

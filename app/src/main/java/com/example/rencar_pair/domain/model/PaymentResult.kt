@@ -6,7 +6,9 @@ enum class PaymentStatus {
     companion object {
         fun fromApiString(value: String?): PaymentStatus = when (value?.uppercase()) {
             "SUCCESS" -> Success
+            "PAID" -> Success
             "FAILED" -> Failed
+            "UNPAID" -> Failed
             else -> Unknown
         }
     }

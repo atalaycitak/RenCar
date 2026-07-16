@@ -7,7 +7,8 @@ interface VehicleRepository {
     suspend fun getAvailableVehicles(
         type: String? = null,
         page: Int? = null,
-        limit: Int? = null
+        limit: Int? = null,
+        includeBusy: Boolean = false
     ): NetworkResult<List<Vehicle>>
     suspend fun getVehicleDetail(id: String): NetworkResult<Vehicle>
 }

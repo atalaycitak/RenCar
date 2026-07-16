@@ -25,7 +25,6 @@ import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.UpdateVehicleRequest
 import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
-import com.example.rencar_pair.data.remote.dto.WalletBalanceResponse
 import com.example.rencar_pair.data.remote.dto.WalletInfoResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -72,6 +71,8 @@ interface RenCarApi {
     @GET("vehicles")
     suspend fun getVehicles(
         @Query("type") type: String? = null,
+        @Query("segment") segment: String? = null,
+        @Query("includeBusy") includeBusy: Boolean? = null,
         @Query("page") page: Int? = null,
         @Query("limit") limit: Int? = null
     ): Response<List<VehicleResponse>>
@@ -91,22 +92,22 @@ interface RenCarApi {
     @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
 
-    @POST("payments/process")
-    suspend fun processPayment(@Body request: ProcessPaymentRequest): Response<ProcessPaymentResponse>
+    @POST("rentals/{id}/pay")
+    suspend fun processPayment(
+        @Path("id") id: String,
+        @Body request: ProcessPaymentRequest
+    ): Response<ProcessPaymentResponse>
 
-    @POST("payments/cards")
+    @POST("cards")
     suspend fun addPaymentCard(@Body request: AddCardRequest): Response<IyzicoCardTokenResponse>
 
-    @GET("payments/cards")
+    @GET("cards")
     suspend fun getPaymentCards(): Response<List<IyzicoCardTokenResponse>>
 
     @GET("wallet")
     suspend fun getWalletInfo(): Response<WalletInfoResponse>
 
-    @GET("wallet/balance")
-    suspend fun getWalletBalance(): Response<WalletBalanceResponse>
-
-    @POST("wallet/top-up")
+    @POST("wallet/topup")
     suspend fun topUpWallet(@Body request: TopUpWalletRequest): Response<WalletInfoResponse>
 
     @GET("health")

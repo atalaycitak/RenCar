@@ -210,7 +210,8 @@ private class FakeVehicleRepositoryForHomeTest : VehicleRepository {
     override suspend fun getAvailableVehicles(
         type: String?,
         page: Int?,
-        limit: Int?
+        limit: Int?,
+        includeBusy: Boolean
     ): NetworkResult<List<Vehicle>> {
         lastTypeQuery = type
         val filtered = type?.let { query ->
