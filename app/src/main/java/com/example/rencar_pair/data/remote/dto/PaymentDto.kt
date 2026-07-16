@@ -4,31 +4,45 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ProcessPaymentRequest(
-    val rentalId: String,
-    val cardToken: String,
-    val amount: Double
+    val method: String,
+    val cardId: String? = null,
+    val discountCode: String? = null,
+    val iyzicoPaymentId: String? = null
 )
 
 @Serializable
 data class ProcessPaymentResponse(
-    val status: String,
-    val transactionId: String?,
-    val errorMessage: String?
+    val rentalId: String? = null,
+    val paymentStatus: String? = null,
+    val method: String? = null,
+    val totalPrice: Double? = null,
+    val discountAmount: Double? = null,
+    val paidAmount: Double? = null,
+    val walletBalance: Double? = null,
+    val status: String? = null,
+    val transactionId: String? = null,
+    val errorMessage: String? = null
 )
 
 @Serializable
 data class AddCardRequest(
-    val cardNumber: String,
-    val expireMonth: String,
-    val expireYear: String,
-    val cvc: String,
-    val cardHolderName: String
+    val brand: String,
+    val last4: String,
+    val expMonth: Int,
+    val expYear: Int
 )
 
 @Serializable
 data class IyzicoCardTokenResponse(
-    val cardToken: String,
-    val cardAlias: String,
-    val binNumber: String,
-    val cardAssociation: String
+    val id: String? = null,
+    val brand: String? = null,
+    val last4: String? = null,
+    val expMonth: Int? = null,
+    val expYear: Int? = null,
+    val isDefault: Boolean? = null,
+    val createdAt: String? = null,
+    val cardToken: String? = null,
+    val cardAlias: String? = null,
+    val binNumber: String? = null,
+    val cardAssociation: String? = null
 )

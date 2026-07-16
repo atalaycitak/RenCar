@@ -5,11 +5,17 @@ import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehiclePosition
+import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
+import com.example.rencar_pair.domain.model.Reservation
+import com.example.rencar_pair.domain.model.ReservationStatus
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
+import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import com.example.rencar_pair.domain.repository.VehicleRepository
+import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -184,16 +191,86 @@ class HomeViewModelTest {
         assertEquals(VehicleLocationStreamMode.WebSocket, viewModel.state.value.vehicleLocationStreamMode)
     }
 
+    @Test
+    fun `active reservation enables unlock only for reserved vehicle`() = runTest {
+        val vehicleLocationRepository = FakeVehicleLocationRepositoryForHomeTest()
+        val viewModel = createViewModel(
+            reservationRepository = FakeReservationRepositoryForHomeTest(
+                activeReservation = Reservation(
+                    id = "reservation-1",
+                    userId = "user-1",
+                    vehicleId = "sedan-1",
+                    status = ReservationStatus.Active,
+                    expiresAt = Instant.parse("2026-07-16T19:15:00Z"),
+                    remainingSeconds = 840,
+                    createdAt = Instant.parse("2026-07-16T19:00:00Z")
+                )
+            ),
+            vehicleLocationRepository = vehicleLocationRepository
+        )
+        advanceUntilIdle()
+
+        val reserved = viewModel.state.value.vehicles.first { it.id == "sedan-1" }
+        val other = viewModel.state.value.vehicles.first { it.id == "suv-1" }
+
+        assertEquals(VehicleStatus.Reserved, reserved.status)
+        assertEquals(true, reserved.canUnlock)
+        assertEquals(false, reserved.canReserve)
+        assertEquals(false, other.canUnlock)
+        assertEquals(false, other.canReserve)
+        assertEquals("sedan-1", vehicleLocationRepository.capturedActiveVehicleId)
+    }
+
     private fun createViewModel(
         vehicleRepository: VehicleRepository = FakeVehicleRepositoryForHomeTest(),
+        reservationRepository: ReservationRepository = FakeReservationRepositoryForHomeTest(),
         vehicleLocationRepository: VehicleLocationRepository = EmptyVehicleLocationRepositoryForHomeTest(),
         locationTracker: LocationTracker = FakeLocationTrackerForHomeTest()
     ): HomeViewModel {
         return HomeViewModel(
             vehicleUseCases = VehicleUseCases(vehicleRepository),
+            rentalUseCases = RentalUseCases(reservationRepository),
             vehicleLocationRepository = vehicleLocationRepository,
             locationTracker = locationTracker
         )
+    }
+}
+
+private class FakeReservationRepositoryForHomeTest(
+    private val activeReservation: Reservation? = null
+) : ReservationRepository {
+    override suspend fun createRental(
+        vehicleId: String,
+        endDate: String?,
+        plan: String?
+    ): NetworkResult<Rental> {
+        return NetworkResult.Success(
+            Rental(
+                id = "rental-1",
+                userId = "user-1",
+                vehicleId = vehicleId,
+                startDate = Instant.parse("2026-07-16T19:00:00Z"),
+                endDate = Instant.parse("2026-07-16T19:00:00Z"),
+                totalPrice = 0.0,
+                status = RentalStatus.Preparing
+            )
+        )
+    }
+
+    override suspend fun getActiveReservation(): NetworkResult<Reservation?> {
+        return NetworkResult.Success(activeReservation)
+    }
+
+    override suspend fun getRentals(): NetworkResult<List<Rental>> {
+        return NetworkResult.Success(emptyList())
+    }
+
+    override suspend fun getRental(id: String): NetworkResult<Rental> {
+        return NetworkResult.Error("Rental not found")
+    }
+
+    override suspend fun returnRental(id: String): NetworkResult<Rental> {
+        return NetworkResult.Error("Rental not found")
     }
 }
 
@@ -210,7 +287,8 @@ private class FakeVehicleRepositoryForHomeTest : VehicleRepository {
     override suspend fun getAvailableVehicles(
         type: String?,
         page: Int?,
-        limit: Int?
+        limit: Int?,
+        includeBusy: Boolean
     ): NetworkResult<List<Vehicle>> {
         lastTypeQuery = type
         val filtered = type?.let { query ->
@@ -250,8 +328,13 @@ private class EmptyVehicleLocationRepositoryForHomeTest : VehicleLocationReposit
 
 private class FakeVehicleLocationRepositoryForHomeTest : VehicleLocationRepository {
     private val positions = MutableSharedFlow<List<VehiclePosition>>(replay = 1)
+    var capturedActiveVehicleId: String? = null
 
     override val streamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.WebSocket
+
+    override fun setActiveVehicleId(vehicleId: String?) {
+        capturedActiveVehicleId = vehicleId
+    }
 
     override fun observeVehiclePositions(): Flow<List<VehiclePosition>> = positions
 

@@ -29,7 +29,7 @@ class DefaultWalletRepository(
 
     override suspend fun getBalance(): NetworkResult<Double> {
         val result = safeApiCall(
-            call = { api.getWalletBalance() },
+            call = { api.getWalletInfo() },
             transform = { it.currentBalance ?: it.balance ?: 0.0 }
         )
         return result.withEndpointFallback {
@@ -45,8 +45,7 @@ class DefaultWalletRepository(
             call = {
                 api.topUpWallet(
                     TopUpWalletRequest(
-                        amount = amount,
-                        cardToken = cardToken
+                        amount = amount
                     )
                 )
             },

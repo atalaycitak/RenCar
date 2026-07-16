@@ -20,6 +20,7 @@ class ReservationViewModel(
 
     init {
         onIntent(ReservationIntent.LoadVehicle)
+        loadActiveReservation()
     }
 
     override fun onIntent(intent: ReservationIntent) {
@@ -69,20 +70,59 @@ class ReservationViewModel(
         }
     }
 
+    private fun loadActiveReservation() {
+        launchCoroutine {
+            when (val result = rentalUseCases.getActiveReservation()) {
+                is NetworkResult.Success -> updateState { state ->
+                    state.copy(activeReservation = result.data)
+                }
+                is NetworkResult.Error -> updateState { state ->
+                    state.copy(errorMessage = result.message)
+                }
+            }
+        }
+    }
 
     private fun confirmReservation() {
         val vehicle = currentState().vehicle ?: return
-        val quote = currentState().quote
-            ?: calculateReservationQuoteUseCase(vehicle, currentState().selectedDays)
+        val activeReservation = currentState().activeReservation
+        if (activeReservation?.vehicleId == vehicle.id) {
+            unlockReservedVehicle(vehicle.id)
+            return
+        }
 
         launchCoroutine {
             updateState { it.copy(isSubmitting = true, errorMessage = null) }
-            when (val result = rentalUseCases.createRental(vehicle.id, quote.endDateIso)) {
+            when (val result = rentalUseCases.createReservation(vehicle.id)) {
+                is NetworkResult.Success -> {
+                    updateState {
+                        it.copy(
+                            isSubmitting = false,
+                            activeReservation = result.data,
+                            vehicle = vehicle.copy(
+                                status = com.example.rencar_pair.domain.model.VehicleStatus.Reserved,
+                                canReserve = false,
+                                canUnlock = true
+                            )
+                        )
+                    }
+                }
+                is NetworkResult.Error -> updateState {
+                    it.copy(isSubmitting = false, errorMessage = result.message)
+                }
+            }
+        }
+    }
+
+    private fun unlockReservedVehicle(vehicleId: String) {
+        launchCoroutine {
+            updateState { it.copy(isSubmitting = true, errorMessage = null) }
+            when (val result = rentalUseCases.createRental(vehicleId = vehicleId, plan = "PER_MINUTE")) {
                 is NetworkResult.Success -> {
                     updateState {
                         it.copy(isSubmitting = false, rentalId = result.data.id)
                     }
-                    emitEffect(ReservationEffect.NavigateToDelivery(result.data.id, vehicle.id))
+                    emitEffect(ReservationEffect.NavigateToDelivery(result.data.id, vehicleId))
                 }
                 is NetworkResult.Error -> updateState {
                     it.copy(isSubmitting = false, errorMessage = result.message)

@@ -16,11 +16,24 @@ class DefaultVehicleRepository(
     override suspend fun getAvailableVehicles(
         type: String?,
         page: Int?,
-        limit: Int?
+        limit: Int?,
+        includeBusy: Boolean
     ): NetworkResult<List<Vehicle>> {
         return safeApiCall(
-            call = { api.getVehicles(type = type, page = page, limit = limit) },
-            transform = { list -> list.orEmpty().map { it.toDomain() } }
+            call = {
+                api.getVehicles(
+                    type = type,
+                    segment = type,
+                    includeBusy = includeBusy.takeIf { it },
+                    page = page,
+                    limit = limit
+                )
+            },
+            transform = { list ->
+                list.orEmpty()
+                    .map { it.toDomain() }
+                    .filterNot { it.status == VehicleStatus.Maintenance }
+            }
         )
     }
 
@@ -45,11 +58,13 @@ class DefaultVehicleRepository(
             longitude = longitude,
             rangeKm = rangeKm ?: 320,
             locationName = locationName ?: "Istanbul",
-            fuelLevelPercent = fuelLevelPercent?.coerceIn(0, 100),
+            fuelLevelPercent = (fuelPercent ?: fuelLevelPercent)?.coerceIn(0, 100),
             transmission = transmission,
-            seatCount = seatCount,
+            seatCount = seats ?: seatCount,
             imageUrl = imageUrl,
             pricePerMinute = pricePerMinute,
+            pricePerHour = pricePerHour,
+            segment = segment,
             locationUpdatedAt = updatedAt,
             canReserve = canReserve ?: (vehicleStatus == VehicleStatus.Available),
             canUnlock = canUnlock ?: false

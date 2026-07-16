@@ -109,7 +109,8 @@ class FakeVehicleRepository : VehicleRepository {
     override suspend fun getAvailableVehicles(
         type: String?,
         page: Int?,
-        limit: Int?
+        limit: Int?,
+        includeBusy: Boolean
     ): NetworkResult<List<Vehicle>> {
         delay(800)
         val list = if (type != null) {

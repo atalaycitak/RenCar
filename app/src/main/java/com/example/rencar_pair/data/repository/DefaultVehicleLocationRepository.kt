@@ -1,88 +1,97 @@
 package com.example.rencar_pair.data.repository
 
-import com.example.rencar_pair.BuildConfig
-import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
+import com.example.rencar_pair.data.remote.TokenHolder
 import com.example.rencar_pair.domain.model.VehiclePosition
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
+import io.socket.client.IO
+import io.socket.client.Socket
+import io.socket.emitter.Emitter
+import io.socket.engineio.client.transports.WebSocket
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
+import org.json.JSONObject
+import java.net.URI
 
 class DefaultVehicleLocationRepository(
-    private val okHttpClient: OkHttpClient,
-    private val json: Json
+    private val tokenHolder: TokenHolder
 ) : VehicleLocationRepository {
 
+    @Volatile
+    private var activeVehicleId: String? = null
+
     override val streamMode: VehicleLocationStreamMode
-        get() = if (BuildConfig.VEHICLE_LOCATION_WS_URL.isNotBlank()) {
-            VehicleLocationStreamMode.WebSocket
-        } else {
+        get() = if (tokenHolder.token.isNullOrBlank()) {
             VehicleLocationStreamMode.Inactive
+        } else {
+            VehicleLocationStreamMode.WebSocket
         }
+
+    override fun setActiveVehicleId(vehicleId: String?) {
+        activeVehicleId = vehicleId
+    }
 
     override fun observeVehiclePositions(): Flow<List<VehiclePosition>> {
-        val url = BuildConfig.VEHICLE_LOCATION_WS_URL.takeIf { it.isNotBlank() } ?: return emptyFlow()
+        val token = tokenHolder.token ?: return emptyFlow()
 
         return callbackFlow {
-            val request = Request.Builder().url(url).build()
-            val listener = object : WebSocketListener() {
-                override fun onMessage(webSocket: WebSocket, text: String) {
-                    parsePositions(text)?.let { trySend(it) }
-                }
-
-                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    close(t)
-                }
-
-                override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                    close()
+            val options = IO.Options.builder()
+                .setAuth(mapOf("token" to token))
+                .setTransports(arrayOf(WebSocket.NAME))
+                .setForceNew(true)
+                .build()
+            val socket = IO.socket(URI.create(SOCKET_NAMESPACE), options)
+            val locationListener = Emitter.Listener { args ->
+                parseMyVehicleEvent(args.firstOrNull())?.let { position ->
+                    trySend(listOf(position))
                 }
             }
-            val socket = okHttpClient.newWebSocket(request, listener)
-            awaitClose { socket.close(1000, "Map stream stopped") }
-        }
-    }
+            val connectErrorListener = Emitter.Listener { args ->
+                close(IllegalStateException(args.firstOrNull()?.toString() ?: "Socket.IO connect error"))
+            }
 
-    private fun parsePositions(raw: String): List<VehiclePosition>? {
-        return runCatching {
-            json.decodeFromString(ListSerializer(VehiclePositionResponse.serializer()), raw)
-                .map { it.toDomain() }
-        }.getOrElse {
-            runCatching {
-                listOf(json.decodeFromString(VehiclePositionResponse.serializer(), raw).toDomain())
-            }.getOrElse {
-                runCatching {
-                    json.decodeFromString(VehiclePositionEnvelope.serializer(), raw)
-                        .positions
-                        .map { it.toDomain() }
-                }.getOrNull()
+            socket.on(MY_VEHICLE_EVENT, locationListener)
+            socket.on(Socket.EVENT_CONNECT_ERROR, connectErrorListener)
+            socket.connect()
+
+            awaitClose {
+                socket.off(MY_VEHICLE_EVENT, locationListener)
+                socket.off(Socket.EVENT_CONNECT_ERROR, connectErrorListener)
+                socket.disconnect()
             }
         }
     }
 
-    private fun VehiclePositionResponse.toDomain(): VehiclePosition {
+    private fun parseMyVehicleEvent(raw: Any?): VehiclePosition? {
+        val envelope = when (raw) {
+            is JSONObject -> raw
+            is String -> runCatching { JSONObject(raw) }.getOrNull()
+            else -> null
+        } ?: return null
+
+        val vehicle = envelope.optJSONObject("vehicle") ?: envelope
+        val vehicleId = vehicle.optString("vehicleId", vehicle.optString("id"))
+            .ifBlank { activeVehicleId.orEmpty() }
+        if (vehicleId.isBlank()) return null
+
+        val latitude = vehicle.optDouble("latitude", Double.NaN)
+        val longitude = vehicle.optDouble("longitude", Double.NaN)
+        if (!latitude.isFinite() || !longitude.isFinite()) return null
+
         return VehiclePosition(
             vehicleId = vehicleId,
             latitude = latitude,
             longitude = longitude,
-            status = VehicleStatus.fromApiString(status),
-            updatedAt = updatedAt
+            status = VehicleStatus.fromApiString(vehicle.optString("status", "RENTED")),
+            updatedAt = envelope.optString("ts", vehicle.optString("updatedAt")).takeIf { it.isNotBlank() }
         )
     }
-}
 
-@Serializable
-private data class VehiclePositionEnvelope(
-    val positions: List<VehiclePositionResponse> = emptyList()
-)
+    private companion object {
+        const val SOCKET_NAMESPACE = "https://rencarv2.halitkalayci.com/ws/locations"
+        const val MY_VEHICLE_EVENT = "my-vehicle"
+    }
+}

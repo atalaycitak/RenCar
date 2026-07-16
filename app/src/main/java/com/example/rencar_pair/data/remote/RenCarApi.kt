@@ -17,15 +17,17 @@ import com.example.rencar_pair.data.remote.dto.RejectLicenseRequest
 import com.example.rencar_pair.data.remote.dto.IyzicoCardTokenResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
+import com.example.rencar_pair.data.remote.dto.CreateReservationRequest
 import com.example.rencar_pair.data.remote.dto.TopUpWalletRequest
 import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
+import com.example.rencar_pair.data.remote.dto.ReservationResponse
 import com.example.rencar_pair.data.remote.dto.RentalResponse
+import com.example.rencar_pair.data.remote.dto.RentalPhotosStateResponse
 import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.UpdateVehicleRequest
 import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
-import com.example.rencar_pair.data.remote.dto.WalletBalanceResponse
 import com.example.rencar_pair.data.remote.dto.WalletInfoResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
@@ -35,6 +37,7 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.Part
+import okhttp3.RequestBody
 import retrofit2.http.Path
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -72,12 +75,23 @@ interface RenCarApi {
     @GET("vehicles")
     suspend fun getVehicles(
         @Query("type") type: String? = null,
+        @Query("segment") segment: String? = null,
+        @Query("includeBusy") includeBusy: Boolean? = null,
         @Query("page") page: Int? = null,
         @Query("limit") limit: Int? = null
     ): Response<List<VehicleResponse>>
 
     @GET("vehicles/{id}")
     suspend fun getVehicle(@Path("id") id: String): Response<VehicleResponse>
+
+    @POST("reservations")
+    suspend fun createReservation(@Body request: CreateReservationRequest): Response<ReservationResponse>
+
+    @GET("reservations/active")
+    suspend fun getActiveReservation(): Response<ReservationResponse>
+
+    @DELETE("reservations/{id}")
+    suspend fun cancelReservation(@Path("id") id: String): Response<Unit>
 
     @POST("rentals")
     suspend fun createRental(@Body request: CreateRentalRequest): Response<RentalResponse>
@@ -91,22 +105,36 @@ interface RenCarApi {
     @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
 
-    @POST("payments/process")
-    suspend fun processPayment(@Body request: ProcessPaymentRequest): Response<ProcessPaymentResponse>
+    @Multipart
+    @POST("rentals/{id}/photos")
+    suspend fun uploadRentalPhoto(
+        @Path("id") id: String,
+        @Part("side") side: RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<RentalPhotosStateResponse>
 
-    @POST("payments/cards")
+    @GET("rentals/{id}/photos")
+    suspend fun getRentalPhotos(@Path("id") id: String): Response<RentalPhotosStateResponse>
+
+    @POST("rentals/{id}/start")
+    suspend fun startRental(@Path("id") id: String): Response<RentalResponse>
+
+    @POST("rentals/{id}/pay")
+    suspend fun processPayment(
+        @Path("id") id: String,
+        @Body request: ProcessPaymentRequest
+    ): Response<ProcessPaymentResponse>
+
+    @POST("cards")
     suspend fun addPaymentCard(@Body request: AddCardRequest): Response<IyzicoCardTokenResponse>
 
-    @GET("payments/cards")
+    @GET("cards")
     suspend fun getPaymentCards(): Response<List<IyzicoCardTokenResponse>>
 
     @GET("wallet")
     suspend fun getWalletInfo(): Response<WalletInfoResponse>
 
-    @GET("wallet/balance")
-    suspend fun getWalletBalance(): Response<WalletBalanceResponse>
-
-    @POST("wallet/top-up")
+    @POST("wallet/topup")
     suspend fun topUpWallet(@Body request: TopUpWalletRequest): Response<WalletInfoResponse>
 
     @GET("health")

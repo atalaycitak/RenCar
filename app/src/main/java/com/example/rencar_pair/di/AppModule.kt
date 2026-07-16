@@ -62,13 +62,13 @@ val appModule = module {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleRepository() else DefaultVehicleRepository(get())
     }
     single<VehicleLocationRepository> {
-        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleLocationRepository() else DefaultVehicleLocationRepository(get(), get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeVehicleLocationRepository() else DefaultVehicleLocationRepository(get())
     }
     single<ReservationRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeReservationRepository() else DefaultReservationRepository(get())
     }
     single<RentalRepository> {
-        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeRentalRepository() else DefaultRentalRepository(get())
+        if (BuildConfig.USE_FAKE_REPOSITORIES) FakeRentalRepository() else DefaultRentalRepository(get(), androidContext())
     }
     single<PaymentRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakePaymentRepository() else DefaultPaymentRepository(get())
@@ -94,6 +94,7 @@ val appModule = module {
     single { RegisterUseCase(get()) }
     single { CalculateReservationQuoteUseCase() }
     single { ReturnVehicleUseCase(get()) }
+    single { com.example.rencar_pair.domain.usecase.rental.RentalPhotoUseCases(get()) }
 
     viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)

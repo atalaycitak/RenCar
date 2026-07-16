@@ -3,10 +3,11 @@ package com.example.rencar_pair.domain.model
 import java.time.Instant
 
 enum class RentalStatus {
-    Active, Completed, Cancelled, Unknown;
+    Preparing, Active, Completed, Cancelled, Unknown;
 
     companion object {
         fun fromApiString(value: String?): RentalStatus = when (value?.uppercase()) {
+            "PREPARING" -> Preparing
             "ACTIVE" -> Active
             "COMPLETED" -> Completed
             "CANCELLED" -> Cancelled

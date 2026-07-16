@@ -7,6 +7,8 @@ interface VehicleLocationRepository {
     val streamMode: VehicleLocationStreamMode
         get() = VehicleLocationStreamMode.Inactive
 
+    fun setActiveVehicleId(vehicleId: String?) = Unit
+
     fun observeVehiclePositions(): Flow<List<VehiclePosition>>
 }
 

@@ -29,10 +29,10 @@ class DefaultPaymentRepository(
         val result = safeApiCall(
             call = {
                 api.processPayment(
-                    ProcessPaymentRequest(
-                        rentalId = rentalId,
-                        cardToken = cardToken,
-                        amount = amount
+                    id = rentalId,
+                    request = ProcessPaymentRequest(
+                        method = "CARD",
+                        cardId = cardToken
                     )
                 )
             },
@@ -53,15 +53,19 @@ class DefaultPaymentRepository(
         if (cardNumber.length < 16) {
             return NetworkResult.Error("Gecersiz kart numarasi")
         }
+        val expMonth = expireMonth.toIntOrNull()
+            ?: return NetworkResult.Error("Gecersiz son kullanma ayi")
+        val expYear = expireYear.toIntOrNull()
+            ?: return NetworkResult.Error("Gecersiz son kullanma yili")
+
         val result = safeApiCall(
             call = {
                 api.addPaymentCard(
                     AddCardRequest(
-                        cardNumber = cardNumber,
-                        expireMonth = expireMonth,
-                        expireYear = expireYear,
-                        cvc = cvc,
-                        cardHolderName = cardHolderName
+                        brand = cardNumber.toCardBrand(),
+                        last4 = cardNumber.takeLast(4),
+                        expMonth = expMonth,
+                        expYear = expYear
                     )
                 )
             },
@@ -84,19 +88,25 @@ class DefaultPaymentRepository(
 
     private fun ProcessPaymentResponse.toDomain(): PaymentResult {
         return PaymentResult(
-            status = PaymentStatus.fromApiString(status),
+            status = PaymentStatus.fromApiString(paymentStatus ?: status),
             transactionId = transactionId,
             errorMessage = errorMessage
         )
     }
 
     private fun IyzicoCardTokenResponse.toDomain(): PaymentMethod {
+        val resolvedBrand = brand ?: cardAssociation ?: "CARD"
+        val resolvedLast4 = last4 ?: binNumber?.takeLast(4).orEmpty()
         return PaymentMethod(
-            cardToken = cardToken,
-            cardAlias = cardAlias,
-            binNumber = binNumber,
-            cardAssociation = cardAssociation
+            cardToken = id ?: cardToken.orEmpty(),
+            cardAlias = cardAlias ?: "$resolvedBrand $resolvedLast4".trim(),
+            binNumber = binNumber ?: resolvedLast4,
+            cardAssociation = resolvedBrand
         )
+    }
+
+    private fun String.toCardBrand(): String {
+        return if (startsWith("4")) "VISA" else "MASTERCARD"
     }
 
     private suspend fun <T> NetworkResult<T>.withEndpointFallback(

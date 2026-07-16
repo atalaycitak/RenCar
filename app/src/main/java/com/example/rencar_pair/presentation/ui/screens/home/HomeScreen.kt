@@ -283,7 +283,7 @@ fun HomeScreenContent(
                     },
                     onUnlockClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
-                        onVehicleDetails(vehicle.id)
+                        onReserveVehicle(vehicle.id)
                     }
                 )
             }
@@ -513,6 +513,7 @@ private fun buildLiveMapSubtitle(
 private fun VehicleStatus.displayName(): String {
     return when (this) {
         VehicleStatus.Available -> "Müsait"
+        VehicleStatus.Reserved -> "Rezerve"
         VehicleStatus.Rented -> "Kirada"
         VehicleStatus.Maintenance -> "Bakımda"
         VehicleStatus.Unknown -> "Bilinmiyor"
@@ -663,7 +664,7 @@ private fun FilterChipCustom(
 }
 
 private fun getHexColorForVehicle(vehicle: Vehicle): String {
-    if (vehicle.status == VehicleStatus.Rented) {
+    if (vehicle.status == VehicleStatus.Rented || vehicle.status == VehicleStatus.Reserved) {
         return "#9AA3AE"
     }
     return when (vehicle.type) {

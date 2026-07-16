@@ -67,9 +67,14 @@ fun VehicleDetailBottomSheet(
                     )
                 )
                 
-                val statusText = if (vehicle.status == VehicleStatus.Rented) "KULLANIMDA" else "MÜSAİT"
-                val statusBgColor = if (vehicle.status == VehicleStatus.Rented) MaterialTheme.colorScheme.surfaceVariant else Color(0xFFE7F4EC)
-                val statusTextColor = if (vehicle.status == VehicleStatus.Rented) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFF1A9E63)
+                val isBusy = vehicle.status == VehicleStatus.Rented || vehicle.status == VehicleStatus.Reserved
+                val statusText = when (vehicle.status) {
+                    VehicleStatus.Rented -> "KULLANIMDA"
+                    VehicleStatus.Reserved -> "REZERVE"
+                    else -> "MÜSAİT"
+                }
+                val statusBgColor = if (isBusy) MaterialTheme.colorScheme.surfaceVariant else Color(0xFFE7F4EC)
+                val statusTextColor = if (isBusy) MaterialTheme.colorScheme.onSurfaceVariant else Color(0xFF1A9E63)
                 
                 Text(
                     text = statusText,
@@ -210,7 +215,7 @@ fun VehicleDetailBottomSheet(
                     )
                 }
                 Text(
-                    text = "Saatlik ₺${vehicle.pricePerDay.toInt()}",
+                    text = "Saatlik ₺${(vehicle.pricePerHour ?: vehicle.pricePerDay).toInt()}",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,

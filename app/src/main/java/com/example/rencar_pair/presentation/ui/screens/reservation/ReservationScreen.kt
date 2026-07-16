@@ -283,6 +283,35 @@ private fun ReservationView(
             }
         }
 
+        state.activeReservation?.takeIf { it.vehicleId == vehicle.id }?.let { reservation ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f), RoundedCornerShape(16.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.28f), RoundedCornerShape(16.dp))
+                    .padding(14.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Aktif rezervasyon hazır",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    Text(
+                        text = "Aracı ${reservation.remainingSeconds / 60} dk daha senin için tuttuk. Kilidi açınca fotoğraf kontrolüne geçeceksin.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+            }
+        }
+
         // Terms and Conditions Check
         Row(
             modifier = Modifier
@@ -323,7 +352,11 @@ private fun ReservationView(
 
         // Bottom Action
         PrimaryButton(
-            text = if (state.isSubmitting) "Oluşturuluyor..." else "Rezervasyonu Tamamla",
+            text = when {
+                state.isSubmitting -> "İşleniyor..."
+                state.canUnlockSelectedVehicle -> "Kilidi Aç ve Fotoğraflara Geç"
+                else -> "15 dk Ücretsiz Rezerve Et"
+            },
             onClick = { onIntent(ReservationIntent.ConfirmReservation) },
             enabled = !state.isSubmitting,
             modifier = Modifier.fillMaxWidth()

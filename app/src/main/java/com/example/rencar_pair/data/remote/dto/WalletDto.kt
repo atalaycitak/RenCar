@@ -4,8 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TopUpWalletRequest(
-    val amount: Double,
-    val cardToken: String
+    val amount: Double
 )
 
 @Serializable
