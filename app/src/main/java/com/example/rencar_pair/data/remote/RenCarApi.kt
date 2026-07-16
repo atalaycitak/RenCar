@@ -23,6 +23,7 @@ import com.example.rencar_pair.data.remote.dto.VerifyOtpRequest
 import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.ReservationResponse
 import com.example.rencar_pair.data.remote.dto.RentalResponse
+import com.example.rencar_pair.data.remote.dto.RentalPhotosStateResponse
 import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.UpdateVehicleRequest
 import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
@@ -36,6 +37,7 @@ import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.Part
+import okhttp3.RequestBody
 import retrofit2.http.Path
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -102,6 +104,20 @@ interface RenCarApi {
 
     @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
+
+    @Multipart
+    @POST("rentals/{id}/photos")
+    suspend fun uploadRentalPhoto(
+        @Path("id") id: String,
+        @Part("side") side: RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<RentalPhotosStateResponse>
+
+    @GET("rentals/{id}/photos")
+    suspend fun getRentalPhotos(@Path("id") id: String): Response<RentalPhotosStateResponse>
+
+    @POST("rentals/{id}/start")
+    suspend fun startRental(@Path("id") id: String): Response<RentalResponse>
 
     @POST("rentals/{id}/pay")
     suspend fun processPayment(

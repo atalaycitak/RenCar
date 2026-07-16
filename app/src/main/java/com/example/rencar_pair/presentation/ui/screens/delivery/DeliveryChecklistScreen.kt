@@ -1,5 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.delivery
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rencar_pair.R
+import com.example.rencar_pair.domain.model.RentalPhotoSide
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
@@ -46,11 +53,35 @@ fun DeliveryChecklistScreen(
     viewModel: DeliveryChecklistViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var pendingSide by remember { mutableStateOf<RentalPhotoSide?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        val side = pendingSide
+        pendingSide = null
+        if (side != null && uri != null) {
+            viewModel.onIntent(DeliveryChecklistIntent.SelectPhoto(side, uri.toString()))
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                DeliveryChecklistEffect.ChecklistCompleted -> onDone()
+                is DeliveryChecklistEffect.ShowError -> Unit
+            }
+        }
+    }
+
     DeliveryChecklistScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         onBack = onBack,
-        onDone = onDone
+        onDone = onDone,
+        onPickPhoto = { side ->
+            pendingSide = side
+            photoPicker.launch("image/*")
+        }
     )
 }
 
@@ -59,7 +90,8 @@ fun DeliveryChecklistScreenContent(
     state: DeliveryChecklistState,
     onIntent: (DeliveryChecklistIntent) -> Unit,
     onBack: () -> Unit,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    onPickPhoto: (RentalPhotoSide) -> Unit
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -153,13 +185,15 @@ fun DeliveryChecklistScreenContent(
                     modifier = Modifier.weight(1f),
                     title = "Ön",
                     isTaken = state.frontPhotoTaken,
-                    onClick = { onIntent(DeliveryChecklistIntent.TakeFrontPhoto) }
+                    isUploading = state.uploadingSide == RentalPhotoSide.Front,
+                    onClick = { onPickPhoto(RentalPhotoSide.Front) }
                 )
                 PhotoBox(
                     modifier = Modifier.weight(1f),
                     title = "Arka",
                     isTaken = state.backPhotoTaken,
-                    onClick = { onIntent(DeliveryChecklistIntent.TakeBackPhoto) }
+                    isUploading = state.uploadingSide == RentalPhotoSide.Back,
+                    onClick = { onPickPhoto(RentalPhotoSide.Back) }
                 )
             }
             Row(
@@ -170,13 +204,15 @@ fun DeliveryChecklistScreenContent(
                     modifier = Modifier.weight(1f),
                     title = "Sol",
                     isTaken = state.leftPhotoTaken,
-                    onClick = { onIntent(DeliveryChecklistIntent.TakeLeftPhoto) }
+                    isUploading = state.uploadingSide == RentalPhotoSide.Left,
+                    onClick = { onPickPhoto(RentalPhotoSide.Left) }
                 )
                 PhotoBox(
                     modifier = Modifier.weight(1f),
                     title = "Sağ",
                     isTaken = state.rightPhotoTaken,
-                    onClick = { onIntent(DeliveryChecklistIntent.TakeRightPhoto) }
+                    isUploading = state.uploadingSide == RentalPhotoSide.Right,
+                    onClick = { onPickPhoto(RentalPhotoSide.Right) }
                 )
             }
 
@@ -206,6 +242,14 @@ fun DeliveryChecklistScreenContent(
                 )
             }
 
+            state.errorMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             // Bottom Action
             if (state.isCompleted) {
                 PrimaryButton(
@@ -215,14 +259,13 @@ fun DeliveryChecklistScreenContent(
                 )
             } else {
                 PrimaryButton(
-                    text = if (state.canComplete) "Kiralamayı Başlat" else "Kiralamayı Başlat · ${4 - state.completedPhotoCount} foto kaldı",
-                    onClick = {
-                        if (state.canComplete) {
-                            onIntent(DeliveryChecklistIntent.CompleteChecklist)
-                            onDone()
-                        }
+                    text = when {
+                        state.isUploading -> "Yükleniyor..."
+                        state.canComplete -> "Kiralamayı Başlat"
+                        else -> "Kiralamayı Başlat · ${4 - state.completedPhotoCount} foto kaldı"
                     },
-                    enabled = state.canComplete,
+                    onClick = { onIntent(DeliveryChecklistIntent.CompleteChecklist) },
+                    enabled = state.canComplete && !state.isUploading,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -237,8 +280,22 @@ private fun PhotoBox(
     modifier: Modifier = Modifier,
     title: String,
     isTaken: Boolean,
+    isUploading: Boolean = false,
     onClick: () -> Unit
 ) {
+    if (isUploading) {
+        Box(
+            modifier = modifier
+                .height(158.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(18.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+        }
+        return
+    }
+
     if (isTaken) {
         Box(
             modifier = modifier
@@ -299,7 +356,7 @@ private fun PhotoBox(
                     )
                 }
                 Text(
-                    text = "Fotoğraf çek",
+                    text = "Galeriden seç",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -326,7 +383,8 @@ private fun DeliveryChecklistScreenPreview() {
             ),
             onIntent = {},
             onBack = {},
-            onDone = {}
+            onDone = {},
+            onPickPhoto = {}
         )
     }
 }
