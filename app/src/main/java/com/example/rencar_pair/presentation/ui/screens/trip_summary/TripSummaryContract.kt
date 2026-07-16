@@ -13,6 +13,13 @@ data class TripSummaryState(
     val rental: Rental? = null,
     val savedCards: List<PaymentMethod> = emptyList(),
     val selectedCardToken: String? = null,
+    val isAddCardDialogVisible: Boolean = false,
+    val isSavingCard: Boolean = false,
+    val cardHolderName: String = "",
+    val cardNumber: String = "",
+    val cardExpiry: String = "",
+    val cardCvc: String = "",
+    val cardFormError: String? = null,
     val isPaying: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
@@ -21,6 +28,13 @@ data class TripSummaryState(
 sealed interface TripSummaryIntent : MviIntent {
     data class LoadSummary(val rentalId: String) : TripSummaryIntent
     data class SelectCard(val token: String) : TripSummaryIntent
+    data object ShowAddCardDialog : TripSummaryIntent
+    data object HideAddCardDialog : TripSummaryIntent
+    data class UpdateCardHolderName(val value: String) : TripSummaryIntent
+    data class UpdateCardNumber(val value: String) : TripSummaryIntent
+    data class UpdateCardExpiry(val value: String) : TripSummaryIntent
+    data class UpdateCardCvc(val value: String) : TripSummaryIntent
+    data object SubmitCard : TripSummaryIntent
     data object Pay : TripSummaryIntent
 }
 
