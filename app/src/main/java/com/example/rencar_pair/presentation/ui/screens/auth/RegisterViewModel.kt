@@ -39,8 +39,10 @@ class RegisterViewModel(
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
 
+            val fullPhone = "+90${current.phone}"
+
             when (val result = registerUseCase(
-                current.fullName, current.email, current.phone, current.password
+                current.fullName, current.email, fullPhone, current.password
             )) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false) }
