@@ -28,10 +28,12 @@ class LoginViewModel(
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
 
-            when (val result = loginUseCase(phone)) {
+            val fullPhone = "+90$phone"
+
+            when (val result = loginUseCase(fullPhone)) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isLoading = false) }
-                    emitEffect(LoginEffect.NavigateToVerifyOtp(phone))
+                    emitEffect(LoginEffect.NavigateToVerifyOtp(fullPhone))
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isLoading = false, errorMessage = result.message) }
