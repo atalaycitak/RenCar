@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +34,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.presentation.ui.components.CustomTextField
 import com.example.rencar_pair.presentation.ui.components.LoadingOverlay
@@ -101,7 +100,7 @@ fun VerifyOtpScreenContent(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack, // Standard back icon
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Geri",
                     tint = textPrimary,
                     modifier = Modifier.size(22.dp)
@@ -156,7 +155,7 @@ fun VerifyOtpScreenContent(
             CustomTextField(
                 value = state.code,
                 onValueChange = { onIntent(VerifyOtpIntent.OnCodeChanged(it)) },
-                placeholder = "123456",
+                placeholder = "6 haneli kod",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done

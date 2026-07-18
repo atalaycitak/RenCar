@@ -1,7 +1,10 @@
 package com.example.rencar_pair.presentation.ui.screens.home
 
 import androidx.compose.runtime.Stable
+import com.example.rencar_pair.domain.model.ActiveRental
 import com.example.rencar_pair.domain.model.Reservation
+import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleType
@@ -27,6 +30,8 @@ data class HomeState(
     val locationPermissionGranted: Boolean = false,
     val userLocation: UserLocation? = null,
     val activeReservation: Reservation? = null,
+    val activeRental: ActiveRental? = null,
+    val pendingRental: Rental? = null,
     val hasLiveVehicleUpdates: Boolean = false,
     val vehicleLocationStreamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.Inactive
 ) : MviState {
@@ -43,11 +48,28 @@ data class HomeState(
             filteredVehicles.sortedBy { vehicle -> location.distanceKmTo(vehicle) }
         } ?: filteredVehicles
 
+    val actionableNearbyVehicles: List<Vehicle>
+        get() = nearbyVehicles.filter { it.canReserve || it.canUnlock }
+
     val selectedVehicle: Vehicle?
         get() = filteredVehicles.firstOrNull { it.id == selectedVehicleId }
 
+    val activeRentalVehicle: Vehicle?
+        get() = activeRental?.vehicleId?.let { vehicleId ->
+            filteredVehicles.firstOrNull { it.id == vehicleId }
+        }
+
+    val pendingRentalVehicle: Vehicle?
+        get() = pendingRental?.vehicleId?.let { vehicleId ->
+            filteredVehicles.firstOrNull { it.id == vehicleId }
+        }
+
     val highlightedVehicle: Vehicle?
-        get() = selectedVehicle ?: nearbyVehicles.firstOrNull()
+        get() = selectedVehicle
+            ?: activeRentalVehicle
+            ?: pendingRentalVehicle
+            ?: actionableNearbyVehicles.firstOrNull()
+            ?: nearbyVehicles.firstOrNull()
 
     val hasActiveFilters: Boolean
         get() = selectedVehicleType != null || maxDailyPrice != null || minRangeKm != null
@@ -82,6 +104,8 @@ data class VehicleDistanceInfo(
 sealed interface HomeIntent : MviIntent {
     data object LoadVehicles : HomeIntent
     data object LoadActiveReservation : HomeIntent
+    data object LoadActiveRental : HomeIntent
+    data object LoadPendingRental : HomeIntent
     data class SelectVehicle(val id: String?) : HomeIntent
     data class UpdateVehicleTypeFilter(val type: VehicleType?) : HomeIntent
     data class UpdateMaxPriceFilter(val maxPrice: Int?) : HomeIntent
@@ -107,3 +131,8 @@ private fun UserLocation.distanceKmTo(vehicle: Vehicle): Double {
 private const val EARTH_RADIUS_KM = 6371.0
 private const val WALKING_SPEED_KM_PER_HOUR = 4.8
 private const val MINUTES_PER_HOUR = 60
+
+internal fun List<Rental>.latestPreparingRental(): Rental? {
+    return filter { it.status == RentalStatus.Preparing }
+        .maxByOrNull { it.createdAt }
+}

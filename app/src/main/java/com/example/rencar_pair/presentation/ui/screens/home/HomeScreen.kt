@@ -67,6 +67,8 @@ import org.maplibre.android.geometry.LatLng
 fun HomeScreen(
     onVehicleDetails: (String) -> Unit,
     onReserveVehicle: (String) -> Unit,
+    onNavigateToActiveRental: (String) -> Unit,
+    onResumeDeliveryChecklist: (String, String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
@@ -110,6 +112,8 @@ fun HomeScreen(
         onIntent = viewModel::onIntent,
         onVehicleDetails = onVehicleDetails,
         onReserveVehicle = onReserveVehicle,
+        onNavigateToActiveRental = onNavigateToActiveRental,
+        onResumeDeliveryChecklist = onResumeDeliveryChecklist,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToProfile = onNavigateToProfile
     )
@@ -121,6 +125,8 @@ fun HomeScreenContent(
     onIntent: (HomeIntent) -> Unit,
     onVehicleDetails: (String) -> Unit,
     onReserveVehicle: (String) -> Unit,
+    onNavigateToActiveRental: (String) -> Unit,
+    onResumeDeliveryChecklist: (String, String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
@@ -251,12 +257,24 @@ fun HomeScreenContent(
                 HomeBottomSheet(
                     vehicleCount = visibleVehicles.size,
                     featuredVehicle = highlightedVehicle,
+                    activeRentalId = state.activeRental?.id,
+                    pendingRentalId = state.pendingRental?.id,
+                    pendingRentalVehicleId = state.pendingRental?.vehicleId,
                     distanceInfo = highlightedDistanceInfo,
                     isSelected = highlightedVehicle?.id == state.selectedVehicle?.id,
                     onFindNearestClick = {
                         highlightedVehicle?.let { vehicle ->
                             onIntent(HomeIntent.SelectVehicle(vehicle.id))
                             mapController.animateTo(LatLng(vehicle.latitude, vehicle.longitude))
+                        }
+                    },
+                    onActiveRentalClick = {
+                        state.activeRental?.id?.let(onNavigateToActiveRental)
+                    },
+                    onPendingRentalClick = {
+                        val pending = state.pendingRental
+                        if (pending != null) {
+                            onResumeDeliveryChecklist(pending.id, pending.vehicleId)
                         }
                     }
                 )
@@ -531,9 +549,14 @@ private fun String.toMapUpdateLabel(): String {
 private fun HomeBottomSheet(
     vehicleCount: Int,
     featuredVehicle: Vehicle?,
+    activeRentalId: String?,
+    pendingRentalId: String?,
+    pendingRentalVehicleId: String?,
     distanceInfo: VehicleDistanceInfo?,
     isSelected: Boolean,
-    onFindNearestClick: () -> Unit
+    onFindNearestClick: () -> Unit,
+    onActiveRentalClick: () -> Unit,
+    onPendingRentalClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -583,7 +606,13 @@ private fun HomeBottomSheet(
                     featuredVehicle?.let { vehicle ->
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (isSelected) "Seçili araç" else "En yakın uygun araç: ${vehicle.title}",
+                            text = when {
+                                activeRentalId != null -> "Aktif kiralaman devam ediyor"
+                                pendingRentalId != null && pendingRentalVehicleId == vehicle.id ->
+                                    "Fotoğraf kontrolü yarım kaldı"
+                                isSelected -> "Seçili araç"
+                                else -> "En yakın uygun araç: ${vehicle.title}"
+                            },
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -621,8 +650,17 @@ private fun HomeBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryButton(
-                text = if (isSelected) "Seçili Araca Git" else "En Yakın Aracı Bul",
-                onClick = onFindNearestClick,
+                text = when {
+                    activeRentalId != null -> "Aktif Kiralamaya Dön"
+                    pendingRentalId != null -> "Fotoğraf Kontrolüne Dön"
+                    isSelected -> "Seçili Araca Git"
+                    else -> "En Yakın Aracı Bul"
+                },
+                onClick = when {
+                    activeRentalId != null -> onActiveRentalClick
+                    pendingRentalId != null -> onPendingRentalClick
+                    else -> onFindNearestClick
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -747,6 +785,8 @@ private fun HomeScreenPreview() {
             onIntent = {},
             onVehicleDetails = {},
             onReserveVehicle = {},
+            onNavigateToActiveRental = {},
+            onResumeDeliveryChecklist = { _, _ -> },
             onNavigateToHistory = {},
             onNavigateToProfile = {}
         )
