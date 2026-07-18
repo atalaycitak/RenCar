@@ -8,6 +8,7 @@ import com.example.rencar_pair.data.remote.dto.ActiveRentalResponse
 import com.example.rencar_pair.data.remote.dto.CreateRentalRequest
 import com.example.rencar_pair.data.remote.dto.FinishRentalResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
+import com.example.rencar_pair.data.remote.dto.RentalVehicleSummaryResponse
 import com.example.rencar_pair.data.remote.dto.RentalPhotosStateResponse
 import com.example.rencar_pair.data.remote.dto.RentalResponse
 import com.example.rencar_pair.data.remote.safeApiCall
@@ -21,6 +22,9 @@ import com.example.rencar_pair.domain.model.RentalPhotoSide
 import com.example.rencar_pair.domain.model.RentalPhotosState
 import com.example.rencar_pair.domain.model.RentalPlan
 import com.example.rencar_pair.domain.model.RentalStatus
+import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehicleStatus
+import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.RentalRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -29,6 +33,8 @@ import java.time.Instant
 import java.time.format.DateTimeParseException
 
 private const val TAG = "DefaultRentalRepo"
+private const val DEFAULT_LATITUDE = 41.0082
+private const val DEFAULT_LONGITUDE = 28.9784
 
 /** Backend'in kabul ettiği MIME tipleri. */
 private val ACCEPTED_MIME_TYPES = setOf("image/jpeg", "image/jpg", "image/png")
@@ -214,6 +220,7 @@ class DefaultRentalRepository(
         id = id,
         userId = userId,
         vehicleId = vehicleId,
+        vehicle = vehicle?.toRentedVehicle(),
         plan = RentalPlan.fromApiString(plan),
         status = RentalStatus.fromApiString(status),
         paymentStatus = PaymentStatus.fromApiString(paymentStatus),
@@ -229,6 +236,23 @@ class DefaultRentalRepository(
         scheduledEndDate = endDate?.parseInstantOrNull(),
         createdAt = Instant.parse(createdAt)
     )
+
+    private fun RentalVehicleSummaryResponse.toRentedVehicle(): Vehicle {
+        return Vehicle(
+            id = id,
+            plate = plate,
+            brand = brand,
+            model = model,
+            type = VehicleType.fromApiString(type),
+            pricePerDay = 0.0,
+            status = VehicleStatus.Rented,
+            latitude = DEFAULT_LATITUDE,
+            longitude = DEFAULT_LONGITUDE,
+            locationName = "Aktif kiralama",
+            canReserve = false,
+            canUnlock = false
+        )
+    }
 
     private fun RentalResponse.toDomainOrNull(): Rental? = runCatching { toDomain() }.getOrElse {
         Log.w(TAG, "Kiralama kaydı atlandı (id=$id): ${it.message}")

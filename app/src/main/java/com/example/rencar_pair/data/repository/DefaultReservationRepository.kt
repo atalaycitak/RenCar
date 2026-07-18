@@ -18,7 +18,11 @@ import com.example.rencar_pair.domain.model.RentalPlan
 import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.Reservation
 import com.example.rencar_pair.domain.model.ReservationStatus
+import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehicleStatus
+import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.ReservationRepository
+import com.example.rencar_pair.data.remote.dto.ReservationVehicleSummaryResponse
 
 class DefaultReservationRepository(
     private val api: RenCarApi
@@ -124,7 +128,26 @@ class DefaultReservationRepository(
             status = ReservationStatus.fromApiString(status),
             expiresAt = Instant.parse(expiresAt),
             remainingSeconds = remainingSeconds.coerceAtLeast(0),
-            createdAt = Instant.parse(createdAt)
+            createdAt = Instant.parse(createdAt),
+            vehicle = vehicle?.toReservedVehicle()
+        )
+    }
+
+    private fun ReservationVehicleSummaryResponse.toReservedVehicle(): Vehicle {
+        return Vehicle(
+            id = id,
+            plate = plate,
+            brand = brand,
+            model = model,
+            type = VehicleType.fromApiString(type),
+            pricePerDay = pricePerMinute ?: 0.0,
+            status = VehicleStatus.Reserved,
+            latitude = latitude ?: DEFAULT_LATITUDE,
+            longitude = longitude ?: DEFAULT_LONGITUDE,
+            locationName = "Rezerve araç",
+            pricePerMinute = pricePerMinute,
+            canReserve = false,
+            canUnlock = true
         )
     }
 
@@ -139,5 +162,7 @@ class DefaultReservationRepository(
 
     private companion object {
         private const val TAG = "ReservationRepo"
+        private const val DEFAULT_LATITUDE = 41.0082
+        private const val DEFAULT_LONGITUDE = 28.9784
     }
 }

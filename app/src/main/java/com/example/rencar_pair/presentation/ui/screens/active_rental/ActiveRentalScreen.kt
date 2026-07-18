@@ -164,7 +164,11 @@ fun ActiveRentalScreenContent(
                 
                 val hours = state.elapsedMinutes / 60
                 val minutes = state.elapsedMinutes % 60
-                val formattedTime = String.format("%02d:%02d:00", hours, minutes) // Mock seconds as 00
+                val formattedTime = if (hours > 0) {
+                    "$hours sa $minutes dk"
+                } else {
+                    "$minutes dk"
+                }
                 Text(
                     text = formattedTime,
                     style = MaterialTheme.typography.displayLarge.copy(

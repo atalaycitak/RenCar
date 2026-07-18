@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,8 +46,10 @@ import androidx.compose.ui.unit.sp
 import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.ReservationQuote
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.RenCarTheme
+import coil.compose.AsyncImage
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -164,7 +167,6 @@ private fun ReservationView(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Image Placeholder
                 Box(
                     modifier = Modifier
                         .size(90.dp, 72.dp)
@@ -172,7 +174,16 @@ private fun ReservationView(
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Foto", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    if (vehicle.imageUrl != null) {
+                        AsyncImage(
+                            model = vehicle.imageUrl,
+                            contentDescription = "${vehicle.title} fotoğrafı",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text("Fotoğraf yok", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    }
                 }
                 
                 Column(modifier = Modifier.weight(1f)) {
@@ -185,7 +196,7 @@ private fun ReservationView(
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = "${vehicle.plate} · ${vehicle.type} · Otomatik", // Mocking some specs
+                        text = vehicle.reservationSpecSummary(),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -194,7 +205,7 @@ private fun ReservationView(
                     )
                     Spacer(modifier = Modifier.height(7.dp))
                     Text(
-                        text = "Yakıt %72", // Mock
+                        text = vehicle.fuelLevelPercent?.let { "Yakıt %$it" } ?: "Yakıt bilgisi yok",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 11.sp,
@@ -364,6 +375,15 @@ private fun ReservationView(
         
         Spacer(modifier = Modifier.height(20.dp))
     }
+}
+
+private fun Vehicle.reservationSpecSummary(): String {
+    val typeLabel = type.takeUnless { it == VehicleType.Unknown }?.name
+    return listOfNotNull(
+        plate.takeIf { it.isNotBlank() },
+        typeLabel,
+        transmission?.takeIf { it.isNotBlank() }
+    ).joinToString(" · ").ifBlank { "Araç bilgisi yok" }
 }
 
 @Composable

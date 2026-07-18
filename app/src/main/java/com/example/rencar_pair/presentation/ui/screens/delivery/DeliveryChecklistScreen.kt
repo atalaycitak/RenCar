@@ -1,7 +1,5 @@
 package com.example.rencar_pair.presentation.ui.screens.delivery
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.rencar_pair.domain.model.RentalPhotoSide
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
+import com.example.rencar_pair.presentation.ui.components.RenCarCameraPreview
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -60,16 +59,7 @@ fun DeliveryChecklistScreen(
     viewModel: DeliveryChecklistViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var pendingSide by remember { mutableStateOf<RentalPhotoSide?>(null) }
-    val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        val side = pendingSide
-        pendingSide = null
-        if (side != null && uri != null) {
-            viewModel.onIntent(DeliveryChecklistIntent.SelectPhoto(side, uri.toString()))
-        }
-    }
+    var activeCameraSide by remember { mutableStateOf<RentalPhotoSide?>(null) }
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
@@ -80,15 +70,23 @@ fun DeliveryChecklistScreen(
         }
     }
 
+    activeCameraSide?.let { side ->
+        RenCarCameraPreview(
+            onPhotoCaptured = { uri ->
+                viewModel.onIntent(DeliveryChecklistIntent.SelectPhoto(side, uri))
+                activeCameraSide = null
+            },
+            onCancel = { activeCameraSide = null }
+        )
+        return
+    }
+
     DeliveryChecklistScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         onBack = onBack,
         onDone = onDone,
-        onPickPhoto = { side ->
-            pendingSide = side
-            photoPicker.launch(arrayOf("image/jpeg", "image/png"))
-        }
+        onPickPhoto = { side -> activeCameraSide = side }
     )
 }
 
@@ -166,7 +164,7 @@ fun DeliveryChecklistScreenContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Renault Clio · 34 RNC 022", // Mock
+                    text = "Araç #${state.vehicleId.takeLast(6).uppercase()}",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,

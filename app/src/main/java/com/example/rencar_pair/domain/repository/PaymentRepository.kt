@@ -20,7 +20,7 @@ interface PaymentRepository {
         amount: Double
     ): NetworkResult<PaymentResult> {
         if (amount <= 0) {
-            return NetworkResult.Error("Gecersiz tutar")
+            return NetworkResult.Error("Geçersiz tutar")
         }
         return payRental(
             rentalId = rentalId,

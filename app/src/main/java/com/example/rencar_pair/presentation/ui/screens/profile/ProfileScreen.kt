@@ -52,6 +52,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ProfileScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: ProfileViewModel = koinViewModel()
 ) {
@@ -75,7 +76,8 @@ fun ProfileScreen(
         snackbarHostState = snackbarHostState,
         onIntent = viewModel::onIntent,
         onNavigateToHome = onNavigateToHome,
-        onNavigateToHistory = onNavigateToHistory
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToWallet = onNavigateToWallet
     )
 }
 
@@ -85,7 +87,8 @@ fun ProfileScreenContent(
     snackbarHostState: SnackbarHostState,
     onIntent: (ProfileIntent) -> Unit,
     onNavigateToHome: () -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit
 ) {
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -96,6 +99,7 @@ fun ProfileScreenContent(
                     when (route) {
                         BottomNavRoute.HOME -> onNavigateToHome()
                         BottomNavRoute.HISTORY -> onNavigateToHistory()
+                        BottomNavRoute.WALLET -> onNavigateToWallet()
                         else -> {}
                     }
                 }
@@ -171,7 +175,7 @@ fun ProfileScreenContent(
                                     )
                                 )
                                 Text(
-                                    text = "+90 532 000 00 00", // Mocked
+                                    text = "Telefon bilgisi yok",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium,
@@ -186,14 +190,13 @@ fun ProfileScreenContent(
                                 modifier = Modifier
                                     .size(38.dp)
                                     .shadow(elevation = 10.dp, shape = RoundedCornerShape(12.dp), spotColor = Color.Black.copy(alpha = 0.07f))
-                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                                    .clickable { /* Edit */ },
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(id = android.R.drawable.ic_menu_edit),
-                                    contentDescription = "Edit Profile",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    contentDescription = "Profili düzenle yakında",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -271,25 +274,28 @@ fun ProfileScreenContent(
                             ProfileMenuItem(
                                 iconId = android.R.drawable.ic_menu_today, // Mock icon
                                 title = "Ödeme yöntemleri",
-                                onClick = { /* Navigate */ }
+                                onClick = onNavigateToWallet
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
                                 iconId = android.R.drawable.ic_menu_preferences, // Mock icon
                                 title = "Ayarlar",
-                                onClick = { /* Navigate */ }
+                                enabled = false,
+                                onClick = {}
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
                                 iconId = android.R.drawable.ic_menu_help, // Mock icon
                                 title = "Yardım & destek",
-                                onClick = { /* Navigate */ }
+                                enabled = false,
+                                onClick = {}
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
                                 iconId = android.R.drawable.ic_menu_share, // Mock icon
                                 title = "Davet et · ₺50 kazan",
-                                onClick = { /* Navigate */ }
+                                enabled = false,
+                                onClick = {}
                             )
                         }
                         Spacer(modifier = Modifier.height(14.dp))
@@ -335,12 +341,24 @@ fun ProfileScreenContent(
 fun ProfileMenuItem(
     iconId: Int,
     title: String,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    val contentColor = if (enabled) {
+        MaterialTheme.colorScheme.onBackground
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+    }
+    val iconColor = if (enabled) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -352,7 +370,7 @@ fun ProfileMenuItem(
             Icon(
                 painter = painterResource(id = iconId),
                 contentDescription = title,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = iconColor,
                 modifier = Modifier.size(20.dp)
             )
             Text(
@@ -360,16 +378,30 @@ fun ProfileMenuItem(
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontSize = 14.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = contentColor
                 )
             )
         }
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(18.dp)
-        )
+        if (enabled) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(18.dp)
+            )
+        } else {
+            Text(
+                text = "Yakında",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                ),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
     }
 }
 
@@ -390,7 +422,8 @@ private fun ProfileScreenPreview() {
             snackbarHostState = remember { SnackbarHostState() },
             onIntent = {},
             onNavigateToHome = {},
-            onNavigateToHistory = {}
+            onNavigateToHistory = {},
+            onNavigateToWallet = {}
         )
     }
 }

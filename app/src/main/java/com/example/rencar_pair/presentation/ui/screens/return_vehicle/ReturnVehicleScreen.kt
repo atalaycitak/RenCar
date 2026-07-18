@@ -120,9 +120,9 @@ fun ReturnVehicleScreenContent(
     if (state.showReturnConfirmation) {
         AlertDialog(
             onDismissRequest = { onIntent(ReturnVehicleIntent.DismissReturnConfirmation) },
-            title = { Text("Iadeyi onayla") },
+            title = { Text("İadeyi onayla") },
             text = {
-                Text("Dort aci fotografi kaydedildi. Arac iadesi backend'e gonderilecek.")
+                Text("Dört açı fotoğrafı kaydedildi. Araç iadesi sunucuya gönderilecek.")
             },
             confirmButton = {
                 TextButton(onClick = { onIntent(ReturnVehicleIntent.SubmitReturn(rentalId)) }) {
@@ -131,7 +131,7 @@ fun ReturnVehicleScreenContent(
             },
             dismissButton = {
                 TextButton(onClick = { onIntent(ReturnVehicleIntent.DismissReturnConfirmation) }) {
-                    Text("Vazgec")
+                    Text("Vazgeç")
                 }
             }
         )
@@ -142,7 +142,7 @@ fun ReturnVehicleScreenContent(
         topBar = {
             @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
-                title = { Text("Arac Iadesi") },
+                title = { Text("Araç İadesi") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Geri")
@@ -173,7 +173,7 @@ fun ReturnVehicleScreenContent(
                             modifier = Modifier.size(24.dp)
                         )
                     } else {
-                        Text("Iadeyi Tamamla", style = MaterialTheme.typography.titleMedium)
+                        Text("İadeyi Tamamla", style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -190,7 +190,7 @@ fun ReturnVehicleScreenContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Aracin dort acisindan fotograf cekin, varsa hasar notunu ekleyin.",
+                text = "Aracın dört açısından fotoğraf çekin, varsa hasar notunu ekleyin.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -212,7 +212,7 @@ fun ReturnVehicleScreenContent(
                 minLines = 3,
                 maxLines = 5,
                 label = { Text("Hasar notu") },
-                placeholder = { Text("Hasar yoksa bos birakabilirsiniz") },
+                placeholder = { Text("Hasar yoksa boş bırakabilirsiniz") },
                 enabled = !state.isLoading
             )
 
@@ -241,7 +241,7 @@ private fun ReturnPhotoGrid(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             AnglePhotoCard(
                 modifier = Modifier.weight(1f),
-                label = "On",
+                label = "Ön",
                 photoUri = state.frontPhotoUri,
                 onClick = { onAngleClick(ReturnAngle.FRONT) }
             )
@@ -261,7 +261,7 @@ private fun ReturnPhotoGrid(
             )
             AnglePhotoCard(
                 modifier = Modifier.weight(1f),
-                label = "Sag",
+                label = "Sağ",
                 photoUri = state.rightPhotoUri,
                 onClick = { onAngleClick(ReturnAngle.RIGHT) }
             )
@@ -291,7 +291,7 @@ private fun AnglePhotoCard(
             if (photoUri != null) {
                 AsyncImage(
                     model = photoUri,
-                    contentDescription = "$label fotografi",
+                    contentDescription = "$label fotoğrafı",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )

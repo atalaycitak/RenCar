@@ -112,7 +112,7 @@ class TripSummaryViewModel(
             updateState {
                 it.copy(selectedPaymentMethod = PaymentMethod.Card, isAddCardDialogVisible = true)
             }
-            emitEffect(TripSummaryEffect.ShowError("Kartla odemek icin once kart ekleyin."))
+            emitEffect(TripSummaryEffect.ShowError("Kartla ödemek için önce kart ekleyin."))
             return
         }
         updateState { it.copy(selectedPaymentMethod = method, errorMessage = null) }
@@ -124,25 +124,20 @@ class TripSummaryViewModel(
         val amount = current.totalPrice
 
         if (current.rental == null) {
-            emitEffect(TripSummaryEffect.ShowError("Kiralama bilgisi bulunamadi."))
+            emitEffect(TripSummaryEffect.ShowError("Kiralama bilgisi bulunamadı."))
             return
         }
 
         when (current.selectedPaymentMethod) {
             PaymentMethod.Wallet -> {
                 if (current.walletBalance < amount) {
-                    if (current.defaultCard == null) {
-                        updateState { it.copy(isAddCardDialogVisible = true) }
-                        emitEffect(TripSummaryEffect.ShowError("Odeme veya bakiye yukleme icin once kart ekleyin."))
-                        return
-                    }
                     updateState {
                         it.copy(
                             isTopUpDialogVisible = true,
                             topUpAmount = it.walletShortfall.formatAmountForInput()
                         )
                     }
-                    emitEffect(TripSummaryEffect.ShowError("Bakiye yetersiz. Kartla odeyebilir veya bakiye yukleyebilirsiniz."))
+                    emitEffect(TripSummaryEffect.ShowError("Bakiye yetersiz. Bakiye yükleyebilir veya kartla ödeyebilirsiniz."))
                     return
                 }
                 submitPayment(rentalId, PaymentMethod.Wallet)
@@ -151,13 +146,13 @@ class TripSummaryViewModel(
                 val cardId = current.selectedCard?.cardToken
                 if (cardId == null) {
                     updateState { it.copy(isAddCardDialogVisible = true) }
-                    emitEffect(TripSummaryEffect.ShowError("Odeme icin bir kart ekleyin."))
+                    emitEffect(TripSummaryEffect.ShowError("Ödeme için bir kart ekleyin."))
                     return
                 }
                 submitPayment(rentalId, PaymentMethod.Card, cardId = cardId)
             }
             PaymentMethod.Iyzico -> {
-                emitEffect(TripSummaryEffect.ShowError("Iyzico akisi bu ekranda izole tutuluyor."))
+                emitEffect(TripSummaryEffect.ShowError("Iyzico akışı bu ekranda izole tutuluyor."))
             }
         }
     }
@@ -186,7 +181,7 @@ class TripSummaryViewModel(
                             } ?: it.walletInfo
                         )
                     }
-                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Odeme basariyla alindi."))
+                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Ödeme başarıyla alındı."))
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isPaying = false, errorMessage = result.message) }
@@ -204,11 +199,11 @@ class TripSummaryViewModel(
         val expireYear = expiryParts.getOrNull(1).orEmpty()
 
         val validationError = when {
-            current.cardHolderName.isBlank() -> "Kart uzerindeki isim gerekli"
-            cardNumber.length != 16 -> "Kart numarasi 16 haneli olmali"
-            expiryParts.size != 2 || expireMonth.length != 2 || expireYear.length != 2 -> "Son kullanma tarihi AA/YY formatinda olmali"
-            expireMonth.toIntOrNull() !in 1..12 -> "Son kullanma ayi gecersiz"
-            current.cardCvc.length < 3 -> "CVC en az 3 haneli olmali"
+            current.cardHolderName.isBlank() -> "Kart üzerindeki isim gerekli"
+            cardNumber.length != 16 -> "Kart numarası 16 haneli olmalı"
+            expiryParts.size != 2 || expireMonth.length != 2 || expireYear.length != 2 -> "Son kullanma tarihi AA/YY formatında olmalı"
+            expireMonth.toIntOrNull() !in 1..12 -> "Son kullanma ayı geçersiz"
+            current.cardCvc.length < 3 -> "CVC en az 3 haneli olmalı"
             else -> null
         }
 
@@ -237,7 +232,7 @@ class TripSummaryViewModel(
                             selectedPaymentMethod = PaymentMethod.Card
                         )
                     }
-                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Kart kaydedildi ve odeme icin secildi."))
+                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Kart kaydedildi ve ödeme için seçildi."))
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isSavingCard = false, cardFormError = result.message) }
@@ -248,12 +243,6 @@ class TripSummaryViewModel(
     }
 
     private fun showTopUpDialog() {
-        val current = currentState()
-        if (current.defaultCard == null) {
-            updateState { it.copy(isAddCardDialogVisible = true) }
-            emitEffect(TripSummaryEffect.ShowError("Bakiye yuklemek icin once kart ekleyin."))
-            return
-        }
         updateState {
             it.copy(
                 isTopUpDialogVisible = true,
@@ -267,20 +256,14 @@ class TripSummaryViewModel(
     private fun submitTopUp() {
         val current = currentState()
         val amount = current.topUpAmount.toAmountOrNull()
-        val card = current.defaultCard
         if (amount == null || amount <= 0) {
-            emitEffect(TripSummaryEffect.ShowError("Gecerli bir tutar girin."))
-            return
-        }
-        if (card == null) {
-            updateState { it.copy(isAddCardDialogVisible = true) }
-            emitEffect(TripSummaryEffect.ShowError("Bakiye yuklemek icin once kart ekleyin."))
+            emitEffect(TripSummaryEffect.ShowError("Geçerli bir tutar girin."))
             return
         }
 
         launchCoroutine {
             updateState { it.copy(isToppingUp = true, errorMessage = null) }
-            when (val result = paymentUseCases.topUpWallet(amount, card.cardToken)) {
+            when (val result = paymentUseCases.topUpWallet(amount)) {
                 is NetworkResult.Success -> {
                     updateState {
                         it.copy(
@@ -291,7 +274,7 @@ class TripSummaryViewModel(
                             topUpAmount = ""
                         )
                     }
-                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Bakiye yuklendi."))
+                    emitEffect(TripSummaryEffect.ShowPaymentSuccess("Bakiye yüklendi."))
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isToppingUp = false, errorMessage = result.message) }

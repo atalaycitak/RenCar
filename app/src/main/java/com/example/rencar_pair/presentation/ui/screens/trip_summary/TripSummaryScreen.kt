@@ -159,7 +159,10 @@ fun TripSummaryScreenContent(
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        TripCompleteHeader(vehicleLabel = rental.vehicleId)
+        TripCompleteHeader(
+            vehicleTitle = rental.vehicle?.title ?: "Araç #${rental.vehicleId.takeLast(6).uppercase(Locale.US)}",
+            vehicleSubtitle = rental.vehicle?.plate
+        )
         SummaryMetricRow(durationMinutes = rentalDurationMins, distanceKm = rental.distanceKm)
         ReceiptCard(state = state, durationMinutes = rentalDurationMins)
         PaymentMethodCard(state = state, onIntent = onIntent)
@@ -180,7 +183,10 @@ fun TripSummaryScreenContent(
 }
 
 @Composable
-private fun TripCompleteHeader(vehicleLabel: String) {
+private fun TripCompleteHeader(
+    vehicleTitle: String,
+    vehicleSubtitle: String?
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -215,7 +221,7 @@ private fun TripCompleteHeader(vehicleLabel: String) {
             modifier = Modifier.padding(top = 12.dp)
         )
         Text(
-            text = "Araç #$vehicleLabel",
+            text = listOfNotNull(vehicleTitle, vehicleSubtitle).joinToString(" · "),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -465,7 +471,7 @@ private fun InsufficientWalletCard(
             )
         )
         Text(
-            text = "${formatCurrency(state.walletShortfall)} eksik. Varsayılan karttan bakiye yükleyebilir veya kartla ödeyebilirsiniz.",
+            text = "${formatCurrency(state.walletShortfall)} eksik. Bakiye yükleyebilir veya kartla ödeyebilirsiniz.",
             style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF8A4B00))
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -570,8 +576,7 @@ private fun TopUpDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = state.defaultCard?.let { "Varsayılan kart: ${it.displayName()}" }
-                        ?: "Bakiye yüklemek için kart ekleyin.",
+                    text = "Yüklemek istediğiniz tutarı girin. İşlem tamamlanınca cüzdan bakiyesi güncellenir.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -146,6 +146,12 @@ fun RenCarNavHost(
                         launchSingleTop = true
                     }
                 },
+                onNavigateToWallet = {
+                    navController.navigate(WalletRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
                 onNavigateToProfile = {
                     navController.navigate(ProfileRoute) {
                         popUpTo(navController.graph.startDestinationId)
@@ -215,13 +221,38 @@ fun RenCarNavHost(
         }
 
         composable<WalletRoute> {
-            WalletScreen()
+            WalletScreen(
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToHistory = {
+                    navController.navigate(TripHistoryListRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(ProfileRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
 
         composable<TripHistoryListRoute> {
             TripHistoryScreen(
                 onNavigateToHome = {
                     navController.navigate(HomeMapRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToWallet = {
+                    navController.navigate(WalletRoute) {
                         popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }
@@ -245,6 +276,12 @@ fun RenCarNavHost(
                 },
                 onNavigateToHistory = {
                     navController.navigate(TripHistoryListRoute) {
+                        popUpTo(navController.graph.startDestinationId)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToWallet = {
+                    navController.navigate(WalletRoute) {
                         popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }

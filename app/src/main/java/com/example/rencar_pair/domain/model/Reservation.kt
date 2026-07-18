@@ -23,5 +23,6 @@ data class Reservation(
     val status: ReservationStatus,
     val expiresAt: Instant,
     val remainingSeconds: Int,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val vehicle: Vehicle? = null
 )

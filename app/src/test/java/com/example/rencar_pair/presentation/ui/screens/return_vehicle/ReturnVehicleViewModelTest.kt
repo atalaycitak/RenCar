@@ -35,7 +35,7 @@ class ReturnVehicleViewModelTest {
         viewModel.onIntent(ReturnVehicleIntent.RequestReturnConfirmation)
 
         assertFalse(viewModel.state.value.showReturnConfirmation)
-        assertEquals("Lutfen dort acidan da fotograf yukleyin", viewModel.state.value.errorMessage)
+        assertEquals("Lütfen dört açıdan da fotoğraf yükleyin", viewModel.state.value.errorMessage)
     }
 
     @Test
@@ -104,7 +104,30 @@ private class FakeRentalRepositoryForReturnTest : RentalRepository {
 
     override suspend fun startRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
 
-    override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
+    override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> {
+        returnedRentalId = rentalId
+        return NetworkResult.Success(
+            com.example.rencar_pair.domain.model.FinishedRental(
+                id = rentalId,
+                userId = "user-1",
+                vehicleId = "vehicle-1",
+                plan = com.example.rencar_pair.domain.model.RentalPlan.PerMinute,
+                totalPrice = 110.5,
+                startFee = 15.0,
+                serviceFee = 7.5,
+                usageFee = 108.0,
+                discountAmount = 20.0,
+                distanceKm = 12.4,
+                durationMinutes = 24.0,
+                elapsedSeconds = 1440.0,
+                paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+                paymentMethod = null,
+                startedAt = java.time.Instant.parse("2026-07-18T10:00:00Z"),
+                endedAt = java.time.Instant.parse("2026-07-18T10:24:00Z"),
+                createdAt = java.time.Instant.parse("2026-07-18T09:55:00Z")
+            )
+        )
+    }
 
     override suspend fun payRental(
         rentalId: String,
@@ -114,8 +137,7 @@ private class FakeRentalRepositoryForReturnTest : RentalRepository {
     ): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
 
     override suspend fun cancelRental(rentalId: String): NetworkResult<Unit> {
-        returnedRentalId = rentalId
-        return NetworkResult.Success(Unit)
+        return NetworkResult.Error("Cancel should not be used for completed return")
     }
 }
 
