@@ -122,7 +122,7 @@ fun TripSummaryScreenContent(
         return
     }
 
-    val rentalDurationMins = Duration.between(state.rental.startDate, state.rental.endDate ?: Instant.now()).toMinutes()
+    val rentalDurationMins = Duration.between(state.rental.startedAt, state.rental.endedAt ?: Instant.now()).toMinutes()
 
     if (state.isAddCardDialogVisible) {
         AddCardDialog(
@@ -520,20 +520,23 @@ private fun TripSummaryScreenPreview() {
                     id = "RNT-12345",
                     userId = "USR-1",
                     vehicleId = "VHC-1",
-                    startDate = Instant.now().minus(Duration.ofMinutes(24)),
-                    endDate = Instant.now(),
+                    plan = com.example.rencar_pair.domain.model.RentalPlan.PerMinute,
                     status = RentalStatus.Completed,
-                    totalPrice = 110.50
+                    paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+                    paymentMethod = null,
+                    totalPrice = 110.50,
+                    startFee = 15.0,
+                    serviceFee = 10.5,
+                    distanceKm = 3.2,
+                    durationMinutes = 13.0,
+                    discountAmount = 0.0,
+                    startedAt = Instant.now().minus(Duration.ofMinutes(24)),
+                    endedAt = Instant.now(),
+                    scheduledEndDate = null,
+                    createdAt = Instant.now().minus(Duration.ofMinutes(30))
                 ),
-                savedCards = listOf(
-                    PaymentMethod(
-                        cardToken = "token1",
-                        cardAlias = "Kişisel kart",
-                        binNumber = "4291",
-                        cardAssociation = "VISA"
-                    )
-                ),
-                selectedCardToken = "token1",
+                savedCards = emptyList(),
+                selectedCardToken = null,
                 isLoading = false,
                 isPaying = false
             ),

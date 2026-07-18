@@ -7,5 +7,5 @@ class ReturnVehicleUseCase(private val repository: RentalRepository) {
         rentalId: String,
         photos: List<String>,
         damageNote: String
-    ) = repository.returnVehicle(rentalId, photos, damageNote)
+    ) = repository.cancelRental(rentalId)
 }

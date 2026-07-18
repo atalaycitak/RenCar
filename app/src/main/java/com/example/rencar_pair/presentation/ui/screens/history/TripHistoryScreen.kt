@@ -147,7 +147,7 @@ fun TripHistoryScreenContent(
 @Composable
 fun TripHistoryCard(rental: Rental) {
     val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy · HH:mm", Locale("tr")).withZone(ZoneId.systemDefault())
-    val formattedDate = formatter.format(rental.startDate)
+    val formattedDate = formatter.format(rental.startedAt ?: rental.createdAt)
 
     Row(
         modifier = Modifier
@@ -258,19 +258,39 @@ private fun TripHistoryScreenPreview() {
                         id = "RNT-1",
                         userId = "USR-1",
                         vehicleId = "VHC-1",
-                        startDate = Instant.now().minusSeconds(86400 * 2),
-                        endDate = Instant.now().minusSeconds(86400 * 1),
+                        plan = com.example.rencar_pair.domain.model.RentalPlan.Daily,
                         status = RentalStatus.Completed,
-                        totalPrice = 110.50
+                        paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Paid,
+                        paymentMethod = com.example.rencar_pair.domain.model.PaymentMethod.Wallet,
+                        totalPrice = 110.50,
+                        startFee = 15.0,
+                        serviceFee = 10.0,
+                        distanceKm = null,
+                        durationMinutes = null,
+                        discountAmount = 0.0,
+                        startedAt = Instant.now().minusSeconds(86400 * 2),
+                        endedAt = Instant.now().minusSeconds(86400 * 1),
+                        scheduledEndDate = null,
+                        createdAt = Instant.now().minusSeconds(86400 * 3)
                     ),
                     Rental(
                         id = "RNT-2",
                         userId = "USR-1",
                         vehicleId = "VHC-2",
-                        startDate = Instant.now(),
-                        endDate = Instant.now().plusSeconds(86400),
+                        plan = com.example.rencar_pair.domain.model.RentalPlan.PerMinute,
                         status = RentalStatus.Active,
-                        totalPrice = 86.00
+                        paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+                        paymentMethod = null,
+                        totalPrice = null,
+                        startFee = 15.0,
+                        serviceFee = null,
+                        distanceKm = null,
+                        durationMinutes = null,
+                        discountAmount = 0.0,
+                        startedAt = Instant.now(),
+                        endedAt = null,
+                        scheduledEndDate = null,
+                        createdAt = Instant.now()
                     )
                 )
             ),

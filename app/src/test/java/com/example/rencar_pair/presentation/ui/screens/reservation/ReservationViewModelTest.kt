@@ -79,19 +79,24 @@ class ReservationViewModelTest {
         val reservationRepository = FakeReservationRepositoryForTest(
             initialReservation = activeReservationForTest()
         )
-        val viewModel = createViewModel(reservationRepository = reservationRepository)
+        val rentalRepository = FakeRentalRepositoryForTest()
+        val viewModel = createViewModel(
+            reservationRepository = reservationRepository,
+            rentalRepository = rentalRepository
+        )
 
         advanceUntilIdle()
         viewModel.onIntent(ReservationIntent.ConfirmReservation)
         advanceUntilIdle()
 
         assertEquals("rental-1", viewModel.state.value.rentalId)
-        assertEquals("vehicle-1", reservationRepository.createdVehicleId)
-        assertEquals("PER_MINUTE", reservationRepository.createdPlan)
+        assertEquals("vehicle-1", rentalRepository.createdVehicleId)
+        assertEquals(com.example.rencar_pair.domain.model.RentalPlan.PerMinute, rentalRepository.createdPlan)
     }
 
     private fun createViewModel(
-        reservationRepository: FakeReservationRepositoryForTest = FakeReservationRepositoryForTest()
+        reservationRepository: FakeReservationRepositoryForTest = FakeReservationRepositoryForTest(),
+        rentalRepository: FakeRentalRepositoryForTest = FakeRentalRepositoryForTest()
     ): ReservationViewModel {
         val vehicleRepository = FakeVehicleRepositoryForTest()
         val savedStateHandle = SavedStateHandle(mapOf("vehicleId" to "vehicle-1"))
@@ -99,7 +104,7 @@ class ReservationViewModelTest {
             savedStateHandle = savedStateHandle,
             vehicleUseCases = VehicleUseCases(vehicleRepository),
             calculateReservationQuoteUseCase = CalculateReservationQuoteUseCase(),
-            rentalUseCases = RentalUseCases(reservationRepository)
+            rentalUseCases = RentalUseCases(rentalRepository, reservationRepository)
         )
     }
 }
@@ -161,53 +166,77 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
         vehicleId: String,
         endDate: String?,
         plan: String?
+    ): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getRentals(): NetworkResult<List<Rental>> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun returnRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+}
+
+private class FakeRentalRepositoryForTest : com.example.rencar_pair.domain.repository.RentalRepository {
+    var createdVehicleId: String? = null
+    var createdEndDate: String? = null
+    var createdPlan: com.example.rencar_pair.domain.model.RentalPlan? = null
+
+    override suspend fun createRental(
+        vehicleId: String,
+        plan: com.example.rencar_pair.domain.model.RentalPlan?,
+        endDate: String?
     ): NetworkResult<Rental> {
         createdVehicleId = vehicleId
-        createdEndDate = endDate
         createdPlan = plan
-        rental = Rental(
-            id = "rental-1",
-            userId = "user-1",
-            vehicleId = vehicleId,
-            startDate = Instant.parse("2026-01-01T10:00:00Z"),
-            endDate = endDate?.let { Instant.parse(it) } ?: Instant.parse("2026-01-01T10:00:00Z"),
-            totalPrice = 1230.0,
-            status = if (plan == "PER_MINUTE") RentalStatus.Preparing else RentalStatus.Active
-        )
-        return NetworkResult.Success(rental!!)
-    }
-
-    override suspend fun getRentals(): NetworkResult<List<Rental>> {
-        return NetworkResult.Success(listOfNotNull(rental))
-    }
-
-    override suspend fun getRental(id: String): NetworkResult<Rental> {
+        createdEndDate = endDate
         return NetworkResult.Success(
-            rental ?: Rental(
-                id = id,
+            Rental(
+                id = "rental-1",
                 userId = "user-1",
-                vehicleId = "vehicle-1",
-                startDate = Instant.parse("2026-01-01T10:00:00Z"),
-                endDate = Instant.parse("2026-01-02T10:00:00Z"),
+                vehicleId = vehicleId,
+                plan = plan ?: com.example.rencar_pair.domain.model.RentalPlan.PerMinute,
+                status = if (plan == com.example.rencar_pair.domain.model.RentalPlan.PerMinute) RentalStatus.Preparing else RentalStatus.Active,
+                paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+                paymentMethod = null,
                 totalPrice = 1230.0,
-                status = RentalStatus.Active
+                startFee = 15.0,
+                serviceFee = null,
+                distanceKm = null,
+                durationMinutes = null,
+                discountAmount = 0.0,
+                startedAt = Instant.parse("2026-01-01T10:00:00Z"),
+                endedAt = null,
+                scheduledEndDate = endDate?.let { Instant.parse(it) } ?: Instant.parse("2026-01-01T10:00:00Z"),
+                createdAt = Instant.parse("2026-01-01T09:00:00Z")
             )
         )
     }
 
-    override suspend fun returnRental(id: String): NetworkResult<Rental> {
-        val completed = (rental ?: Rental(
-            id = id,
-            userId = "user-1",
-            vehicleId = "vehicle-1",
-            startDate = Instant.parse("2026-01-01T10:00:00Z"),
-            endDate = Instant.parse("2026-01-02T10:00:00Z"),
-            totalPrice = 1230.0,
-            status = RentalStatus.Active
-        )).copy(status = RentalStatus.Completed)
-        rental = completed
-        return NetworkResult.Success(completed)
-    }
+    override suspend fun getMyRentals(): NetworkResult<List<Rental>> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getActiveRental(): NetworkResult<com.example.rencar_pair.domain.model.ActiveRental?> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getPreparationPhotos(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
+
+    override suspend fun uploadPreparationPhoto(
+        rentalId: String,
+        side: com.example.rencar_pair.domain.model.RentalPhotoSide,
+        photoUri: String
+    ): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
+
+    override suspend fun startRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+
+    override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun payRental(
+        rentalId: String,
+        method: com.example.rencar_pair.domain.model.PaymentMethod,
+        cardId: String?,
+        discountCode: String?
+    ): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+
+    override suspend fun cancelRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
 }
 
 private fun activeReservationForTest(vehicleId: String = "vehicle-1"): Reservation {

@@ -24,10 +24,10 @@ class SplashViewModel(
                 is NetworkResult.Success -> {
                     updateState { it.copy(isCheckingAuth = false) }
                     val user = result.data
-                    if (user.role == com.example.rencar_pair.domain.model.UserRole.Customer || user.role == com.example.rencar_pair.domain.model.UserRole.Admin) {
-                        emitEffect(SplashEffect.NavigateToHome)
-                    } else {
+                    if (user.role == com.example.rencar_pair.domain.model.UserRole.Pending) {
                         emitEffect(SplashEffect.NavigateToLicenseVerification)
+                    } else {
+                        emitEffect(SplashEffect.NavigateToHome)
                     }
                 }
                 is NetworkResult.Error -> {
