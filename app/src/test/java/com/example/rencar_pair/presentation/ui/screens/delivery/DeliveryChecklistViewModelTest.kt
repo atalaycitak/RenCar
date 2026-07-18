@@ -124,6 +124,8 @@ private class FakeRentalRepositoryForDeliveryTest : RentalRepository {
 
     override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
 
+    override suspend fun returnRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.Rental> = NetworkResult.Error("Not implemented")
+
     override suspend fun payRental(
         rentalId: String,
         method: com.example.rencar_pair.domain.model.PaymentMethod,

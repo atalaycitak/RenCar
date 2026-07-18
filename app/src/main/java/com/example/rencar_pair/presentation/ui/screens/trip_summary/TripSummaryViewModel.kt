@@ -2,6 +2,7 @@ package com.example.rencar_pair.presentation.ui.screens.trip_summary
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.PaymentMethod
+import com.example.rencar_pair.domain.model.PaymentStatus
 import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.model.WalletInfo
 import com.example.rencar_pair.domain.usecase.PaymentUseCases
@@ -176,8 +177,16 @@ class TripSummaryViewModel(
                         it.copy(
                             isPaying = false,
                             paymentResult = result.data,
+                            rental = it.rental?.copy(
+                                paymentStatus = result.data.paymentStatus.takeIf { status -> status != PaymentStatus.Unknown }
+                                    ?: PaymentStatus.Paid,
+                                paymentMethod = result.data.method ?: method,
+                                discountAmount = result.data.discountAmount,
+                                totalPrice = result.data.totalPrice ?: it.rental.totalPrice
+                            ),
                             walletInfo = result.data.walletBalance?.let { balance ->
                                 it.walletInfo?.copy(balance = balance)
+                                    ?: WalletInfo(balance = balance, transactions = emptyList())
                             } ?: it.walletInfo
                         )
                     }

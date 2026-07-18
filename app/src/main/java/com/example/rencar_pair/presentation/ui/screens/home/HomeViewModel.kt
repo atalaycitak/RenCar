@@ -4,7 +4,6 @@ import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.model.VehiclePosition
 import com.example.rencar_pair.domain.model.VehicleStatus
-import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
@@ -50,7 +49,6 @@ class HomeViewModel(
                         errorMessage = null
                     )
                 }
-                loadVehicles(intent.type)
             }
             is HomeIntent.UpdateMaxPriceFilter -> updateFilterState {
                 it.copy(maxDailyPrice = intent.maxPrice)
@@ -68,7 +66,6 @@ class HomeViewModel(
                         errorMessage = null
                     )
                 }
-                loadVehicles(null)
             }
             is HomeIntent.LocationPermissionChanged -> {
                 updateState {
@@ -97,10 +94,10 @@ class HomeViewModel(
         }
     }
 
-    private fun loadVehicles(type: VehicleType? = currentState().selectedVehicleType) {
+    private fun loadVehicles() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = vehicleUseCases.getAvailableVehicles(type = type?.toApiQuery(), includeBusy = true)) {
+            when (val result = vehicleUseCases.getAvailableVehicles(type = null, includeBusy = true)) {
                 is NetworkResult.Success -> updateState {
                     val next = it.copy(
                         vehicles = result.data.withReservationState(it.activeReservation),
@@ -252,15 +249,6 @@ class HomeViewModel(
     }
 
     private fun HomeState.firstVisibleVehicleId(): String? = filteredVehicles.firstOrNull()?.id
-
-    private fun VehicleType.toApiQuery(): String = when (this) {
-        VehicleType.Sedan -> "SEDAN"
-        VehicleType.Suv -> "SUV"
-        VehicleType.Hatchback -> "HATCHBACK"
-        VehicleType.Station -> "STATION"
-        VehicleType.Minivan -> "MINIVAN"
-        VehicleType.Unknown -> "UNKNOWN"
-    }
 
     private fun List<com.example.rencar_pair.domain.model.Vehicle>.withReservationState(
         reservation: com.example.rencar_pair.domain.model.Reservation?

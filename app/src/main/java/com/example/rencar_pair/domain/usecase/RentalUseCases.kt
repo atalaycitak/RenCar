@@ -71,6 +71,8 @@ class RentalUseCases(
     /** POST /rentals/{id}/finish — Aktif kiralamayı bitirir; ödeme ekranı için fiyat kırılımı döner. */
     suspend fun finishRental(rentalId: String) = rentalRepository.finishRental(rentalId)
 
+    suspend fun returnRental(rentalId: String) = rentalRepository.returnRental(rentalId)
+
     /**
      * POST /rentals/{id}/pay — Ödeme gerçekleştirir.
      * CARD yöntemi seçildiyse [cardId] boş bırakılamaz.

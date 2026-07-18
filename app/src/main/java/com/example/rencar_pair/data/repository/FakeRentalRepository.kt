@@ -148,6 +148,40 @@ class FakeRentalRepository : RentalRepository {
         return NetworkResult.Success(finished)
     }
 
+    override suspend fun returnRental(rentalId: String): NetworkResult<Rental> {
+        delay(600)
+        activeRental = null
+        val existing = rentals.firstOrNull { it.id == rentalId }
+        val rental = existing?.copy(
+            status = RentalStatus.Completed,
+            paymentStatus = PaymentStatus.Unpaid,
+            totalPrice = existing.totalPrice ?: 110.50,
+            serviceFee = existing.serviceFee ?: 7.50,
+            distanceKm = existing.distanceKm ?: 12.4,
+            durationMinutes = existing.durationMinutes ?: 24.0,
+            endedAt = Instant.now()
+        ) ?: Rental(
+            id = rentalId,
+            userId = "fake-user",
+            vehicleId = "fake-vehicle",
+            plan = RentalPlan.Daily,
+            status = RentalStatus.Completed,
+            paymentStatus = PaymentStatus.Unpaid,
+            paymentMethod = null,
+            totalPrice = 110.50,
+            startFee = 15.0,
+            serviceFee = 7.50,
+            distanceKm = 12.4,
+            durationMinutes = 24.0,
+            discountAmount = 0.0,
+            startedAt = Instant.now().minusSeconds(1440),
+            endedAt = Instant.now(),
+            scheduledEndDate = null,
+            createdAt = Instant.now().minusSeconds(1800)
+        )
+        return NetworkResult.Success(rental)
+    }
+
     override suspend fun payRental(
         rentalId: String,
         method: PaymentMethod,

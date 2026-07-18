@@ -1,11 +1,14 @@
 package com.example.rencar_pair.presentation.ui.screens.return_vehicle
 
 import com.example.rencar_pair.domain.NetworkResult
+import com.example.rencar_pair.domain.model.ActiveRental
 import com.example.rencar_pair.domain.model.ReturnAngle
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.repository.RentalRepository
 import com.example.rencar_pair.domain.usecase.rental.ReturnVehicleUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -65,6 +68,35 @@ class ReturnVehicleViewModelTest {
         assertEquals("rental-1", (effect as ReturnVehicleEffect.NavigateToSummary).rentalId)
     }
 
+    @Test
+    fun `submit return falls back to return endpoint when finish is rejected`() = runTest {
+        val repository = FakeRentalRepositoryForReturnTest(finishResult = NetworkResult.Error("DAILY plan için eski iade ucu kullanılmalı.", 409))
+        val viewModel = createViewModel(repository)
+
+        addAllPhotos(viewModel)
+        viewModel.onIntent(ReturnVehicleIntent.SubmitReturn("rental-1"))
+        advanceUntilIdle()
+
+        val effect = viewModel.effect.first()
+
+        assertEquals("rental-1", repository.returnEndpointRentalId)
+        assertTrue(effect is ReturnVehicleEffect.NavigateToSummary)
+    }
+
+    @Test
+    fun `submit return navigates home when rental is not active anymore`() = runTest {
+        val repository = FakeRentalRepositoryForReturnTest(activeRental = null)
+        val viewModel = createViewModel(repository)
+
+        addAllPhotos(viewModel)
+        val effect = async { viewModel.effect.first { it is ReturnVehicleEffect.NavigateToHome } }
+        viewModel.onIntent(ReturnVehicleIntent.SubmitReturn("rental-1"))
+        advanceUntilIdle()
+
+        assertEquals(null, repository.returnedRentalId)
+        assertEquals(ReturnVehicleEffect.NavigateToHome, effect.await())
+    }
+
     private fun createViewModel(
         repository: RentalRepository = FakeRentalRepositoryForReturnTest()
     ): ReturnVehicleViewModel {
@@ -79,8 +111,25 @@ class ReturnVehicleViewModelTest {
     }
 }
 
-private class FakeRentalRepositoryForReturnTest : RentalRepository {
+private class FakeRentalRepositoryForReturnTest(
+    private val activeRental: ActiveRental? = ActiveRental(
+        id = "rental-1",
+        userId = "user-1",
+        vehicleId = "vehicle-1",
+        plan = com.example.rencar_pair.domain.model.RentalPlan.PerMinute,
+        status = RentalStatus.Active,
+        elapsedSeconds = 120.0,
+        currentCost = 45.0,
+        startedAt = java.time.Instant.parse("2026-07-18T10:00:00Z"),
+        distanceKm = 1.0,
+        durationMinutes = null,
+        startFee = 15.0,
+        createdAt = java.time.Instant.parse("2026-07-18T09:55:00Z")
+    ),
+    private val finishResult: NetworkResult<com.example.rencar_pair.domain.model.FinishedRental>? = null
+) : RentalRepository {
     var returnedRentalId: String? = null
+    var returnEndpointRentalId: String? = null
 
     override suspend fun createRental(
         vehicleId: String,
@@ -92,7 +141,8 @@ private class FakeRentalRepositoryForReturnTest : RentalRepository {
 
     override suspend fun getRental(id: String): NetworkResult<com.example.rencar_pair.domain.model.Rental> = NetworkResult.Error("Not implemented")
 
-    override suspend fun getActiveRental(): NetworkResult<com.example.rencar_pair.domain.model.ActiveRental?> = NetworkResult.Error("Not implemented")
+    override suspend fun getActiveRental(): NetworkResult<com.example.rencar_pair.domain.model.ActiveRental?> =
+        NetworkResult.Success(activeRental)
 
     override suspend fun getPreparationPhotos(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
 
@@ -106,6 +156,7 @@ private class FakeRentalRepositoryForReturnTest : RentalRepository {
 
     override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> {
         returnedRentalId = rentalId
+        finishResult?.let { return it }
         return NetworkResult.Success(
             com.example.rencar_pair.domain.model.FinishedRental(
                 id = rentalId,
@@ -124,6 +175,31 @@ private class FakeRentalRepositoryForReturnTest : RentalRepository {
                 paymentMethod = null,
                 startedAt = java.time.Instant.parse("2026-07-18T10:00:00Z"),
                 endedAt = java.time.Instant.parse("2026-07-18T10:24:00Z"),
+                createdAt = java.time.Instant.parse("2026-07-18T09:55:00Z")
+            )
+        )
+    }
+
+    override suspend fun returnRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.Rental> {
+        returnEndpointRentalId = rentalId
+        return NetworkResult.Success(
+            com.example.rencar_pair.domain.model.Rental(
+                id = rentalId,
+                userId = "user-1",
+                vehicleId = "vehicle-1",
+                plan = com.example.rencar_pair.domain.model.RentalPlan.Daily,
+                status = RentalStatus.Completed,
+                paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+                paymentMethod = null,
+                totalPrice = 110.5,
+                startFee = 15.0,
+                serviceFee = 7.5,
+                distanceKm = 12.4,
+                durationMinutes = 24.0,
+                discountAmount = 20.0,
+                startedAt = java.time.Instant.parse("2026-07-18T10:00:00Z"),
+                endedAt = java.time.Instant.parse("2026-07-18T10:24:00Z"),
+                scheduledEndDate = null,
                 createdAt = java.time.Instant.parse("2026-07-18T09:55:00Z")
             )
         )

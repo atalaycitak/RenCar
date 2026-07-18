@@ -138,13 +138,13 @@ interface RenCarApi {
     suspend fun getRental(@Path("id") id: String): Response<RentalResponse>
 
     /**
-     * POST /rentals/{id}/finish — Kullanım bazlı (PER_MINUTE/HOURLY) yolculuğu bitirir.
-     * DAILY plan için POST /rentals/{id}/return kullanın.
+     * POST /rentals/{id}/finish — Aktif yolculuğu bitirir ve ücret dökümünü döner.
+     * PER_MINUTE/HOURLY için ana bitirme ucudur; v2 dokümanında DAILY için de ücret kilitli döner.
      */
     @POST("rentals/{id}/finish")
     suspend fun finishRental(@Path("id") id: String): Response<FinishRentalResponse>
 
-    /** POST /rentals/{id}/return — DAILY planına özel iade ucu (geriye uyum). */
+    /** POST /rentals/{id}/return — Eski DAILY iade ucu; kullanım bazlı yolculuklarda 409 döner. */
     @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
 

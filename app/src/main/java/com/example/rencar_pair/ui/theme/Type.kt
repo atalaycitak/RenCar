@@ -2,27 +2,13 @@ package com.example.rencar_pair.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import com.example.rencar_pair.R
 import androidx.compose.ui.unit.sp
 
-val SoraFontFamily = FontFamily(
-    Font(R.font.sora_regular, FontWeight.Normal),
-    Font(R.font.sora_medium, FontWeight.Medium),
-    Font(R.font.sora_semi_bold, FontWeight.SemiBold),
-    Font(R.font.sora_bold, FontWeight.Bold),
-    Font(R.font.sora_extra_bold, FontWeight.ExtraBold)
-)
+val SoraFontFamily = FontFamily.SansSerif
 
-val PlusJakartaSansFontFamily = FontFamily(
-    Font(R.font.plus_jakarta_sans_regular, FontWeight.Normal),
-    Font(R.font.plus_jakarta_sans_medium, FontWeight.Medium),
-    Font(R.font.plus_jakarta_sans_semi_bold, FontWeight.SemiBold),
-    Font(R.font.plus_jakarta_sans_bold, FontWeight.Bold),
-    Font(R.font.plus_jakarta_sans_extra_bold, FontWeight.ExtraBold)
-)
+val PlusJakartaSansFontFamily = FontFamily.SansSerif
 
 val RenCarTypography = Typography(
     displayLarge = TextStyle(

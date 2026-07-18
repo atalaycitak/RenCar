@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +26,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,6 +51,8 @@ import org.maplibre.android.geometry.LatLng
 fun ActiveRentalScreen(
     rentalId: String,
     onNavigateToReturnVehicle: (String) -> Unit,
+    onNavigateToSummary: (String) -> Unit,
+    onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ActiveRentalViewModel = koinViewModel()
 ) {
@@ -61,6 +67,8 @@ fun ActiveRentalScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is ActiveRentalEffect.NavigateToReturnVehicle -> onNavigateToReturnVehicle(effect.rentalId)
+                is ActiveRentalEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
+                ActiveRentalEffect.NavigateToHome -> onNavigateToHome()
                 is ActiveRentalEffect.ShowError -> snackbarHostState.showSnackbar(
                     message = effect.message,
                     duration = SnackbarDuration.Short
@@ -94,6 +102,24 @@ fun ActiveRentalScreenContent(
             .fillMaxSize()
             .background(Color(0xFFE9EDF2)) // Placeholder for Map background
     ) {
+        if (state.showFinishConfirmation) {
+            AlertDialog(
+                onDismissRequest = { onIntent(ActiveRentalIntent.DismissFinishConfirmation) },
+                title = { Text("Kiralama bitirilsin mi?") },
+                text = { Text("Süre ve ücret kilitlenecek, ödeme adımına geçeceksin.") },
+                confirmButton = {
+                    TextButton(onClick = { onIntent(ActiveRentalIntent.FinishRental) }) {
+                        Text("Evet, bitir")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onIntent(ActiveRentalIntent.DismissFinishConfirmation) }) {
+                        Text("Vazgeç")
+                    }
+                }
+            )
+        }
+
         RenCarMap(
             myLocation = null,
             routePoints = state.routePoints.map { LatLng(it.latitude, it.longitude) },
@@ -114,7 +140,12 @@ fun ActiveRentalScreenContent(
         ) {
             val isConnected = state.isGpsConnected
             val statusColor = if (isConnected) Color(0xFF34C98A) else Color(0xFFE2B93B)
-            val statusText = if (isConnected) "Araç konumu güncelleniyor" else "Aracın GPS bağlantısı bekleniyor"
+            val vehicleTitle = state.vehicle?.title ?: state.rental?.vehicle?.title ?: "Araç"
+            val statusText = if (isConnected) {
+                "Kiralama aktif · $vehicleTitle"
+            } else {
+                "Aracın GPS bağlantısı bekleniyor"
+            }
             
             Box(
                 modifier = Modifier
@@ -162,19 +193,13 @@ fun ActiveRentalScreenContent(
                     )
                 )
                 
-                val hours = state.elapsedMinutes / 60
-                val minutes = state.elapsedMinutes % 60
-                val formattedTime = if (hours > 0) {
-                    "$hours sa $minutes dk"
-                } else {
-                    "$minutes dk"
-                }
+                val formattedTime = state.elapsedSeconds.formatElapsedTime()
                 Text(
                     text = formattedTime,
                     style = MaterialTheme.typography.displayLarge.copy(
                         fontSize = 46.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-1).sp,
+                        letterSpacing = 0.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     ),
                     modifier = Modifier.padding(top = 2.dp)
@@ -255,19 +280,19 @@ fun ActiveRentalScreenContent(
                             .weight(1f)
                             .height(54.dp)
                             .border(1.7.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
-                            .clickable { /* Toggle Lock */ },
+                            .clickable { onIntent(ActiveRentalIntent.ToggleVehicleLock) },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = android.R.drawable.ic_lock_lock), // Lock
+                            imageVector = if (state.isVehicleLocked) Icons.Default.Lock else Icons.Default.LockOpen,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.size(19.dp)
                         )
                         Spacer(modifier = Modifier.size(8.dp))
                         Text(
-                            text = "Kilitle / Aç",
+                            text = if (state.isVehicleLocked) "Aracı Aç" else "Kilitle",
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontSize = 14.5.sp,
                                 fontWeight = FontWeight.Bold,
@@ -283,7 +308,7 @@ fun ActiveRentalScreenContent(
                             .height(54.dp)
                             .shadow(elevation = 24.dp, shape = RoundedCornerShape(16.dp), spotColor = Color(0xFFE5484D).copy(alpha = 0.3f))
                             .background(Color(0xFFE5484D), RoundedCornerShape(16.dp))
-                            .clickable { if (!state.isFinishing) onIntent(ActiveRentalIntent.FinishRental) },
+                            .clickable { if (!state.isFinishing) onIntent(ActiveRentalIntent.RequestFinishConfirmation) },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -313,7 +338,7 @@ private fun ActiveRentalScreenPreview() {
         ActiveRentalScreenContent(
             state = ActiveRentalState(
                 rental = null,
-                elapsedMinutes = 24,
+                elapsedSeconds = 24 * 60,
                 distanceKm = 12.4,
                 currentCost = 108.0,
                 isFinishing = false,
@@ -323,4 +348,12 @@ private fun ActiveRentalScreenPreview() {
             onNavigateToReturnVehicle = {}
         )
     }
+}
+
+private fun Long.formatElapsedTime(): String {
+    val safeSeconds = coerceAtLeast(0)
+    val hours = safeSeconds / 3600
+    val minutes = (safeSeconds % 3600) / 60
+    val seconds = safeSeconds % 60
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
 }

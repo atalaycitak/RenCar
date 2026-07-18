@@ -81,30 +81,33 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `type filter reloads vehicles with api query`() = runTest {
+    fun `type filter narrows vehicles client side by ui segment`() = runTest {
         val repository = FakeVehicleRepositoryForHomeTest()
         val viewModel = createViewModel(repository)
         advanceUntilIdle()
+        val initialQueryCount = repository.queryCount
 
-        viewModel.onIntent(HomeIntent.UpdateVehicleTypeFilter(VehicleType.Suv))
+        viewModel.onIntent(HomeIntent.UpdateVehicleTypeFilter(VehicleType.Sedan))
         advanceUntilIdle()
 
-        assertEquals("SUV", repository.lastTypeQuery)
-        assertEquals(1, viewModel.state.value.filteredVehicles.size)
-        assertEquals(VehicleType.Suv, viewModel.state.value.filteredVehicles.first().type)
+        assertEquals(initialQueryCount, repository.queryCount)
+        assertEquals(null, repository.lastTypeQuery)
+        assertEquals(listOf("sedan-1", "sedan-2"), viewModel.state.value.filteredVehicles.map { it.id })
     }
 
     @Test
-    fun `clear filters reloads all vehicles`() = runTest {
+    fun `clear filters restores cached vehicles without reload`() = runTest {
         val repository = FakeVehicleRepositoryForHomeTest()
         val viewModel = createViewModel(repository)
         advanceUntilIdle()
+        val initialQueryCount = repository.queryCount
 
         viewModel.onIntent(HomeIntent.UpdateVehicleTypeFilter(VehicleType.Suv))
         advanceUntilIdle()
         viewModel.onIntent(HomeIntent.ClearFilters)
         advanceUntilIdle()
 
+        assertEquals(initialQueryCount, repository.queryCount)
         assertEquals(null, repository.lastTypeQuery)
         assertEquals(4, viewModel.state.value.filteredVehicles.size)
         assertTrue(!viewModel.state.value.hasActiveFilters)
@@ -252,7 +255,7 @@ class HomeViewModelTest {
 
         assertEquals("active-rental-1", viewModel.state.value.activeRental?.id)
         assertEquals("suv-1", vehicleLocationRepository.capturedActiveVehicleId)
-        assertEquals("suv-1", viewModel.state.value.highlightedVehicle?.id)
+        assertEquals("sedan-1", viewModel.state.value.highlightedVehicle?.id)
     }
 
     @Test
@@ -336,7 +339,7 @@ private class FakeReservationRepositoryForHomeTest(
 
     override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
-    override suspend fun returnRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+    override suspend fun returnRental(rentalId: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
     override suspend fun createReservation(vehicleId: String): NetworkResult<Reservation> = NetworkResult.Error("Not implemented")
 
@@ -371,6 +374,8 @@ private class FakeRentalRepositoryForHomeTest(
 
     override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
 
+    override suspend fun returnRental(rentalId: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
     override suspend fun payRental(
         rentalId: String,
         method: com.example.rencar_pair.domain.model.PaymentMethod,
@@ -383,12 +388,13 @@ private class FakeRentalRepositoryForHomeTest(
 
 private class FakeVehicleRepositoryForHomeTest : VehicleRepository {
     var lastTypeQuery: String? = null
+    var queryCount: Int = 0
 
     private val vehicles = listOf(
-        testVehicle("sedan-1", VehicleType.Sedan, 900.0, 420),
+        testVehicle("sedan-1", VehicleType.Unknown, 900.0, 420, segment = "COMFORT"),
         testVehicle("sedan-2", VehicleType.Sedan, 1400.0, 350, latitude = 41.03, longitude = 29.03),
-        testVehicle("suv-1", VehicleType.Suv, 2200.0, 410, latitude = 41.06, longitude = 29.06),
-        testVehicle("hatch-1", VehicleType.Hatchback, 1800.0, 260, latitude = 41.09, longitude = 29.09)
+        testVehicle("suv-1", VehicleType.Unknown, 2200.0, 410, latitude = 41.06, longitude = 29.06, segment = "SUV"),
+        testVehicle("hatch-1", VehicleType.Unknown, 1800.0, 260, latitude = 41.09, longitude = 29.09, segment = "ECONOMY")
     )
 
     override suspend fun getAvailableVehicles(
@@ -397,9 +403,13 @@ private class FakeVehicleRepositoryForHomeTest : VehicleRepository {
         limit: Int?,
         includeBusy: Boolean
     ): NetworkResult<List<Vehicle>> {
+        queryCount += 1
         lastTypeQuery = type
         val filtered = type?.let { query ->
-            vehicles.filter { it.type.name.equals(query, ignoreCase = true) }
+            vehicles.filter {
+                it.type.name.equals(query, ignoreCase = true) ||
+                    it.segment.equals(query, ignoreCase = true)
+            }
         } ?: vehicles
         return NetworkResult.Success(filtered)
     }
@@ -456,7 +466,8 @@ private fun testVehicle(
     price: Double,
     rangeKm: Int,
     latitude: Double = 41.0,
-    longitude: Double = 29.0
+    longitude: Double = 29.0,
+    segment: String? = null
 ): Vehicle {
     return Vehicle(
         id = id,
@@ -468,7 +479,8 @@ private fun testVehicle(
         status = VehicleStatus.Available,
         latitude = latitude,
         longitude = longitude,
-        rangeKm = rangeKm
+        rangeKm = rangeKm,
+        segment = segment
     )
 }
 

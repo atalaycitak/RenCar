@@ -41,7 +41,9 @@ import java.util.concurrent.Executor
 @Composable
 fun RenCarCameraPreview(
     onPhotoCaptured: (String) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    guideText: String = "Ehliyeti çerçevenin içine yerleştirin",
+    filePrefix: String = "license_scan"
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -142,7 +144,7 @@ fun RenCarCameraPreview(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Ehliyeti çerçevenin içine yerleştirin",
+                    text = guideText,
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -169,7 +171,7 @@ fun RenCarCameraPreview(
                     Button(
                         onClick = {
                             isCapturing = true
-                            takePhoto(context, imageCapture, ContextCompat.getMainExecutor(context)) { uri ->
+                            takePhoto(context, imageCapture, filePrefix, ContextCompat.getMainExecutor(context)) { uri ->
                                 isCapturing = false
                                 if (uri != null) {
                                     onPhotoCaptured(uri.toString())
@@ -191,12 +193,13 @@ fun RenCarCameraPreview(
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
+    filePrefix: String,
     executor: Executor,
     onPhotoCaptured: (Uri?) -> Unit
 ) {
     val photoFile = File(
         context.cacheDir,
-        "license_scan_${System.currentTimeMillis()}.jpg"
+        "${filePrefix}_${System.currentTimeMillis()}.jpg"
     )
 
     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()

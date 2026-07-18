@@ -180,6 +180,12 @@ fun RenCarNavHost(
                         popUpTo<ReservationRoute> { inclusive = true }
                         launchSingleTop = true
                     }
+                },
+                onActiveRental = { rentalId ->
+                    navController.navigate(ActiveRentalRoute(rentalId)) {
+                        popUpTo<ReservationRoute> { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -203,6 +209,17 @@ fun RenCarNavHost(
                 onNavigateToReturnVehicle = { rentalId ->
                     navController.navigate(ReturnVehicleRoute(rentalId)) {
                         popUpTo<ActiveRentalRoute> { inclusive = true }
+                    }
+                },
+                onNavigateToSummary = { rentalId ->
+                    navController.navigate(TripSummaryRoute(rentalId)) {
+                        popUpTo<ActiveRentalRoute> { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo<ActiveRentalRoute> { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -302,6 +319,12 @@ fun RenCarNavHost(
                 onNavigateToSummary = { rentalId ->
                     navController.navigate(TripSummaryRoute(rentalId)) {
                         popUpTo<ReturnVehicleRoute> { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo<ReturnVehicleRoute> { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )

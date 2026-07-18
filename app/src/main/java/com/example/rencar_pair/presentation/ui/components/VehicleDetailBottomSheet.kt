@@ -4,18 +4,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EventSeat
+import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import coil.compose.AsyncImage
@@ -25,7 +30,7 @@ import coil.compose.AsyncImage
 fun VehicleDetailBottomSheet(
     vehicle: Vehicle,
     onDismissRequest: () -> Unit,
-    onReserveClick: () -> Unit,
+    onDetailsClick: () -> Unit,
     onUnlockClick: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -132,7 +137,7 @@ fun VehicleDetailBottomSheet(
                     modifier = Modifier.weight(1f),
                     title = "Yakıt",
                     value = fuelPercent?.let { "%$it" } ?: "Bilinmiyor",
-                    iconRes = android.R.drawable.ic_menu_compass, // placeholder icon
+                    icon = Icons.Default.LocalGasStation,
                     bottomContent = {
                         Box(
                             modifier = Modifier
@@ -154,7 +159,7 @@ fun VehicleDetailBottomSheet(
                     modifier = Modifier.weight(1f),
                     title = "Menzil",
                     value = "~${vehicle.rangeKm} km",
-                    iconRes = android.R.drawable.ic_menu_mylocation, // placeholder icon
+                    icon = Icons.Default.Speed,
                     bottomContent = {
                         Text(
                             text = "Dolu depo",
@@ -175,13 +180,13 @@ fun VehicleDetailBottomSheet(
                     modifier = Modifier.weight(1f),
                     title = "Vites",
                     value = vehicle.transmission ?: "Bilinmiyor",
-                    iconRes = android.R.drawable.ic_menu_preferences // placeholder icon
+                    icon = Icons.Default.Settings
                 )
                 SpecCardSmall(
                     modifier = Modifier.weight(1f),
                     title = "Koltuk",
                     value = vehicle.seatCount?.let { "$it kişi" } ?: "Bilinmiyor",
-                    iconRes = android.R.drawable.ic_menu_report_image // placeholder icon
+                    icon = Icons.Default.EventSeat
                 )
             }
 
@@ -238,7 +243,7 @@ fun VehicleDetailBottomSheet(
             Spacer(modifier = Modifier.height(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(11.dp)) {
                 Button(
-                    onClick = onReserveClick,
+                    onClick = onDetailsClick,
                     enabled = vehicle.canReserve,
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     border = androidx.compose.foundation.BorderStroke(1.7.dp, MaterialTheme.colorScheme.primary),
@@ -248,9 +253,9 @@ fun VehicleDetailBottomSheet(
                         .height(56.dp)
                 ) {
                     Text(
-                        text = "Rezerve Et",
+                        text = "Detay / Kirala",
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -271,7 +276,7 @@ fun VehicleDetailBottomSheet(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_info_details),
+                        imageVector = Icons.Default.LockOpen,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
@@ -301,7 +306,7 @@ private fun SpecCardLarge(
     modifier: Modifier = Modifier,
     title: String,
     value: String,
-    iconRes: Int,
+    icon: ImageVector,
     bottomContent: @Composable () -> Unit
 ) {
     Box(
@@ -312,7 +317,7 @@ private fun SpecCardLarge(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(
-                    painter = painterResource(id = iconRes),
+                    imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(14.dp)
@@ -346,7 +351,7 @@ private fun SpecCardSmall(
     modifier: Modifier = Modifier,
     title: String,
     value: String,
-    iconRes: Int
+    icon: ImageVector
 ) {
     Row(
         modifier = modifier
@@ -356,7 +361,7 @@ private fun SpecCardSmall(
         horizontalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         Icon(
-            painter = painterResource(id = iconRes),
+            imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.size(18.dp)

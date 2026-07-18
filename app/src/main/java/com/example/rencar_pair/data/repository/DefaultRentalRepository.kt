@@ -138,6 +138,12 @@ class DefaultRentalRepository(
             transform = { it.toDomain() }
         )
 
+    override suspend fun returnRental(rentalId: String): NetworkResult<Rental> =
+        safeApiCall(
+            call = { api.returnRental(rentalId) },
+            transform = { it.toDomain() }
+        )
+
     override suspend fun payRental(
         rentalId: String,
         method: PaymentMethod,

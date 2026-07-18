@@ -138,6 +138,7 @@ class DefaultAuthRepository(
             id = id,
             fullName = fullName,
             token = token,
+            phone = phone,
             role = UserRole.fromApiString(role)
         )
     }

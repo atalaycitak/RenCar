@@ -40,7 +40,7 @@ class HomeStateMapInsightTest {
                     status = VehicleStatus.Rented,
                     canReserve = false
                 ),
-                mapInsightVehicle(id = "available-far", latitude = 41.0500, longitude = 29.0200)
+                mapInsightVehicle(id = "available-far", latitude = 41.0170, longitude = 28.9860)
             ),
             userLocation = UserLocation(latitude = 41.0082, longitude = 28.9784)
         )
@@ -49,7 +49,7 @@ class HomeStateMapInsightTest {
     }
 
     @Test
-    fun `highlighted vehicle prefers active rental vehicle over available vehicle`() {
+    fun `highlighted vehicle keeps available map vehicle when active rental exists`() {
         val state = HomeState(
             vehicles = listOf(
                 mapInsightVehicle(id = "available-near", latitude = 41.0090, longitude = 28.9790),
@@ -78,7 +78,19 @@ class HomeStateMapInsightTest {
             userLocation = UserLocation(latitude = 41.0082, longitude = 28.9784)
         )
 
-        assertEquals("active-rental", state.highlightedVehicle?.id)
+        assertEquals("available-near", state.highlightedVehicle?.id)
+    }
+
+    @Test
+    fun `service area outside location does not hide fleet or show absurd eta`() {
+        val vehicle = mapInsightVehicle(id = "istanbul-car", latitude = 41.0090, longitude = 28.9790)
+        val state = HomeState(
+            vehicles = listOf(vehicle),
+            userLocation = UserLocation(latitude = 37.4219, longitude = -122.0840)
+        )
+
+        assertEquals(listOf("istanbul-car"), state.visibleVehicles.map { it.id })
+        assertEquals(null, state.distanceInfoFor(vehicle))
     }
 
     @Test
@@ -87,10 +99,8 @@ class HomeStateMapInsightTest {
             vehicles = listOf(
                 mapInsightVehicle(
                     id = "selected",
-                    latitude = 41.0500,
-                    longitude = 29.0200,
-                    status = VehicleStatus.Rented,
-                    canReserve = false
+                    latitude = 41.0170,
+                    longitude = 28.9860
                 ),
                 mapInsightVehicle(id = "near", latitude = 41.0090, longitude = 28.9790)
             ),
@@ -99,6 +109,32 @@ class HomeStateMapInsightTest {
         )
 
         assertEquals("selected", state.highlightedVehicle?.id)
+    }
+
+    @Test
+    fun `comfort filter matches vehicle segment when api type is unknown`() {
+        val state = HomeState(
+            vehicles = listOf(
+                mapInsightVehicle(
+                    id = "comfort-by-segment",
+                    latitude = 41.0090,
+                    longitude = 28.9790,
+                    type = VehicleType.Unknown,
+                    segment = "COMFORT"
+                ),
+                mapInsightVehicle(
+                    id = "economy-by-segment",
+                    latitude = 41.0100,
+                    longitude = 28.9800,
+                    type = VehicleType.Unknown,
+                    segment = "ECONOMY"
+                )
+            ),
+            selectedVehicleType = VehicleType.Sedan,
+            userLocation = UserLocation(latitude = 41.0082, longitude = 28.9784)
+        )
+
+        assertEquals(listOf("comfort-by-segment"), state.visibleVehicles.map { it.id })
     }
 
     @Test
@@ -153,19 +189,22 @@ private fun mapInsightVehicle(
     longitude: Double,
     status: VehicleStatus = VehicleStatus.Available,
     canReserve: Boolean = status == VehicleStatus.Available,
-    canUnlock: Boolean = false
+    canUnlock: Boolean = false,
+    type: VehicleType = VehicleType.Sedan,
+    segment: String? = null
 ): Vehicle {
     return Vehicle(
         id = id,
         plate = "34 MAP $id",
         brand = "Test",
         model = id,
-        type = VehicleType.Sedan,
+        type = type,
         pricePerDay = 900.0,
         status = status,
         latitude = latitude,
         longitude = longitude,
         rangeKm = 420,
+        segment = segment,
         canReserve = canReserve,
         canUnlock = canUnlock
     )

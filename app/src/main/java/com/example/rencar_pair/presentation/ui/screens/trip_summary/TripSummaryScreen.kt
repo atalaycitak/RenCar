@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -38,7 +40,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -204,7 +205,7 @@ private fun TripCompleteHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.checkbox_on_background),
+                    imageVector = Icons.Default.Check,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(22.dp)
@@ -631,7 +632,7 @@ private fun PaymentSuccessContent(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(id = android.R.drawable.checkbox_on_background),
+                imageVector = Icons.Default.Check,
                 contentDescription = null,
                 tint = Color(0xFF1A9E63),
                 modifier = Modifier.size(34.dp)

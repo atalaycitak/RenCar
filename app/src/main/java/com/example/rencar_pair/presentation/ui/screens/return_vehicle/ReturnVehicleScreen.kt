@@ -68,6 +68,7 @@ fun ReturnVehicleScreen(
     rentalId: String,
     onNavigateBack: () -> Unit,
     onNavigateToSummary: (String) -> Unit,
+    onNavigateToHome: () -> Unit,
     viewModel: ReturnVehicleViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -77,6 +78,7 @@ fun ReturnVehicleScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is ReturnVehicleEffect.NavigateToSummary -> onNavigateToSummary(effect.rentalId)
+                ReturnVehicleEffect.NavigateToHome -> onNavigateToHome()
                 is ReturnVehicleEffect.ShowError -> snackbarHostState.showSnackbar(
                     message = effect.message,
                     duration = SnackbarDuration.Short
@@ -112,7 +114,9 @@ fun ReturnVehicleScreenContent(
             },
             onCancel = {
                 activeCameraAngle = null
-            }
+            },
+            guideText = "${angle.displayName()} tarafını çerçevenin içine yerleştirin",
+            filePrefix = "return_${angle.name.lowercase()}"
         )
         return
     }
@@ -230,6 +234,13 @@ fun ReturnVehicleScreenContent(
             Spacer(modifier = Modifier.height(96.dp))
         }
     }
+}
+
+private fun ReturnAngle.displayName(): String = when (this) {
+    ReturnAngle.FRONT -> "Aracın ön"
+    ReturnAngle.BACK -> "Aracın arka"
+    ReturnAngle.LEFT -> "Aracın sol"
+    ReturnAngle.RIGHT -> "Aracın sağ"
 }
 
 @Composable
