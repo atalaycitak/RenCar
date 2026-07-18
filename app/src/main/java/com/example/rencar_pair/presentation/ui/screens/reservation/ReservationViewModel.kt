@@ -64,7 +64,19 @@ class ReservationViewModel(
                     )
                 }
                 is NetworkResult.Error -> updateState {
-                    it.copy(isLoading = false, errorMessage = result.message)
+                    val reservedVehicle = it.activeReservation
+                        ?.takeIf { reservation -> reservation.vehicleId == vehicleId }
+                        ?.vehicle
+                    if (reservedVehicle != null) {
+                        it.copy(
+                            vehicle = reservedVehicle,
+                            quote = calculateReservationQuoteUseCase(reservedVehicle, it.selectedDays),
+                            isLoading = false,
+                            errorMessage = null
+                        )
+                    } else {
+                        it.copy(isLoading = false, errorMessage = result.message)
+                    }
                 }
             }
         }
@@ -74,7 +86,17 @@ class ReservationViewModel(
         launchCoroutine {
             when (val result = rentalUseCases.getActiveReservation()) {
                 is NetworkResult.Success -> updateState { state ->
-                    state.copy(activeReservation = result.data)
+                    val reservedVehicle = result.data
+                        ?.takeIf { reservation -> reservation.vehicleId == vehicleId }
+                        ?.vehicle
+                    state.copy(
+                        activeReservation = result.data,
+                        vehicle = reservedVehicle ?: state.vehicle,
+                        quote = reservedVehicle?.let { calculateReservationQuoteUseCase(it, state.selectedDays) }
+                            ?: state.quote,
+                        isLoading = if (reservedVehicle != null) false else state.isLoading,
+                        errorMessage = if (reservedVehicle != null) null else state.errorMessage
+                    )
                 }
                 is NetworkResult.Error -> updateState { state ->
                     state.copy(errorMessage = result.message)

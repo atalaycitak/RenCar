@@ -221,6 +221,8 @@ class HomeViewModelTest {
         assertEquals(false, reserved.canReserve)
         assertEquals(false, other.canUnlock)
         assertEquals(false, other.canReserve)
+        assertEquals(listOf("sedan-1"), viewModel.state.value.visibleVehicles.map { it.id })
+        assertEquals("sedan-1", viewModel.state.value.highlightedVehicle?.id)
         assertEquals("sedan-1", vehicleLocationRepository.capturedActiveVehicleId)
     }
 

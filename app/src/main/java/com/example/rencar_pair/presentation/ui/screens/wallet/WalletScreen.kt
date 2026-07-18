@@ -47,11 +47,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.model.WalletTransaction
 import com.example.rencar_pair.domain.model.WalletTransactionType
+import com.example.rencar_pair.presentation.ui.components.BottomNavRoute
+import com.example.rencar_pair.presentation.ui.components.RenCarBottomNavigation
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
 @Composable
 fun WalletScreen(
+    onNavigateToHome: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WalletViewModel = koinViewModel()
 ) {
@@ -76,7 +81,20 @@ fun WalletScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            RenCarBottomNavigation(
+                currentRoute = BottomNavRoute.WALLET,
+                onNavigate = { route ->
+                    when (route) {
+                        BottomNavRoute.HOME -> onNavigateToHome()
+                        BottomNavRoute.HISTORY -> onNavigateToHistory()
+                        BottomNavRoute.PROFILE -> onNavigateToProfile()
+                        else -> {}
+                    }
+                }
+            )
+        }
     ) { padding ->
         WalletScreenContent(
             state = state,
@@ -101,6 +119,9 @@ fun WalletScreenContent(
 
     if (state.isTopUpDialogVisible) {
         TopUpDialog(state = state, onIntent = onIntent)
+    }
+    if (state.isAddCardDialogVisible) {
+        AddCardDialog(state = state, onIntent = onIntent)
     }
 
     LazyColumn(
@@ -129,7 +150,11 @@ fun WalletScreenContent(
         }
 
         item {
-            SectionTitle(title = "Kayıtlı kartlar")
+            SectionTitle(
+                title = "Kayıtlı kartlar",
+                actionText = "+ Ekle",
+                onActionClick = { onIntent(WalletIntent.ShowAddCardDialog) }
+            )
             if (state.savedCards.isEmpty()) {
                 EmptySurface(text = "Kayıtlı kart yok.")
             }
@@ -234,15 +259,35 @@ private fun BalanceCard(balance: Double, onTopUpClick: () -> Unit) {
 }
 
 @Composable
-private fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium.copy(
-            fontSize = 15.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground
+private fun SectionTitle(
+    title: String,
+    actionText: String? = null,
+    onActionClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
         )
-    )
+        if (actionText != null && onActionClick != null) {
+            Text(
+                text = actionText,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                ),
+                modifier = Modifier.clickable(onClick = onActionClick)
+            )
+        }
+    }
 }
 
 @Composable
@@ -343,8 +388,7 @@ private fun TopUpDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = state.defaultCard?.let { "Varsayılan kart: ${it.displayName()}" }
-                        ?: "Bakiye yüklemek için kart ekleyin.",
+                    text = "Yüklemek istediğiniz tutarı girin. İşlem tamamlanınca cüzdan bakiyesi güncellenir.",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -374,6 +418,85 @@ private fun TopUpDialog(
                 enabled = !state.isToppingUp
             ) {
                 Text("İptal")
+            }
+        }
+    )
+}
+
+@Composable
+private fun AddCardDialog(
+    state: WalletState,
+    onIntent: (WalletIntent) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            if (!state.isSavingCard) onIntent(WalletIntent.HideAddCardDialog)
+        },
+        title = { Text("Kart ekle") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "Kart numarasının tamamı sunucuya gönderilmez; API yalnızca marka, son 4 hane ve son kullanma tarihini kaydeder.",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = state.cardHolderName,
+                    onValueChange = { onIntent(WalletIntent.UpdateCardHolderName(it)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Kart üzerindeki isim") },
+                    singleLine = true,
+                    enabled = !state.isSavingCard
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = state.cardNumber.chunked(4).joinToString(" "),
+                    onValueChange = { onIntent(WalletIntent.UpdateCardNumber(it)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Kart numarası") },
+                    singleLine = true,
+                    enabled = !state.isSavingCard,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    androidx.compose.material3.OutlinedTextField(
+                        value = state.cardExpiry,
+                        onValueChange = { onIntent(WalletIntent.UpdateCardExpiry(it)) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("AA/YY") },
+                        singleLine = true,
+                        enabled = !state.isSavingCard,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    androidx.compose.material3.OutlinedTextField(
+                        value = state.cardCvc,
+                        onValueChange = { onIntent(WalletIntent.UpdateCardCvc(it)) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("CVC") },
+                        singleLine = true,
+                        enabled = !state.isSavingCard,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
+                    )
+                }
+                state.cardFormError?.let {
+                    Text(text = it, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onIntent(WalletIntent.SubmitCard) },
+                enabled = !state.isSavingCard
+            ) {
+                Text(if (state.isSavingCard) "Kaydediliyor..." else "Kaydet")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { onIntent(WalletIntent.HideAddCardDialog) },
+                enabled = !state.isSavingCard
+            ) {
+                Text("Vazgeç")
             }
         }
     )

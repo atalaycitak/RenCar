@@ -43,10 +43,10 @@ class FakePaymentRepository : PaymentRepository {
         delay(1000)
         val selectedCard = mutex.withLock { fakeCards.firstOrNull { it.cardToken == cardId } }
         if (method == PaymentMethod.Card && selectedCard == null) {
-            return NetworkResult.Error("Kart secimi gerekli")
+            return NetworkResult.Error("Kart seçimi gerekli")
         }
         if (method == PaymentMethod.Iyzico && iyzicoPaymentId.isNullOrBlank()) {
-            return NetworkResult.Error("Iyzico odeme bilgisi gerekli")
+            return NetworkResult.Error("Iyzico ödeme bilgisi gerekli")
         }
 
         return NetworkResult.Success(
@@ -79,12 +79,12 @@ class FakePaymentRepository : PaymentRepository {
     ): NetworkResult<SavedCard> {
         delay(1500)
         if (cardNumber.length < 16) {
-            return NetworkResult.Error("Gecersiz kart numarasi")
+            return NetworkResult.Error("Geçersiz kart numarası")
         }
         val expMonth = expireMonth.toIntOrNull()
-            ?: return NetworkResult.Error("Gecersiz son kullanma ayi")
+            ?: return NetworkResult.Error("Geçersiz son kullanma ayı")
         val expYear = expireYear.toIntOrNull()
-            ?: return NetworkResult.Error("Gecersiz son kullanma yili")
+            ?: return NetworkResult.Error("Geçersiz son kullanma yılı")
 
         return mutex.withLock {
             val newCard = SavedCard(
@@ -110,7 +110,7 @@ class FakePaymentRepository : PaymentRepository {
         delay(400)
         return mutex.withLock {
             val selectedCard = fakeCards.firstOrNull { it.cardToken == cardId }
-                ?: return@withLock NetworkResult.Error("Kart bulunamadi")
+                ?: return@withLock NetworkResult.Error("Kart bulunamadı")
             fakeCards.replaceAll { it.copy(isDefault = it.cardToken == cardId) }
             NetworkResult.Success(selectedCard.copy(isDefault = true))
         }
@@ -120,7 +120,7 @@ class FakePaymentRepository : PaymentRepository {
         delay(400)
         return mutex.withLock {
             val removed = fakeCards.removeIf { it.cardToken == cardId }
-            if (removed) NetworkResult.Success(Unit) else NetworkResult.Error("Kart bulunamadi")
+            if (removed) NetworkResult.Success(Unit) else NetworkResult.Error("Kart bulunamadı")
         }
     }
 }

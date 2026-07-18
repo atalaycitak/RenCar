@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +92,7 @@ fun VehicleDetailBottomSheet(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${vehicle.plate} · 250 m uzaklıkta", // Distance is mock
+                text = vehicle.detailSubtitle(),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -99,7 +101,6 @@ fun VehicleDetailBottomSheet(
                 )
             )
 
-            // Vehicle Image Placeholder
             Spacer(modifier = Modifier.height(14.dp))
             Box(
                 modifier = Modifier
@@ -109,10 +110,19 @@ fun VehicleDetailBottomSheet(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Araç fotoğrafı ekle",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (vehicle.imageUrl != null) {
+                    AsyncImage(
+                        model = vehicle.imageUrl,
+                        contentDescription = "${vehicle.title} fotoğrafı",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = "Araç fotoğrafı yok",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             // Specs Row 1: Fuel & Range
@@ -277,6 +287,13 @@ fun VehicleDetailBottomSheet(
             }
         }
     }
+}
+
+private fun Vehicle.detailSubtitle(): String {
+    return listOf(
+        plate,
+        locationName
+    ).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { "Konum bilgisi yok" }
 }
 
 @Composable

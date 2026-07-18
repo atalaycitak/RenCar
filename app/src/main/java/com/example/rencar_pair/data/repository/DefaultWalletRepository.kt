@@ -39,7 +39,7 @@ class DefaultWalletRepository(
 
     override suspend fun topUp(amount: Double): NetworkResult<WalletInfo> {
         if (amount <= 0) {
-            return NetworkResult.Error("Gecersiz tutar")
+            return NetworkResult.Error("Geçersiz tutar")
         }
         val result = safeApiCall(
             call = {

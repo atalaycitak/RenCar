@@ -40,7 +40,7 @@ class ReturnVehicleViewModel(
 
     private fun requestReturnConfirmation() {
         if (!currentState().allPhotosFilled) {
-            updateState { it.copy(errorMessage = "Lutfen dort acidan da fotograf yukleyin") }
+            updateState { it.copy(errorMessage = "Lütfen dört açıdan da fotoğraf yükleyin") }
             return
         }
 
@@ -51,7 +51,7 @@ class ReturnVehicleViewModel(
         val current = currentState()
 
         if (!current.allPhotosFilled) {
-            updateState { it.copy(errorMessage = "Lutfen dort acidan da fotograf yukleyin") }
+            updateState { it.copy(errorMessage = "Lütfen dört açıdan da fotoğraf yükleyin") }
             return
         }
 

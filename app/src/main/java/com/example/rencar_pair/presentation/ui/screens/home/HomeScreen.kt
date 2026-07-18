@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,6 +71,7 @@ fun HomeScreen(
     onNavigateToActiveRental: (String) -> Unit,
     onResumeDeliveryChecklist: (String, String) -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = koinViewModel()
 ) {
@@ -107,6 +109,16 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(state.activeRental?.id) {
+        state.activeRental?.id?.let(onNavigateToActiveRental)
+    }
+
+    LaunchedEffect(state.activeRental?.id, state.activeReservation?.vehicleId) {
+        if (state.activeRental == null) {
+            state.activeReservation?.vehicleId?.let(onReserveVehicle)
+        }
+    }
+
     HomeScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
@@ -115,6 +127,7 @@ fun HomeScreen(
         onNavigateToActiveRental = onNavigateToActiveRental,
         onResumeDeliveryChecklist = onResumeDeliveryChecklist,
         onNavigateToHistory = onNavigateToHistory,
+        onNavigateToWallet = onNavigateToWallet,
         onNavigateToProfile = onNavigateToProfile
     )
 }
@@ -128,11 +141,13 @@ fun HomeScreenContent(
     onNavigateToActiveRental: (String) -> Unit,
     onResumeDeliveryChecklist: (String, String) -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
-    val visibleVehicles = state.filteredVehicles
+    val visibleVehicles = state.visibleVehicles
     val highlightedVehicle = state.highlightedVehicle
     val highlightedDistanceInfo = highlightedVehicle?.let { state.distanceInfoFor(it) }
+    val detailVehicle = state.selectedVehicle ?: state.activeReservationVehicle
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -198,13 +213,15 @@ fun HomeScreenContent(
                     )
             )
 
-            TopSearchBar(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 54.dp, start = 18.dp, end = 18.dp)
-            )
+            if (!state.isReservationLocked) {
+                TopSearchBar(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 54.dp, start = 18.dp, end = 18.dp)
+                )
+            }
 
-            if (!state.locationPermissionGranted) {
+            if (!state.locationPermissionGranted && !state.isReservationLocked) {
                 PermissionNotice(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -258,9 +275,12 @@ fun HomeScreenContent(
                     vehicleCount = visibleVehicles.size,
                     featuredVehicle = highlightedVehicle,
                     activeRentalId = state.activeRental?.id,
+                    activeReservationId = state.activeReservation?.id,
                     pendingRentalId = state.pendingRental?.id,
                     pendingRentalVehicleId = state.pendingRental?.vehicleId,
                     distanceInfo = highlightedDistanceInfo,
+                    selectedVehicleType = state.selectedVehicleType,
+                    isReservationLocked = state.isReservationLocked,
                     isSelected = highlightedVehicle?.id == state.selectedVehicle?.id,
                     onFindNearestClick = {
                         highlightedVehicle?.let { vehicle ->
@@ -276,6 +296,9 @@ fun HomeScreenContent(
                         if (pending != null) {
                             onResumeDeliveryChecklist(pending.id, pending.vehicleId)
                         }
+                    },
+                    onVehicleTypeFilterClick = { type ->
+                        onIntent(HomeIntent.UpdateVehicleTypeFilter(type))
                     }
                 )
 
@@ -284,6 +307,7 @@ fun HomeScreenContent(
                     onNavigate = { route ->
                         when (route) {
                             BottomNavRoute.HISTORY -> onNavigateToHistory()
+                            BottomNavRoute.WALLET -> onNavigateToWallet()
                             BottomNavRoute.PROFILE -> onNavigateToProfile()
                             else -> {}
                         }
@@ -291,10 +315,14 @@ fun HomeScreenContent(
                 )
             }
 
-            state.selectedVehicle?.let { vehicle ->
+            detailVehicle?.let { vehicle ->
                 VehicleDetailBottomSheet(
                     vehicle = vehicle,
-                    onDismissRequest = { onIntent(HomeIntent.SelectVehicle(null)) },
+                    onDismissRequest = {
+                        if (!state.isReservationLocked) {
+                            onIntent(HomeIntent.SelectVehicle(null))
+                        }
+                    },
                     onReserveClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
                         onReserveVehicle(vehicle.id)
@@ -550,13 +578,17 @@ private fun HomeBottomSheet(
     vehicleCount: Int,
     featuredVehicle: Vehicle?,
     activeRentalId: String?,
+    activeReservationId: String?,
     pendingRentalId: String?,
     pendingRentalVehicleId: String?,
     distanceInfo: VehicleDistanceInfo?,
+    selectedVehicleType: VehicleType?,
+    isReservationLocked: Boolean,
     isSelected: Boolean,
     onFindNearestClick: () -> Unit,
     onActiveRentalClick: () -> Unit,
-    onPendingRentalClick: () -> Unit
+    onPendingRentalClick: () -> Unit,
+    onVehicleTypeFilterClick: (VehicleType?) -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -585,7 +617,11 @@ private fun HomeBottomSheet(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Yakınında $vehicleCount araç",
+                        text = if (isReservationLocked) {
+                            "Rezerve aracın hazır"
+                        } else {
+                            "Yakınında $vehicleCount araç"
+                        },
                         style = MaterialTheme.typography.displaySmall.copy(
                             fontSize = 20.sp,
                             letterSpacing = (-0.4).sp,
@@ -594,9 +630,13 @@ private fun HomeBottomSheet(
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = featuredVehicle?.let { vehicle ->
-                            buildFeaturedVehicleSummary(vehicle, distanceInfo)
-                        } ?: "Haritada uygun araçları keşfet",
+                        text = if (isReservationLocked) {
+                            "Başka araçlar gizlendi. Bu rezervasyonu kilidi açarak sürdürebilirsin."
+                        } else {
+                            featuredVehicle?.let { vehicle ->
+                                buildFeaturedVehicleSummary(vehicle, distanceInfo)
+                            } ?: "Haritada uygun araçları keşfet"
+                        },
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Medium,
@@ -608,6 +648,7 @@ private fun HomeBottomSheet(
                         Text(
                             text = when {
                                 activeRentalId != null -> "Aktif kiralaman devam ediyor"
+                                activeReservationId != null -> "Aktif rezervasyonun devam ediyor"
                                 pendingRentalId != null && pendingRentalVehicleId == vehicle.id ->
                                     "Fotoğraf kontrolü yarım kaldı"
                                 isSelected -> "Seçili araç"
@@ -637,14 +678,36 @@ private fun HomeBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChipCustom("Tümü", null, isSelected = true)
-                FilterChipCustom("Ekonomik", Color(0xFFF5821F), isSelected = false)
-                FilterChipCustom("Konfor", Color(0xFF7C5CE6), isSelected = false)
-                FilterChipCustom("SUV", Color(0xFFE6A700), isSelected = false)
+            if (!isReservationLocked) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChipCustom(
+                        text = "Tümü",
+                        dotColor = null,
+                        isSelected = selectedVehicleType == null,
+                        onClick = { onVehicleTypeFilterClick(null) }
+                    )
+                    FilterChipCustom(
+                        text = "Ekonomik",
+                        dotColor = Color(0xFFF5821F),
+                        isSelected = selectedVehicleType == VehicleType.Hatchback,
+                        onClick = { onVehicleTypeFilterClick(VehicleType.Hatchback) }
+                    )
+                    FilterChipCustom(
+                        text = "Konfor",
+                        dotColor = Color(0xFF7C5CE6),
+                        isSelected = selectedVehicleType == VehicleType.Sedan,
+                        onClick = { onVehicleTypeFilterClick(VehicleType.Sedan) }
+                    )
+                    FilterChipCustom(
+                        text = "SUV",
+                        dotColor = Color(0xFFE6A700),
+                        isSelected = selectedVehicleType == VehicleType.Suv,
+                        onClick = { onVehicleTypeFilterClick(VehicleType.Suv) }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -652,12 +715,14 @@ private fun HomeBottomSheet(
             PrimaryButton(
                 text = when {
                     activeRentalId != null -> "Aktif Kiralamaya Dön"
+                    activeReservationId != null -> "Rezerve Aracı Aç"
                     pendingRentalId != null -> "Fotoğraf Kontrolüne Dön"
                     isSelected -> "Seçili Araca Git"
                     else -> "En Yakın Aracı Bul"
                 },
                 onClick = when {
                     activeRentalId != null -> onActiveRentalClick
+                    activeReservationId != null -> onFindNearestClick
                     pendingRentalId != null -> onPendingRentalClick
                     else -> onFindNearestClick
                 },
@@ -671,7 +736,8 @@ private fun HomeBottomSheet(
 private fun FilterChipCustom(
     text: String,
     dotColor: Color?,
-    isSelected: Boolean
+    isSelected: Boolean,
+    onClick: () -> Unit
 ) {
     val bgColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
@@ -679,6 +745,7 @@ private fun FilterChipCustom(
     Row(
         modifier = Modifier
             .background(bgColor, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
             .padding(horizontal = if (isSelected) 14.dp else 13.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -788,6 +855,7 @@ private fun HomeScreenPreview() {
             onNavigateToActiveRental = {},
             onResumeDeliveryChecklist = { _, _ -> },
             onNavigateToHistory = {},
+            onNavigateToWallet = {},
             onNavigateToProfile = {}
         )
     }

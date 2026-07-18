@@ -14,8 +14,15 @@ data class WalletState(
     val selectedCardToken: String? = null,
     val isLoading: Boolean = false,
     val isTopUpDialogVisible: Boolean = false,
+    val isAddCardDialogVisible: Boolean = false,
     val isToppingUp: Boolean = false,
+    val isSavingCard: Boolean = false,
     val topUpAmount: String = "",
+    val cardHolderName: String = "",
+    val cardNumber: String = "",
+    val cardExpiry: String = "",
+    val cardCvc: String = "",
+    val cardFormError: String? = null,
     val errorMessage: String? = null
 ) : MviState {
     val defaultCard: SavedCard?
@@ -29,7 +36,14 @@ sealed interface WalletIntent : MviIntent {
     data class SelectCard(val token: String) : WalletIntent
     data object ShowTopUpDialog : WalletIntent
     data object HideTopUpDialog : WalletIntent
+    data object ShowAddCardDialog : WalletIntent
+    data object HideAddCardDialog : WalletIntent
     data class UpdateTopUpAmount(val amount: String) : WalletIntent
+    data class UpdateCardHolderName(val value: String) : WalletIntent
+    data class UpdateCardNumber(val value: String) : WalletIntent
+    data class UpdateCardExpiry(val value: String) : WalletIntent
+    data class UpdateCardCvc(val value: String) : WalletIntent
+    data object SubmitCard : WalletIntent
     data object SubmitTopUp : WalletIntent
 }
 

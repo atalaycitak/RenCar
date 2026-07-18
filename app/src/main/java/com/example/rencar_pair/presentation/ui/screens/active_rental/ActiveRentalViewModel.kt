@@ -42,6 +42,7 @@ class ActiveRentalViewModel(
                         it.copy(
                             isLoading = false,
                             rental = result.data,
+                            vehicle = result.data.vehicle,
                             elapsedMinutes = elapsedMinutes,
                             distanceKm = 0.0,
                             currentCost = result.data.estimatedCurrentCost(elapsedMinutes)
@@ -62,7 +63,11 @@ class ActiveRentalViewModel(
         launchCoroutine {
             when (val result = vehicleUseCases.getVehicleDetail(vehicleId)) {
                 is NetworkResult.Success -> updateState { it.copy(vehicle = result.data) }
-                is NetworkResult.Error -> emitEffect(ActiveRentalEffect.ShowError(result.message))
+                is NetworkResult.Error -> {
+                    if (currentState().vehicle == null) {
+                        emitEffect(ActiveRentalEffect.ShowError(result.message))
+                    }
+                }
             }
         }
     }

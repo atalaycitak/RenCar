@@ -71,6 +71,7 @@ data class Rental(
     val id: String,
     val userId: String,
     val vehicleId: String,
+    val vehicle: Vehicle? = null,
     val plan: RentalPlan,
     val status: RentalStatus,
     val paymentStatus: PaymentStatus,

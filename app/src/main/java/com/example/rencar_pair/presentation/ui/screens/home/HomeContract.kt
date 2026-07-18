@@ -43,16 +43,27 @@ data class HomeState(
             matchesType && matchesPrice && matchesRange
         }
 
+    val activeReservationVehicle: Vehicle?
+        get() = activeReservation?.let { reservation ->
+            reservation.vehicle ?: vehicles.firstOrNull { it.id == reservation.vehicleId }
+        }
+
+    val isReservationLocked: Boolean
+        get() = activeReservationVehicle != null && activeRental == null
+
+    val visibleVehicles: List<Vehicle>
+        get() = activeReservationVehicle?.let(::listOf) ?: filteredVehicles
+
     val nearbyVehicles: List<Vehicle>
         get() = userLocation?.let { location ->
-            filteredVehicles.sortedBy { vehicle -> location.distanceKmTo(vehicle) }
-        } ?: filteredVehicles
+            visibleVehicles.sortedBy { vehicle -> location.distanceKmTo(vehicle) }
+        } ?: visibleVehicles
 
     val actionableNearbyVehicles: List<Vehicle>
         get() = nearbyVehicles.filter { it.canReserve || it.canUnlock }
 
     val selectedVehicle: Vehicle?
-        get() = filteredVehicles.firstOrNull { it.id == selectedVehicleId }
+        get() = visibleVehicles.firstOrNull { it.id == selectedVehicleId }
 
     val activeRentalVehicle: Vehicle?
         get() = activeRental?.vehicleId?.let { vehicleId ->
@@ -65,8 +76,9 @@ data class HomeState(
         }
 
     val highlightedVehicle: Vehicle?
-        get() = selectedVehicle
-            ?: activeRentalVehicle
+        get() = activeRentalVehicle
+            ?: activeReservationVehicle
+            ?: selectedVehicle
             ?: pendingRentalVehicle
             ?: actionableNearbyVehicles.firstOrNull()
             ?: nearbyVehicles.firstOrNull()

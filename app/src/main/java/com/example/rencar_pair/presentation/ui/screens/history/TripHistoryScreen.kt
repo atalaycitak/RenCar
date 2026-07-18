@@ -48,6 +48,7 @@ import java.util.Locale
 @Composable
 fun TripHistoryScreen(
     onNavigateToHome: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     onNavigateToProfile: () -> Unit,
     viewModel: TripHistoryViewModel = koinViewModel()
 ) {
@@ -56,6 +57,7 @@ fun TripHistoryScreen(
     TripHistoryScreenContent(
         state = state,
         onNavigateToHome = onNavigateToHome,
+        onNavigateToWallet = onNavigateToWallet,
         onNavigateToProfile = onNavigateToProfile
     )
 }
@@ -64,6 +66,7 @@ fun TripHistoryScreen(
 fun TripHistoryScreenContent(
     state: TripHistoryState,
     onNavigateToHome: () -> Unit,
+    onNavigateToWallet: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     Scaffold(
@@ -73,6 +76,7 @@ fun TripHistoryScreenContent(
                 onNavigate = { route ->
                     when (route) {
                         BottomNavRoute.HOME -> onNavigateToHome()
+                        BottomNavRoute.WALLET -> onNavigateToWallet()
                         BottomNavRoute.PROFILE -> onNavigateToProfile()
                         else -> {}
                     }
@@ -180,7 +184,7 @@ fun TripHistoryCard(rental: Rental) {
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = "Renault Clio", // Mocked as per design
+                    text = rental.vehicleLabel(),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontSize = 15.5.sp,
                         fontWeight = FontWeight.Bold,
@@ -188,7 +192,7 @@ fun TripHistoryCard(rental: Rental) {
                     )
                 )
                 
-                val formattedPrice = String.format(Locale.US, "%.2f", rental.totalPrice)
+                val formattedPrice = String.format(Locale.US, "%.2f", rental.totalPrice ?: 0.0)
                 Text(
                     text = "₺$formattedPrice",
                     style = MaterialTheme.typography.titleLarge.copy(
@@ -219,7 +223,7 @@ fun TripHistoryCard(rental: Rental) {
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "24 dk", // Mock
+                        text = rental.durationMinutes?.toInt()?.let { "$it dk" } ?: "Süre yok",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -233,7 +237,7 @@ fun TripHistoryCard(rental: Rental) {
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "12,4 km", // Mock
+                        text = rental.distanceKm?.let { String.format(Locale.US, "%.1f km", it) } ?: "Mesafe yok",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -244,6 +248,10 @@ fun TripHistoryCard(rental: Rental) {
             }
         }
     }
+}
+
+private fun Rental.vehicleLabel(): String {
+    return "Araç #${vehicleId.takeLast(6).uppercase(Locale.US)}"
 }
 
 @Preview(showBackground = true)
@@ -295,6 +303,7 @@ private fun TripHistoryScreenPreview() {
                 )
             ),
             onNavigateToHome = {},
+            onNavigateToWallet = {},
             onNavigateToProfile = {}
         )
     }

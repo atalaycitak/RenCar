@@ -3,6 +3,8 @@ package com.example.rencar_pair.presentation.ui.screens.home
 import com.example.rencar_pair.domain.model.ActiveRental
 import com.example.rencar_pair.domain.model.RentalPlan
 import com.example.rencar_pair.domain.model.RentalStatus
+import com.example.rencar_pair.domain.model.Reservation
+import com.example.rencar_pair.domain.model.ReservationStatus
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
@@ -97,6 +99,37 @@ class HomeStateMapInsightTest {
         )
 
         assertEquals("selected", state.highlightedVehicle?.id)
+    }
+
+    @Test
+    fun `active reservation locks visible vehicles to reserved vehicle`() {
+        val state = HomeState(
+            vehicles = listOf(
+                mapInsightVehicle(id = "selected", latitude = 41.0500, longitude = 29.0200),
+                mapInsightVehicle(
+                    id = "reserved",
+                    latitude = 41.0090,
+                    longitude = 28.9790,
+                    status = VehicleStatus.Reserved,
+                    canReserve = false,
+                    canUnlock = true
+                )
+            ),
+            selectedVehicleId = "selected",
+            activeReservation = Reservation(
+                id = "reservation-1",
+                userId = "user-1",
+                vehicleId = "reserved",
+                status = ReservationStatus.Active,
+                expiresAt = Instant.parse("2026-07-18T10:15:00Z"),
+                remainingSeconds = 840,
+                createdAt = Instant.parse("2026-07-18T10:00:00Z")
+            ),
+            userLocation = UserLocation(latitude = 41.0082, longitude = 28.9784)
+        )
+
+        assertEquals(listOf("reserved"), state.visibleVehicles.map { it.id })
+        assertEquals("reserved", state.highlightedVehicle?.id)
     }
 
     @Test

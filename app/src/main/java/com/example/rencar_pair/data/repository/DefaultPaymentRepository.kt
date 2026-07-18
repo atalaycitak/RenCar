@@ -29,10 +29,10 @@ class DefaultPaymentRepository(
         iyzicoPaymentId: String?
     ): NetworkResult<PaymentResult> {
         if (method == PaymentMethod.Card && cardId.isNullOrBlank()) {
-            return NetworkResult.Error("Kart secimi gerekli")
+            return NetworkResult.Error("Kart seçimi gerekli")
         }
         if (method == PaymentMethod.Iyzico && iyzicoPaymentId.isNullOrBlank()) {
-            return NetworkResult.Error("Iyzico odeme bilgisi gerekli")
+            return NetworkResult.Error("Iyzico ödeme bilgisi gerekli")
         }
 
         val result = safeApiCall(
@@ -68,12 +68,12 @@ class DefaultPaymentRepository(
         cardHolderName: String
     ): NetworkResult<SavedCard> {
         if (cardNumber.length < 16) {
-            return NetworkResult.Error("Gecersiz kart numarasi")
+            return NetworkResult.Error("Geçersiz kart numarası")
         }
         val expMonth = expireMonth.toIntOrNull()
-            ?: return NetworkResult.Error("Gecersiz son kullanma ayi")
+            ?: return NetworkResult.Error("Geçersiz son kullanma ayı")
         val expYear = expireYear.toIntOrNull()
-            ?: return NetworkResult.Error("Gecersiz son kullanma yili")
+            ?: return NetworkResult.Error("Geçersiz son kullanma yılı")
 
         val result = safeApiCall(
             call = {
