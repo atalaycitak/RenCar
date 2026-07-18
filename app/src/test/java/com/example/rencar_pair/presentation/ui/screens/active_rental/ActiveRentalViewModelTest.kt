@@ -7,12 +7,16 @@ import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.ReservationRepository
+import com.example.rencar_pair.domain.repository.RideLocationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
+import com.example.rencar_pair.domain.usecase.ObserveActiveVehicleLocationUseCase
 import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -38,7 +42,8 @@ class ActiveRentalViewModelTest {
     fun `load rental also loads active vehicle detail`() = runTest {
         val viewModel = ActiveRentalViewModel(
             rentalUseCases = RentalUseCases(FakeRentalRepositoryForActiveRentalTest(), FakeReservationRepositoryForActiveRentalTest()),
-            vehicleUseCases = VehicleUseCases(FakeVehicleRepositoryForActiveRentalTest())
+            vehicleUseCases = VehicleUseCases(FakeVehicleRepositoryForActiveRentalTest()),
+            observeActiveVehicleLocationUseCase = ObserveActiveVehicleLocationUseCase(FakeRideLocationRepositoryForActiveRentalTest())
         )
         viewModel.setTimerEnabled(false)
 
@@ -55,7 +60,8 @@ class ActiveRentalViewModelTest {
     fun `finish rental emits return navigation when rental is loaded`() = runTest {
         val viewModel = ActiveRentalViewModel(
             rentalUseCases = RentalUseCases(FakeRentalRepositoryForActiveRentalTest(), FakeReservationRepositoryForActiveRentalTest()),
-            vehicleUseCases = VehicleUseCases(FakeVehicleRepositoryForActiveRentalTest())
+            vehicleUseCases = VehicleUseCases(FakeVehicleRepositoryForActiveRentalTest()),
+            observeActiveVehicleLocationUseCase = ObserveActiveVehicleLocationUseCase(FakeRideLocationRepositoryForActiveRentalTest())
         )
         viewModel.setTimerEnabled(false)
 
@@ -195,6 +201,12 @@ private class FakeVehicleRepositoryForActiveRentalTest : VehicleRepository {
 
     override suspend fun getVehicleDetail(id: String): NetworkResult<Vehicle> {
         return NetworkResult.Success(vehicle.copy(id = id))
+    }
+}
+
+private class FakeRideLocationRepositoryForActiveRentalTest : RideLocationRepository {
+    override fun observeActiveVehicleLocation(): Flow<com.example.rencar_pair.domain.model.VehiclePoint> {
+        return emptyFlow()
     }
 }
 

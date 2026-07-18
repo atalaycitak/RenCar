@@ -38,7 +38,7 @@ class FakeWalletRepository : WalletRepository {
         return mutex.withLock { NetworkResult.Success(currentBalance) }
     }
 
-    override suspend fun topUp(amount: Double, cardToken: String): NetworkResult<WalletInfo> {
+    override suspend fun topUp(amount: Double): NetworkResult<WalletInfo> {
         delay(1200)
         if (amount <= 0) {
             return NetworkResult.Error("Geçersiz tutar")
