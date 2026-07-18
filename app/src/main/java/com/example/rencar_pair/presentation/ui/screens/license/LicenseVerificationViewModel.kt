@@ -35,6 +35,24 @@ class LicenseVerificationViewModel(
                     errorMessage = null
                 )
             }
+            is LicenseVerificationIntent.PickSelfieImage -> updateState {
+                it.copy(
+                    status = statusAfterNewImagePick(it.status),
+                    selfieImageUri = intent.uri,
+                    errorMessage = null
+                )
+            }
+            LicenseVerificationIntent.NextStep -> {
+                val current = currentState()
+                if (!current.hasFrontImage || !current.hasBackImage) {
+                    updateState { s -> s.copy(errorMessage = "Lütfen ehliyetinizin ön ve arka yüzünü yükleyin.") }
+                } else {
+                    updateState { s -> s.copy(currentStep = 2, errorMessage = null) }
+                }
+            }
+            LicenseVerificationIntent.PreviousStep -> {
+                updateState { s -> s.copy(currentStep = 1, errorMessage = null) }
+            }
             LicenseVerificationIntent.Upload -> upload()
             LicenseVerificationIntent.Continue -> refreshStatusAndContinue()
         }
@@ -78,8 +96,8 @@ class LicenseVerificationViewModel(
 
     private fun upload() {
         val current = currentState()
-        if (!current.hasFrontImage || !current.hasBackImage) {
-            updateState { it.copy(errorMessage = "Ehliyetin ön ve arka yüzü gerekli.") }
+        if (!current.hasFrontImage || !current.hasBackImage || !current.hasSelfieImage) {
+            updateState { it.copy(errorMessage = "Ehliyetin ön, arka yüzü ve selfie gereklidir.") }
             return
         }
 
@@ -88,7 +106,8 @@ class LicenseVerificationViewModel(
             when (
                 val result = licenseUseCases.upload(
                     frontPath = current.frontImageUri.orEmpty(),
-                    backPath = current.backImageUri.orEmpty()
+                    backPath = current.backImageUri.orEmpty(),
+                    selfiePath = current.selfieImageUri.orEmpty()
                 )
             ) {
                 is NetworkResult.Success -> applyLicense(result.data)

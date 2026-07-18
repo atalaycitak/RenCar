@@ -17,4 +17,5 @@ sealed interface SplashIntent : MviIntent {
 sealed interface SplashEffect : MviEffect {
     data object NavigateToOnboarding : SplashEffect
     data object NavigateToLicenseVerification : SplashEffect
+    data object NavigateToHome : SplashEffect
 }

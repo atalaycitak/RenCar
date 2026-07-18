@@ -45,6 +45,11 @@ fun RenCarNavHost(
                     navController.navigate(LicenseCheckRoute) {
                         popUpTo(SplashRoute) { inclusive = true }
                     }
+                },
+                onNavigateToHome = {
+                    navController.navigate(HomeMapRoute) {
+                        popUpTo(SplashRoute) { inclusive = true }
+                    }
                 }
             )
         }

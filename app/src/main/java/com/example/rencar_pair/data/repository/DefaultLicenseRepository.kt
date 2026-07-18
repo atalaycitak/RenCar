@@ -29,7 +29,7 @@ class DefaultLicenseRepository(
         )
     }
 
-    override suspend fun upload(frontPath: String, backPath: String): NetworkResult<DriverLicense> {
+    override suspend fun upload(frontPath: String, backPath: String, selfiePath: String): NetworkResult<DriverLicense> {
         return safeApiCall(
             call = {
                 val frontPart = MultipartBody.Part.createFormData(
@@ -42,7 +42,12 @@ class DefaultLicenseRepository(
                     resolveFileName(backPath, "back-license.jpg"),
                     createImageRequestBody(backPath)
                 )
-                api.uploadLicense(frontPart, backPart)
+                val selfiePart = MultipartBody.Part.createFormData(
+                    "selfie",
+                    resolveFileName(selfiePath, "selfie.jpg"),
+                    createImageRequestBody(selfiePath)
+                )
+                api.uploadLicense(frontPart, backPart, selfiePart)
             },
             transform = { it.toDomain() }
         )
@@ -79,7 +84,10 @@ class DefaultLicenseRepository(
     private fun createImageRequestBody(source: String): RequestBody {
         return if (source.startsWith("content://")) {
             val uri = Uri.parse(source)
-            val mediaType = (context.contentResolver.getType(uri) ?: "image/*").toMediaTypeOrNull()
+            val type = context.contentResolver.getType(uri)
+            // Eğer sistem "image/*" gibi belirsiz bir tip dönerse, varsayılan olarak "image/jpeg" kullan.
+            val finalType = if (type == null || type.contains("*")) "image/jpeg" else type
+            val mediaType = finalType.toMediaTypeOrNull()
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                 ?: throw IllegalArgumentException("Image file cannot be read")
             bytes.toRequestBody(mediaType)
@@ -89,7 +97,9 @@ class DefaultLicenseRepository(
             if (!file.exists()) {
                 throw IllegalArgumentException("Image file not found")
             }
-            file.asRequestBody("image/*".toMediaTypeOrNull())
+            val ext = android.webkit.MimeTypeMap.getFileExtensionFromUrl(path)
+            val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "image/jpeg"
+            file.asRequestBody(mime.toMediaTypeOrNull())
         }
     }
 
