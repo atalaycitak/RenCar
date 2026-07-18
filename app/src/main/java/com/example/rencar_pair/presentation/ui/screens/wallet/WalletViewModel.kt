@@ -8,8 +8,6 @@ class WalletViewModel(
     private val paymentUseCases: PaymentUseCases
 ) : BaseMviViewModel<WalletState, WalletIntent, WalletEffect>(WalletState()) {
 
-    private var defaultCardToken: String? = null
-
     init {
         onIntent(WalletIntent.LoadWallet)
     }
@@ -17,12 +15,13 @@ class WalletViewModel(
     override fun onIntent(intent: WalletIntent) {
         when (intent) {
             WalletIntent.LoadWallet -> loadWallet()
-            WalletIntent.ShowTopUpDialog -> updateState {
-                it.copy(isTopUpDialogVisible = true, topUpAmount = "")
+            is WalletIntent.SelectCard -> updateState { it.copy(selectedCardToken = intent.token) }
+            WalletIntent.ShowTopUpDialog -> showTopUpDialog()
+            WalletIntent.HideTopUpDialog -> updateState {
+                it.copy(isTopUpDialogVisible = false, isToppingUp = false, topUpAmount = "")
             }
-            WalletIntent.HideTopUpDialog -> updateState { it.copy(isTopUpDialogVisible = false) }
             is WalletIntent.UpdateTopUpAmount -> updateState {
-                it.copy(topUpAmount = intent.amount)
+                it.copy(topUpAmount = intent.amount.asAmountInput())
             }
             WalletIntent.SubmitTopUp -> submitTopUp()
         }
@@ -31,49 +30,69 @@ class WalletViewModel(
     private fun loadWallet() {
         launchCoroutine {
             updateState { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = paymentUseCases.getWalletInfo()) {
-                is NetworkResult.Success -> {
-                    updateState { it.copy(isLoading = false, walletInfo = result.data) }
-                }
+            val walletInfo = when (val result = paymentUseCases.getWalletInfo()) {
+                is NetworkResult.Success -> result.data
                 is NetworkResult.Error -> {
-                    updateState { it.copy(isLoading = false, errorMessage = result.message) }
+                    emitEffect(WalletEffect.ShowError(result.message))
+                    null
                 }
             }
-            loadDefaultCard()
+            val cards = when (val result = paymentUseCases.getSavedCards()) {
+                is NetworkResult.Success -> result.data
+                is NetworkResult.Error -> {
+                    emitEffect(WalletEffect.ShowError(result.message))
+                    emptyList()
+                }
+            }
+            updateState {
+                val selected = cards.firstOrNull { card -> card.cardToken == it.selectedCardToken }
+                    ?: cards.firstOrNull { card -> card.isDefault }
+                    ?: cards.firstOrNull()
+                it.copy(
+                    isLoading = false,
+                    walletInfo = walletInfo,
+                    savedCards = cards,
+                    selectedCardToken = selected?.cardToken
+                )
+            }
         }
     }
 
-    private fun loadDefaultCard() {
-        launchCoroutine {
-            when (val result = paymentUseCases.getSavedCards()) {
-                is NetworkResult.Success -> {
-                    defaultCardToken = result.data.firstOrNull()?.cardToken
-                }
-                is NetworkResult.Error -> { /* no saved cards yet, user will be notified on top-up */ }
-            }
+    private fun showTopUpDialog() {
+        val card = currentState().defaultCard
+        if (card == null) {
+            emitEffect(WalletEffect.ShowError("Bakiye yuklemek icin once kart ekleyin."))
+            return
         }
+        updateState { it.copy(isTopUpDialogVisible = true, topUpAmount = "") }
     }
 
     private fun submitTopUp() {
-        val amount = currentState().topUpAmount.toDoubleOrNull()
+        val current = currentState()
+        val amount = current.topUpAmount.toAmountOrNull()
+        val card = current.defaultCard
         if (amount == null || amount <= 0) {
-            emitEffect(WalletEffect.ShowError("Geçerli bir tutar giriniz"))
+            emitEffect(WalletEffect.ShowError("Gecerli bir tutar giriniz."))
             return
         }
-
-        val cardToken = defaultCardToken
-        if (cardToken == null) {
-            emitEffect(WalletEffect.ShowError("Kayıtlı kart bulunamadı. Lütfen önce bir kart ekleyin."))
+        if (card == null) {
+            emitEffect(WalletEffect.ShowError("Bakiye yuklemek icin once kart ekleyin."))
             return
         }
 
         launchCoroutine {
             updateState { it.copy(isToppingUp = true, errorMessage = null) }
-            when (val result = paymentUseCases.topUpWallet(amount, cardToken)) {
+            when (val result = paymentUseCases.topUpWallet(amount, card.cardToken)) {
                 is NetworkResult.Success -> {
-                    updateState { it.copy(isToppingUp = false, isTopUpDialogVisible = false) }
-                    emitEffect(WalletEffect.ShowMessage("Bakiye başarıyla yüklendi!"))
-                    loadWallet()
+                    updateState {
+                        it.copy(
+                            isToppingUp = false,
+                            isTopUpDialogVisible = false,
+                            walletInfo = result.data,
+                            topUpAmount = ""
+                        )
+                    }
+                    emitEffect(WalletEffect.ShowMessage("Bakiye basariyla yuklendi."))
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isToppingUp = false, errorMessage = result.message) }
@@ -82,4 +101,12 @@ class WalletViewModel(
             }
         }
     }
+
+    private fun String.asAmountInput(): String {
+        return filter { it.isDigit() || it == '.' || it == ',' }
+            .replace(',', '.')
+            .take(9)
+    }
+
+    private fun String.toAmountOrNull(): Double? = replace(',', '.').toDoubleOrNull()
 }
