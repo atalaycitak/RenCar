@@ -384,7 +384,14 @@ fun WalletScreenContent(
 @Composable
 fun TransactionItem(tx: WalletTransaction, isLast: Boolean) {
     val formatter = remember { SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()) }
-    val dateStr = remember(tx.date) { formatter.format(Date(tx.date)) }
+    val dateStr = remember(tx.createdAt) {
+        try {
+            val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
+            isoFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val parsed = isoFormat.parse(tx.createdAt)
+            formatter.format(parsed ?: java.util.Date())
+        } catch (_: Exception) { tx.createdAt }
+    }
     val isTopUp = tx.type == WalletTransactionType.TOP_UP
 
     Row(
@@ -476,8 +483,8 @@ private fun WalletScreenPreview() {
                 walletInfo = WalletInfo(
                     balance = 340.0,
                     transactions = listOf(
-                        WalletTransaction("1", 110.50, System.currentTimeMillis(), com.example.rencar_pair.domain.model.WalletTransactionType.RENTAL_PAYMENT),
-                        WalletTransaction("2", 200.0, System.currentTimeMillis() - 86400000, com.example.rencar_pair.domain.model.WalletTransactionType.TOP_UP)
+                        WalletTransaction("1", 110.50, "2026-07-17T08:00:00.000Z", com.example.rencar_pair.domain.model.WalletTransactionType.RENTAL_PAYMENT),
+                        WalletTransaction("2", 200.0, "2026-07-16T10:00:00.000Z", com.example.rencar_pair.domain.model.WalletTransactionType.TOP_UP)
                     )
                 )
             ),

@@ -59,7 +59,7 @@ class DefaultWalletRepository(
     private fun WalletInfoResponse.toDomain(): WalletInfo {
         return WalletInfo(
             balance = currentBalance ?: balance ?: 0.0,
-            transactions = transactions.map { it.toDomain() }.sortedByDescending { it.date }
+            transactions = transactions.map { it.toDomain() }.sortedByDescending { it.createdAt }
         )
     }
 
@@ -67,10 +67,13 @@ class DefaultWalletRepository(
         return WalletTransaction(
             id = id,
             amount = amount,
-            date = date,
+            createdAt = createdAt,
+            rentalId = rentalId,
+            description = description,
             type = when (type.uppercase()) {
-                "TOP_UP" -> WalletTransactionType.TOP_UP
+                "TOP_UP", "TOPUP" -> WalletTransactionType.TOP_UP
                 "RENTAL_PAYMENT" -> WalletTransactionType.RENTAL_PAYMENT
+                "REFERRAL_BONUS" -> WalletTransactionType.REFERRAL_BONUS
                 else -> WalletTransactionType.RENTAL_PAYMENT
             }
         )

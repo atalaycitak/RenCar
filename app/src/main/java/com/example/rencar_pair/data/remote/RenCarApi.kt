@@ -14,7 +14,7 @@ import com.example.rencar_pair.data.remote.dto.OtpRequiredResponseDto
 import com.example.rencar_pair.data.remote.dto.AddCardRequest
 import com.example.rencar_pair.data.remote.dto.RefreshTokenRequest
 import com.example.rencar_pair.data.remote.dto.RejectLicenseRequest
-import com.example.rencar_pair.data.remote.dto.IyzicoCardTokenResponse
+import com.example.rencar_pair.data.remote.dto.CardResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
 import com.example.rencar_pair.data.remote.dto.CreateReservationRequest
@@ -24,11 +24,22 @@ import com.example.rencar_pair.data.remote.dto.RegisterRequest
 import com.example.rencar_pair.data.remote.dto.ReservationResponse
 import com.example.rencar_pair.data.remote.dto.RentalResponse
 import com.example.rencar_pair.data.remote.dto.RentalPhotosStateResponse
+import com.example.rencar_pair.data.remote.dto.ActiveRentalResponse
+import com.example.rencar_pair.data.remote.dto.FinishRentalResponse
+import com.example.rencar_pair.data.remote.dto.QuoteResponse
+import com.example.rencar_pair.data.remote.dto.RentalStatsResponse
 import com.example.rencar_pair.data.remote.dto.AuthUserResponse
 import com.example.rencar_pair.data.remote.dto.UpdateVehicleRequest
 import com.example.rencar_pair.data.remote.dto.VehiclePositionResponse
 import com.example.rencar_pair.data.remote.dto.VehicleResponse
 import com.example.rencar_pair.data.remote.dto.WalletInfoResponse
+import com.example.rencar_pair.data.remote.dto.CancelIyzicoPaymentRequest
+import com.example.rencar_pair.data.remote.dto.CheckoutFormInitializeResponse
+import com.example.rencar_pair.data.remote.dto.CreateIyzicoPaymentRequest
+import com.example.rencar_pair.data.remote.dto.InitializeCheckoutFormRequest
+import com.example.rencar_pair.data.remote.dto.IyzicoPaymentResponse
+import com.example.rencar_pair.data.remote.dto.RefundIyzicoPaymentRequest
+import com.example.rencar_pair.data.remote.dto.ThreedsInitializeResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -66,7 +77,9 @@ interface RenCarApi {
     @POST("license/upload")
     suspend fun uploadLicense(
         @Part front: MultipartBody.Part,
-        @Part back: MultipartBody.Part
+        @Part back: MultipartBody.Part,
+        /** Yeni başvurularda zorunlu: yüz doğrulama selfie'si. */
+        @Part selfie: MultipartBody.Part? = null
     ): Response<LicenseUploadResponse>
 
     @GET("license/status")
@@ -84,6 +97,18 @@ interface RenCarApi {
     @GET("vehicles/{id}")
     suspend fun getVehicle(@Path("id") id: String): Response<VehicleResponse>
 
+    /**
+     * GET /vehicles/{id}/quote — Fiyat önizleme (salt hesap, araç kilitlenmez).
+     * @param plan PER_MINUTE | HOURLY | DAILY
+     * @param minutes Tahmini kullanım süresi (1..43200)
+     */
+    @GET("vehicles/{id}/quote")
+    suspend fun getVehicleQuote(
+        @Path("id") id: String,
+        @Query("plan") plan: String,
+        @Query("minutes") minutes: Int
+    ): Response<QuoteResponse>
+
     @POST("reservations")
     suspend fun createReservation(@Body request: CreateReservationRequest): Response<ReservationResponse>
 
@@ -92,6 +117,16 @@ interface RenCarApi {
 
     @DELETE("reservations/{id}")
     suspend fun cancelReservation(@Path("id") id: String): Response<Unit>
+
+    /** GET /rentals/stats — Aylık yolculuk özeti (sadece COMPLETED). */
+    @GET("rentals/stats")
+    suspend fun getRentalStats(
+        @Query("month") month: String? = null
+    ): Response<RentalStatsResponse>
+
+    /** GET /rentals/active — Süren yolculuğun anlık durumu (elapsedSeconds, currentCost). */
+    @GET("rentals/active")
+    suspend fun getActiveRental(): Response<ActiveRentalResponse>
 
     @POST("rentals")
     suspend fun createRental(@Body request: CreateRentalRequest): Response<RentalResponse>
@@ -102,8 +137,20 @@ interface RenCarApi {
     @GET("rentals/{id}")
     suspend fun getRental(@Path("id") id: String): Response<RentalResponse>
 
+    /**
+     * POST /rentals/{id}/finish — Kullanım bazlı (PER_MINUTE/HOURLY) yolculuğu bitirir.
+     * DAILY plan için POST /rentals/{id}/return kullanın.
+     */
+    @POST("rentals/{id}/finish")
+    suspend fun finishRental(@Path("id") id: String): Response<FinishRentalResponse>
+
+    /** POST /rentals/{id}/return — DAILY planına özel iade ucu (geriye uyum). */
     @POST("rentals/{id}/return")
     suspend fun returnRental(@Path("id") id: String): Response<RentalResponse>
+
+    /** DELETE /rentals/{id} — PREPARING aşamasındaki yolculuğu iptal eder. */
+    @DELETE("rentals/{id}")
+    suspend fun cancelRental(@Path("id") id: String): Response<Unit>
 
     @Multipart
     @POST("rentals/{id}/photos")
@@ -126,10 +173,18 @@ interface RenCarApi {
     ): Response<ProcessPaymentResponse>
 
     @POST("cards")
-    suspend fun addPaymentCard(@Body request: AddCardRequest): Response<IyzicoCardTokenResponse>
+    suspend fun addPaymentCard(@Body request: AddCardRequest): Response<CardResponse>
 
     @GET("cards")
-    suspend fun getPaymentCards(): Response<List<IyzicoCardTokenResponse>>
+    suspend fun getPaymentCards(): Response<List<CardResponse>>
+
+    /** PATCH /cards/{id}/default — Kartı öntanımlı yapar. */
+    @PATCH("cards/{id}/default")
+    suspend fun setDefaultCard(@Path("id") id: String): Response<CardResponse>
+
+    /** DELETE /cards/{id} — Kartı siler. */
+    @DELETE("cards/{id}")
+    suspend fun deleteCard(@Path("id") id: String): Response<Unit>
 
     @GET("wallet")
     suspend fun getWalletInfo(): Response<WalletInfoResponse>
@@ -166,6 +221,7 @@ interface RenCarApi {
     @GET("admin/vehicles")
     suspend fun getAdminVehicles(
         @Query("type") type: String? = null,
+        @Query("segment") segment: String? = null,
         @Query("status") status: String? = null,
         @Query("page") page: Int? = null,
         @Query("limit") limit: Int? = null
@@ -200,4 +256,81 @@ interface RenCarApi {
 
     @GET("admin/locations")
     suspend fun getAdminLocations(): Response<List<VehiclePositionResponse>>
+
+    // ─────────────────────────────────────────────────────────────────────
+    // IYZICO — Ödeme altyapısı (aktifleşince hemen kullanıma hazır)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /iyzico/health — Iyzico entegrasyon sağlık kontrolü.
+     * Iyzico aktif mi öğrenmek için kullanılabilir.
+     */
+    @GET("iyzico/health")
+    suspend fun iyzicoHealth(): Response<EmptyResponse>
+
+    /**
+     * POST /iyzico/payments — Doğrudan kart bilgisiyle ödeme başlatır.
+     * Kiralama ödemesi için basketId = "rental-<kiralamaId>" formatında gönderilmeli;
+     * ardından POST /rentals/{id}/pay (method: "IYZICO", iyzicoPaymentId: response.paymentId) çağrılmalıdır.
+     */
+    @POST("iyzico/payments")
+    suspend fun createIyzicoPayment(
+        @Body request: CreateIyzicoPaymentRequest
+    ): Response<IyzicoPaymentResponse>
+
+    /**
+     * POST /iyzico/payments/threeds/initialize — 3D Secure akışını başlatır.
+     * Yanıttaki threeDSHtmlContentDecoded değeri WebView'a yüklenir.
+     */
+    @POST("iyzico/payments/threeds/initialize")
+    suspend fun initializeThreedsPayment(
+        @Body request: CreateIyzicoPaymentRequest
+    ): Response<ThreedsInitializeResponse>
+
+    /**
+     * POST /iyzico/checkout-form/initialize — Iyzico Checkout Form (WebView) akışını başlatır.
+     * Yanıttaki checkoutFormContent WebView'a yüklenir;
+     * token ise form tamamlandığında GET /iyzico/checkout-form/result/{token} ile sorgulanır.
+     */
+    @POST("iyzico/checkout-form/initialize")
+    suspend fun initializeCheckoutForm(
+        @Body request: InitializeCheckoutFormRequest
+    ): Response<CheckoutFormInitializeResponse>
+
+    /**
+     * GET /iyzico/checkout-form/result/{token} — Checkout Form sonucunu sorgular.
+     * WebView'daki yönlendirme (callbackUrl) tetiklenince bu uç çağrılır.
+     */
+    @GET("iyzico/checkout-form/result/{token}")
+    suspend fun getCheckoutFormResult(
+        @Path("token") token: String
+    ): Response<IyzicoPaymentResponse>
+
+    /**
+     * GET /iyzico/payments/{paymentId} — Ödeme durumunu sorgular.
+     * paymentId: IyzicoPaymentResponse.paymentId veya ThreedsInitializeResponse sonrası elde edilir.
+     */
+    @GET("iyzico/payments/{paymentId}")
+    suspend fun getIyzicoPayment(
+        @Path("paymentId") paymentId: String
+    ): Response<IyzicoPaymentResponse>
+
+    /**
+     * POST /iyzico/payments/{paymentId}/cancel — Onaylı ödemeyi iptal eder.
+     * reason: DOUBLE_PAYMENT | BUYER_REQUEST | FRAUD | OTHER
+     */
+    @POST("iyzico/payments/{paymentId}/cancel")
+    suspend fun cancelIyzicoPayment(
+        @Path("paymentId") paymentId: String,
+        @Body request: CancelIyzicoPaymentRequest
+    ): Response<IyzicoPaymentResponse>
+
+    /**
+     * POST /iyzico/refunds — Kısmi veya tam iade.
+     * paymentTransactionId: IyzicoPaymentResponse.paymentTransactionIds listesinden alınır.
+     */
+    @POST("iyzico/refunds")
+    suspend fun refundIyzicoPayment(
+        @Body request: RefundIyzicoPaymentRequest
+    ): Response<IyzicoPaymentResponse>
 }

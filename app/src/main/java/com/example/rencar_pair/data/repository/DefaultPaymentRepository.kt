@@ -3,7 +3,7 @@ package com.example.rencar_pair.data.repository
 import com.example.rencar_pair.BuildConfig
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.AddCardRequest
-import com.example.rencar_pair.data.remote.dto.IyzicoCardTokenResponse
+import com.example.rencar_pair.data.remote.dto.CardResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
 import com.example.rencar_pair.data.remote.safeApiCall
@@ -88,19 +88,19 @@ class DefaultPaymentRepository(
 
     private fun ProcessPaymentResponse.toDomain(): PaymentResult {
         return PaymentResult(
-            status = PaymentStatus.fromApiString(paymentStatus ?: status),
-            transactionId = transactionId,
-            errorMessage = errorMessage
+            status = PaymentStatus.fromApiString(paymentStatus),
+            transactionId = null,
+            errorMessage = null
         )
     }
 
-    private fun IyzicoCardTokenResponse.toDomain(): PaymentMethod {
-        val resolvedBrand = brand ?: cardAssociation ?: "CARD"
-        val resolvedLast4 = last4 ?: binNumber?.takeLast(4).orEmpty()
+    private fun CardResponse.toDomain(): PaymentMethod {
+        val resolvedBrand = brand
+        val resolvedLast4 = last4
         return PaymentMethod(
-            cardToken = id ?: cardToken.orEmpty(),
-            cardAlias = cardAlias ?: "$resolvedBrand $resolvedLast4".trim(),
-            binNumber = binNumber ?: resolvedLast4,
+            cardToken = id,
+            cardAlias = "$resolvedBrand $resolvedLast4".trim(),
+            binNumber = resolvedLast4,
             cardAssociation = resolvedBrand
         )
     }

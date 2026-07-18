@@ -14,6 +14,7 @@ data class AdminLicenseResponse(
     val status: String,
     val frontImageUrl: String,
     val backImageUrl: String,
+    val selfieImageUrl: String? = null,
     val rejectReason: String? = null,
     val reviewedAt: String? = null,
     val createdAt: String,
@@ -45,6 +46,7 @@ data class UpdateVehicleRequest(
     val status: String? = null
 )
 
+/** Kullanıcı özeti — AdminRentalResponseDto.user içinde kullanılır. */
 @Serializable
 data class RentalUserSummaryResponse(
     val id: String,
@@ -52,8 +54,9 @@ data class RentalUserSummaryResponse(
     val fullName: String
 )
 
+/** Araç özeti — AdminRentalResponseDto.vehicle içinde kullanılır. */
 @Serializable
-data class RentalVehicleSummaryResponse(
+data class RentalVehicleSummaryAdminResponse(
     val id: String,
     val plate: String,
     val brand: String,
@@ -61,16 +64,43 @@ data class RentalVehicleSummaryResponse(
     val status: String
 )
 
+/**
+ * Admin kiralama listesi ve detay yanıtı.
+ *
+ * Not: startDate alanı deprecated (eski alan adı). startedAt kullanılmalıdır.
+ */
 @Serializable
 data class AdminRentalResponse(
     val id: String,
-    val startDate: String,
-    val endDate: String,
-    val totalPrice: Double,
+    /** Kiralama planı: PER_MINUTE | HOURLY | DAILY */
+    val plan: String? = null,
+    /** Yolculuğun gerçek başlangıç anı. */
+    val startedAt: String? = null,
+    /** Yolculuğun gerçek bitiş anı; sürerken null. */
+    val endedAt: String? = null,
+    /** Planlanan iade tarihi — yalnız DAILY planda dolu. */
+    val endDate: String? = null,
+    val totalPrice: Double? = null,
+    /** Açılış ücreti. */
+    val startFee: Double? = null,
+    /** Servis ücreti; DAILY'de null. */
+    val serviceFee: Double? = null,
+    /** Biriken mesafe (km). */
+    val distanceKm: Double? = null,
+    /** Yolculuk süresi (dakika). */
+    val durationMinutes: Double? = null,
+    /** PREPARING | ACTIVE | COMPLETED | CANCELLED */
     val status: String,
+    /** UNPAID | PAID */
+    val paymentStatus: String? = null,
+    /** WALLET | CARD | IYZICO */
+    val paymentMethod: String? = null,
+    val discountAmount: Double? = null,
     val createdAt: String,
+    /** @deprecated startedAt kullanın. Geriye uyum için korunuyor. */
+    val startDate: String? = null,
     val user: RentalUserSummaryResponse,
-    val vehicle: RentalVehicleSummaryResponse
+    val vehicle: RentalVehicleSummaryAdminResponse
 )
 
 @Serializable
@@ -82,4 +112,3 @@ data class VehiclePositionResponse(
     val longitude: Double,
     val updatedAt: String
 )
-

@@ -8,11 +8,15 @@ data class WalletInfo(
 data class WalletTransaction(
     val id: String,
     val amount: Double,
-    val date: Long,
-    val type: WalletTransactionType
+    /** ISO tarih string (ör. "2026-07-11T12:00:00.000Z"). */
+    val createdAt: String,
+    val type: WalletTransactionType,
+    val rentalId: String? = null,
+    val description: String? = null
 )
 
 enum class WalletTransactionType {
     TOP_UP,
-    RENTAL_PAYMENT
+    RENTAL_PAYMENT,
+    REFERRAL_BONUS
 }

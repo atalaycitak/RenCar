@@ -13,6 +13,8 @@ data class LicenseUploadResponse(
     val status: String,
     val frontImageUrl: String,
     val backImageUrl: String,
+    /** Yüz doğrulama selfie'si URL'i. D5 öncesi kayıtlarda null. */
+    val selfieImageUrl: String? = null,
     val rejectReason: String? = null,
     val reviewedAt: String? = null,
     val createdAt: String,
