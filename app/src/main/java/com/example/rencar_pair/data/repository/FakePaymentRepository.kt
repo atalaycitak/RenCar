@@ -1,9 +1,8 @@
 package com.example.rencar_pair.data.repository
 
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
-import com.example.rencar_pair.domain.model.PaymentStatus
+import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.repository.PaymentRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -12,13 +11,13 @@ import kotlinx.coroutines.sync.withLock
 class FakePaymentRepository : PaymentRepository {
     private val mutex = Mutex()
     private val fakeCards = mutableListOf(
-        PaymentMethod(
+        SavedCard(
             cardToken = "tok_12345",
             cardAlias = "Garanti Bonus",
             binNumber = "493827",
             cardAssociation = "VISA"
         ),
-        PaymentMethod(
+        SavedCard(
             cardToken = "tok_67890",
             cardAlias = "IsBankasi Maximum",
             binNumber = "543210",
@@ -37,7 +36,6 @@ class FakePaymentRepository : PaymentRepository {
         }
         return NetworkResult.Success(
             PaymentResult(
-                status = PaymentStatus.Success,
                 transactionId = "tx_${System.currentTimeMillis()}",
                 errorMessage = null
             )
@@ -50,12 +48,12 @@ class FakePaymentRepository : PaymentRepository {
         expireYear: String,
         cvc: String,
         cardHolderName: String
-    ): NetworkResult<PaymentMethod> {
+    ): NetworkResult<SavedCard> {
         delay(1500)
         if (cardNumber.length < 16) {
             return NetworkResult.Error("Geçersiz kart numarası")
         }
-        val newCard = PaymentMethod(
+        val newCard = SavedCard(
             cardToken = "tok_${System.currentTimeMillis()}",
             cardAlias = cardHolderName,
             binNumber = cardNumber.take(6),
@@ -65,7 +63,7 @@ class FakePaymentRepository : PaymentRepository {
         return NetworkResult.Success(newCard)
     }
 
-    override suspend fun getSavedCards(): NetworkResult<List<PaymentMethod>> {
+    override suspend fun getSavedCards(): NetworkResult<List<SavedCard>> {
         delay(800)
         return mutex.withLock { NetworkResult.Success(fakeCards.toList()) }
     }

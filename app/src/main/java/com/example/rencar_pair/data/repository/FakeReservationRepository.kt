@@ -52,10 +52,20 @@ class FakeReservationRepository : ReservationRepository {
             id = "local-${System.currentTimeMillis()}",
             userId = "",
             vehicleId = vehicleId,
-            startDate = now,
-            endDate = endDate?.let { parseEndDate(it) } ?: now,
-            totalPrice = if (plan == "PER_MINUTE") 0.0 else 1500.0,
-            status = if (plan == "PER_MINUTE") RentalStatus.Preparing else RentalStatus.Active
+            plan = com.example.rencar_pair.domain.model.RentalPlan.fromApiString(plan),
+            status = if (plan == "PER_MINUTE") RentalStatus.Preparing else RentalStatus.Active,
+            paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+            paymentMethod = null,
+            totalPrice = if (plan == "PER_MINUTE") null else 1500.0,
+            startFee = 15.0,
+            serviceFee = null,
+            distanceKm = null,
+            durationMinutes = null,
+            discountAmount = 0.0,
+            startedAt = now,
+            endedAt = null,
+            scheduledEndDate = endDate?.let { parseEndDate(it) },
+            createdAt = now
         )
         if (activeReservation?.vehicleId == vehicleId) {
             activeReservation = activeReservation?.copy(status = ReservationStatus.Converted)

@@ -85,7 +85,7 @@ val appModule = module {
     single { AuthUseCases(get()) }
     single { VehicleUseCases(get()) }
     single { LicenseUseCases(get()) }
-    single { RentalUseCases(get()) }
+    single { RentalUseCases(get(), get()) }
     single { PaymentUseCases(get(), get()) }
 
     // Use cases with real business logic (validation, calculations)

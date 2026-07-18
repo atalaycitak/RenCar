@@ -33,7 +33,8 @@ class ActiveRentalViewModel(
             updateState { it.copy(isLoading = true, errorMessage = null) }
             when (val result = rentalUseCases.getRental(rentalId)) {
                 is NetworkResult.Success -> {
-                    val elapsedMinutes = result.data.startDate.elapsedMinutesUntilNow()
+                    val startedTime = result.data.startedAt ?: result.data.createdAt
+                    val elapsedMinutes = startedTime.elapsedMinutesUntilNow()
                     updateState {
                         it.copy(
                             isLoading = false,
@@ -109,7 +110,7 @@ class ActiveRentalViewModel(
     }
 
     private fun com.example.rencar_pair.domain.model.Rental.estimatedCurrentCost(elapsedMinutes: Int): Double {
-        return totalPrice + elapsedMinutes * COST_PER_MINUTE
+        return (totalPrice ?: 0.0) + elapsedMinutes * COST_PER_MINUTE
     }
 
     private companion object {

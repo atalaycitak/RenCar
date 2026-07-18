@@ -117,7 +117,7 @@ class ReservationViewModel(
     private fun unlockReservedVehicle(vehicleId: String) {
         launchCoroutine {
             updateState { it.copy(isSubmitting = true, errorMessage = null) }
-            when (val result = rentalUseCases.createRental(vehicleId = vehicleId, plan = "PER_MINUTE")) {
+            when (val result = rentalUseCases.createRental(vehicleId = vehicleId, plan = com.example.rencar_pair.domain.model.RentalPlan.PerMinute)) {
                 is NetworkResult.Success -> {
                     updateState {
                         it.copy(isSubmitting = false, rentalId = result.data.id)
