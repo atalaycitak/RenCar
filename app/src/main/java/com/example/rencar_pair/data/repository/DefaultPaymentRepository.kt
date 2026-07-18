@@ -4,13 +4,16 @@ import com.example.rencar_pair.BuildConfig
 import com.example.rencar_pair.data.remote.RenCarApi
 import com.example.rencar_pair.data.remote.dto.AddCardRequest
 import com.example.rencar_pair.data.remote.dto.CardResponse
+import com.example.rencar_pair.data.remote.dto.PaidCardSummaryResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.model.SavedCard
+import com.example.rencar_pair.domain.model.PaidCardSummary
+import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
 import com.example.rencar_pair.domain.model.PaymentStatus
+import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.repository.PaymentRepository
 
 class DefaultPaymentRepository(
@@ -18,28 +21,42 @@ class DefaultPaymentRepository(
 ) : PaymentRepository {
     private val endpointFallback = FakePaymentRepository()
 
-    override suspend fun processPayment(
+    override suspend fun payRental(
         rentalId: String,
-        cardToken: String,
-        amount: Double
+        method: PaymentMethod,
+        cardId: String?,
+        discountCode: String?,
+        iyzicoPaymentId: String?
     ): NetworkResult<PaymentResult> {
-        if (amount <= 0) {
-            return NetworkResult.Error("Gecersiz tutar")
+        if (method == PaymentMethod.Card && cardId.isNullOrBlank()) {
+            return NetworkResult.Error("Kart secimi gerekli")
         }
+        if (method == PaymentMethod.Iyzico && iyzicoPaymentId.isNullOrBlank()) {
+            return NetworkResult.Error("Iyzico odeme bilgisi gerekli")
+        }
+
         val result = safeApiCall(
             call = {
                 api.processPayment(
                     id = rentalId,
                     request = ProcessPaymentRequest(
-                        method = "CARD",
-                        cardId = cardToken
+                        method = method.toApiValue(),
+                        cardId = cardId.takeIf { method == PaymentMethod.Card },
+                        discountCode = discountCode,
+                        iyzicoPaymentId = iyzicoPaymentId.takeIf { method == PaymentMethod.Iyzico }
                     )
                 )
             },
             transform = { it.toDomain() }
         )
         return result.withEndpointFallback {
-            endpointFallback.processPayment(rentalId, cardToken, amount)
+            endpointFallback.payRental(
+                rentalId = rentalId,
+                method = method,
+                cardId = cardId,
+                discountCode = discountCode,
+                iyzicoPaymentId = iyzicoPaymentId
+            )
         }
     }
 
@@ -86,21 +103,67 @@ class DefaultPaymentRepository(
         }
     }
 
+    override suspend fun setDefaultCard(cardId: String): NetworkResult<SavedCard> {
+        val result = safeApiCall(
+            call = { api.setDefaultCard(cardId) },
+            transform = { it.toDomain() }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.setDefaultCard(cardId)
+        }
+    }
+
+    override suspend fun deleteCard(cardId: String): NetworkResult<Unit> {
+        val result = try {
+            val response = api.deleteCard(cardId)
+            if (response.isSuccessful) {
+                NetworkResult.Success(Unit)
+            } else {
+                NetworkResult.Error("HTTP ${response.code()} error", response.code())
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error("Kart silinemedi: ${e.localizedMessage}")
+        }
+        return result.withEndpointFallback {
+            endpointFallback.deleteCard(cardId)
+        }
+    }
+
     private fun ProcessPaymentResponse.toDomain(): PaymentResult {
         return PaymentResult(
-            transactionId = null,
-            errorMessage = null
+            rentalId = rentalId,
+            paymentStatus = PaymentStatus.fromApiString(paymentStatus),
+            method = PaymentMethod.fromApiString(method),
+            totalPrice = totalPrice,
+            discountAmount = discountAmount ?: 0.0,
+            paidAmount = paidAmount,
+            walletBalance = walletBalance,
+            card = card?.toDomain()
+        )
+    }
+
+    private fun PaidCardSummaryResponse.toDomain(): PaidCardSummary? {
+        val resolvedLast4 = last4 ?: return null
+        return PaidCardSummary(
+            id = id.orEmpty(),
+            brand = brand.orEmpty(),
+            last4 = resolvedLast4,
+            expMonth = expMonth,
+            expYear = expYear
         )
     }
 
     private fun CardResponse.toDomain(): SavedCard {
-        val resolvedBrand = brand
-        val resolvedLast4 = last4
+        val resolvedBrand = brand.ifBlank { "CARD" }
+        val resolvedLast4 = last4.ifBlank { "0000" }
         return SavedCard(
             cardToken = id,
             cardAlias = "$resolvedBrand $resolvedLast4".trim(),
             binNumber = resolvedLast4,
-            cardAssociation = resolvedBrand
+            cardAssociation = resolvedBrand,
+            expMonth = expMonth,
+            expYear = expYear,
+            isDefault = isDefault
         )
     }
 

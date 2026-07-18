@@ -37,7 +37,7 @@ class DefaultWalletRepository(
         }
     }
 
-    override suspend fun topUp(amount: Double, cardToken: String): NetworkResult<WalletInfo> {
+    override suspend fun topUp(amount: Double): NetworkResult<WalletInfo> {
         if (amount <= 0) {
             return NetworkResult.Error("Gecersiz tutar")
         }
@@ -52,7 +52,7 @@ class DefaultWalletRepository(
             transform = { it.toDomain() }
         )
         return result.withEndpointFallback {
-            endpointFallback.topUp(amount, cardToken)
+            endpointFallback.topUp(amount)
         }
     }
 
