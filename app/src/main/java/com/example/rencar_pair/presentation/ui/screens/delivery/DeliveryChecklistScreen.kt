@@ -18,6 +18,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,12 +41,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.rencar_pair.R
+import coil.compose.AsyncImage
 import com.example.rencar_pair.domain.model.RentalPhotoSide
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.ui.theme.RenCarTheme
@@ -55,7 +62,7 @@ fun DeliveryChecklistScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var pendingSide by remember { mutableStateOf<RentalPhotoSide?>(null) }
     val photoPicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         val side = pendingSide
         pendingSide = null
@@ -80,7 +87,7 @@ fun DeliveryChecklistScreen(
         onDone = onDone,
         onPickPhoto = { side ->
             pendingSide = side
-            photoPicker.launch("image/*")
+            photoPicker.launch(arrayOf("image/jpeg", "image/png"))
         }
     )
 }
@@ -118,7 +125,7 @@ fun DeliveryChecklistScreenContent(
                             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(13.dp))
                     ) {
                         Icon(
-                            painter = painterResource(id = android.R.drawable.ic_media_previous),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Geri",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -185,6 +192,8 @@ fun DeliveryChecklistScreenContent(
                     modifier = Modifier.weight(1f),
                     title = "Ön",
                     isTaken = state.frontPhotoTaken,
+                    photoUri = state.selectedPhotoUri(RentalPhotoSide.Front),
+                    hasError = state.hasUploadFailed(RentalPhotoSide.Front),
                     isUploading = state.uploadingSide == RentalPhotoSide.Front,
                     onClick = { onPickPhoto(RentalPhotoSide.Front) }
                 )
@@ -192,6 +201,8 @@ fun DeliveryChecklistScreenContent(
                     modifier = Modifier.weight(1f),
                     title = "Arka",
                     isTaken = state.backPhotoTaken,
+                    photoUri = state.selectedPhotoUri(RentalPhotoSide.Back),
+                    hasError = state.hasUploadFailed(RentalPhotoSide.Back),
                     isUploading = state.uploadingSide == RentalPhotoSide.Back,
                     onClick = { onPickPhoto(RentalPhotoSide.Back) }
                 )
@@ -204,6 +215,8 @@ fun DeliveryChecklistScreenContent(
                     modifier = Modifier.weight(1f),
                     title = "Sol",
                     isTaken = state.leftPhotoTaken,
+                    photoUri = state.selectedPhotoUri(RentalPhotoSide.Left),
+                    hasError = state.hasUploadFailed(RentalPhotoSide.Left),
                     isUploading = state.uploadingSide == RentalPhotoSide.Left,
                     onClick = { onPickPhoto(RentalPhotoSide.Left) }
                 )
@@ -211,6 +224,8 @@ fun DeliveryChecklistScreenContent(
                     modifier = Modifier.weight(1f),
                     title = "Sağ",
                     isTaken = state.rightPhotoTaken,
+                    photoUri = state.selectedPhotoUri(RentalPhotoSide.Right),
+                    hasError = state.hasUploadFailed(RentalPhotoSide.Right),
                     isUploading = state.uploadingSide == RentalPhotoSide.Right,
                     onClick = { onPickPhoto(RentalPhotoSide.Right) }
                 )
@@ -227,13 +242,13 @@ fun DeliveryChecklistScreenContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_dialog_alert), // Yellow alert icon
+                    imageVector = Icons.Default.ErrorOutline,
                     contentDescription = null,
                     tint = Color(0xFFE6A700),
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "Hasarları net çek — teslim sonrası anlaşmazlığı önler.",
+                    text = "Hasarları net çek. Teslim sonrası anlaşmazlığı önler.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Medium,
@@ -262,7 +277,7 @@ fun DeliveryChecklistScreenContent(
                     text = when {
                         state.isUploading -> "Yükleniyor..."
                         state.canComplete -> "Kiralamayı Başlat"
-                        else -> "Kiralamayı Başlat · ${4 - state.completedPhotoCount} foto kaldı"
+                        else -> "Kiralamayı Başlat - ${state.remainingPhotoCount} foto kaldı"
                     },
                     onClick = { onIntent(DeliveryChecklistIntent.CompleteChecklist) },
                     enabled = state.canComplete && !state.isUploading,
@@ -280,90 +295,150 @@ private fun PhotoBox(
     modifier: Modifier = Modifier,
     title: String,
     isTaken: Boolean,
+    photoUri: String?,
+    hasError: Boolean,
     isUploading: Boolean = false,
     onClick: () -> Unit
 ) {
-    if (isUploading) {
-        Box(
-            modifier = modifier
-                .height(158.dp)
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
-                .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(18.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(32.dp))
-        }
-        return
+    val borderColor = when {
+        hasError -> MaterialTheme.colorScheme.error
+        isTaken -> Color(0xFF1FB370)
+        isUploading -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outlineVariant
     }
+    val showPreview = photoUri != null
 
-    if (isTaken) {
+    Box(
+        modifier = modifier
+            .height(158.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(2.dp, borderColor.copy(alpha = if (isTaken || hasError) 0.9f else 0.55f), RoundedCornerShape(18.dp))
+            .clickable(enabled = !isUploading, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        if (showPreview) {
+            AsyncImage(
+                model = photoUri,
+                contentDescription = "$title fotoğrafı",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = if (hasError) 0.48f else 0.28f))
+            )
+        }
+
         Box(
-            modifier = modifier
-                .height(158.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable(onClick = onClick)
-        ) {
-            Box(
-                modifier = Modifier.padding(8.dp).background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(7.dp)).padding(horizontal = 9.dp, vertical = 3.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.background)
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(8.dp)
+                .background(
+                    if (showPreview) Color.Black.copy(alpha = 0.52f) else MaterialTheme.colorScheme.surfaceVariant,
+                    RoundedCornerShape(7.dp)
                 )
-            }
-            Box(
-                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(24.dp).background(Color(0xFF1FB370), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
+                .padding(horizontal = 9.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (showPreview) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+        }
+
+        when {
+            isUploading -> PhotoStatusContent(
+                text = "Yükleniyor",
+                icon = null,
+                textColor = if (showPreview) Color.White else MaterialTheme.colorScheme.primary
+            )
+            hasError -> PhotoStatusContent(
+                text = "Tekrar seç",
+                icon = Icons.Default.Refresh,
+                textColor = Color.White
+            )
+            isTaken -> UploadedBadge()
+            else -> PhotoStatusContent(
+                text = "Galeriden seç",
+                icon = Icons.Default.CameraAlt,
+                textColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun PhotoStatusContent(
+    text: String,
+    icon: ImageVector?,
+    textColor: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        Box(
+            modifier = Modifier
+                .size(46.dp)
+                .background(
+                    if (icon == null) Color.Transparent else MaterialTheme.colorScheme.primary,
+                    RoundedCornerShape(14.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (icon == null) {
+                CircularProgressIndicator(modifier = Modifier.size(30.dp), color = MaterialTheme.colorScheme.primary)
+            } else {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
+                    imageVector = icon,
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(13.dp)
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
-    } else {
-        Box(
-            modifier = modifier
-                .height(158.dp)
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
-                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+        )
+    }
+}
+
+@Composable
+private fun UploadedBadge() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        contentAlignment = Alignment.TopEnd
+    ) {
+        Row(
+            modifier = Modifier
+                .background(Color(0xFF1FB370), RoundedCornerShape(13.dp))
+                .padding(horizontal = 9.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(7.dp)).padding(horizontal = 9.dp, vertical = 3.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(13.dp)
+            )
+            Text(
+                text = "Yüklendi",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                Text(
-                    text = "Galeriden seç",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
+            )
         }
     }
 }

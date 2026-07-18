@@ -52,17 +52,33 @@ class DeliveryChecklistViewModel(
 
         launchCoroutine {
             updateState {
-                it.copy(isUploading = true, uploadingSide = side, errorMessage = null)
+                it.copy(
+                    selectedPhotoUris = it.selectedPhotoUris + (side to photoUri),
+                    failedPhotoSides = it.failedPhotoSides - side,
+                    isUploading = true,
+                    uploadingSide = side,
+                    errorMessage = null
+                )
             }
             when (val result = rentalPhotoUseCases.uploadPhoto(rentalId, side, photoUri)) {
                 is NetworkResult.Success -> updateState {
-                    it.withPhotos(result.data).copy(isUploading = false, uploadingSide = null)
+                    it.withPhotos(result.data).copy(
+                        isUploading = false,
+                        uploadingSide = null,
+                        failedPhotoSides = it.failedPhotoSides - side
+                    )
                 }
                 is NetworkResult.Error -> {
+                    val friendlyMessage = result.message.toPhotoUploadMessage()
                     updateState {
-                        it.copy(isUploading = false, uploadingSide = null, errorMessage = result.message)
+                        it.copy(
+                            isUploading = false,
+                            uploadingSide = null,
+                            failedPhotoSides = it.failedPhotoSides + side,
+                            errorMessage = friendlyMessage
+                        )
                     }
-                    emitEffect(DeliveryChecklistEffect.ShowError(result.message))
+                    emitEffect(DeliveryChecklistEffect.ShowError(friendlyMessage))
                 }
             }
         }
@@ -80,8 +96,9 @@ class DeliveryChecklistViewModel(
                     emitEffect(DeliveryChecklistEffect.ChecklistCompleted)
                 }
                 is NetworkResult.Error -> {
-                    updateState { it.copy(isUploading = false, errorMessage = result.message) }
-                    emitEffect(DeliveryChecklistEffect.ShowError(result.message))
+                    val friendlyMessage = result.message.toStartRentalMessage()
+                    updateState { it.copy(isUploading = false, errorMessage = friendlyMessage) }
+                    emitEffect(DeliveryChecklistEffect.ShowError(friendlyMessage))
                 }
             }
         }
@@ -95,5 +112,27 @@ class DeliveryChecklistViewModel(
             rightPhotoTaken = RentalPhotoSide.Right in photosState.uploadedSides,
             errorMessage = null
         )
+    }
+
+    private fun String.toPhotoUploadMessage(): String {
+        val normalized = lowercase()
+        return when {
+            "jpg" in normalized || "jpeg" in normalized || "png" in normalized ->
+                "Bu fotoğraf yüklenemedi. Lütfen JPG veya PNG formatında bir görsel seç."
+            "okun" in normalized || "read" in normalized ->
+                "Fotoğraf okunamadı. Lütfen galeriden farklı bir JPG veya PNG görsel seç."
+            else ->
+                "Fotoğraf yüklenemedi. Lütfen farklı bir JPG veya PNG görsel ile tekrar dene."
+        }
+    }
+
+    private fun String.toStartRentalMessage(): String {
+        val normalized = lowercase()
+        return when {
+            "photo" in normalized || "foto" in normalized ->
+                "Kiralamayı başlatmak için ön, arka, sol ve sağ fotoğrafların tamamını yüklemelisin."
+            else ->
+                "Kiralama başlatılamadı. Lütfen fotoğrafları kontrol edip tekrar dene."
+        }
     }
 }
