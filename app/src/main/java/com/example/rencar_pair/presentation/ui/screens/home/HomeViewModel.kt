@@ -28,6 +28,8 @@ class HomeViewModel(
     init {
         onIntent(HomeIntent.LoadVehicles)
         onIntent(HomeIntent.LoadActiveReservation)
+        onIntent(HomeIntent.LoadActiveRental)
+        onIntent(HomeIntent.LoadPendingRental)
         startVehicleLocationUpdates()
     }
 
@@ -35,6 +37,8 @@ class HomeViewModel(
         when (intent) {
             HomeIntent.LoadVehicles -> loadVehicles()
             HomeIntent.LoadActiveReservation -> loadActiveReservation()
+            HomeIntent.LoadActiveRental -> loadActiveRental()
+            HomeIntent.LoadPendingRental -> loadPendingRental()
             is HomeIntent.SelectVehicle -> updateState {
                 it.copy(selectedVehicleId = intent.id)
             }
@@ -126,7 +130,9 @@ class HomeViewModel(
         launchCoroutine {
             when (val result = rentalUseCases.getActiveReservation()) {
                 is NetworkResult.Success -> {
-                    vehicleLocationRepository.setActiveVehicleId(result.data?.vehicleId)
+                    if (currentState().activeRental == null) {
+                        vehicleLocationRepository.setActiveVehicleId(result.data?.vehicleId)
+                    }
                     updateState { state ->
                         state.copy(
                             activeReservation = result.data,
@@ -135,10 +141,48 @@ class HomeViewModel(
                     }
                 }
                 is NetworkResult.Error -> {
-                    vehicleLocationRepository.setActiveVehicleId(null)
+                    if (currentState().activeRental == null) {
+                        vehicleLocationRepository.setActiveVehicleId(null)
+                    }
                     updateState { state ->
                         state.copy(activeReservation = null)
                     }
+                }
+            }
+        }
+    }
+
+    private fun loadActiveRental() {
+        launchCoroutine {
+            when (val result = rentalUseCases.getActiveRental()) {
+                is NetworkResult.Success -> {
+                    vehicleLocationRepository.setActiveVehicleId(
+                        result.data?.vehicleId ?: currentState().activeReservation?.vehicleId
+                    )
+                    updateState { state ->
+                        state.copy(activeRental = result.data)
+                    }
+                }
+                is NetworkResult.Error -> {
+                    if (currentState().activeReservation == null) {
+                        vehicleLocationRepository.setActiveVehicleId(null)
+                    }
+                    updateState { state ->
+                        state.copy(activeRental = null)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun loadPendingRental() {
+        launchCoroutine {
+            when (val result = rentalUseCases.getMyRentals()) {
+                is NetworkResult.Success -> updateState { state ->
+                    state.copy(pendingRental = result.data.latestPreparingRental())
+                }
+                is NetworkResult.Error -> updateState { state ->
+                    state.copy(pendingRental = null)
                 }
             }
         }

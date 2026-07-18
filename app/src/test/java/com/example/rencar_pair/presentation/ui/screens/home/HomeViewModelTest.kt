@@ -5,6 +5,8 @@ import com.example.rencar_pair.domain.location.LocationTracker
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehiclePosition
+import com.example.rencar_pair.domain.model.ActiveRental
+import com.example.rencar_pair.domain.model.RentalPlan
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.Reservation
@@ -12,6 +14,7 @@ import com.example.rencar_pair.domain.model.ReservationStatus
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.ReservationRepository
+import com.example.rencar_pair.domain.repository.RentalRepository
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import com.example.rencar_pair.domain.repository.VehicleRepository
@@ -221,15 +224,69 @@ class HomeViewModelTest {
         assertEquals("sedan-1", vehicleLocationRepository.capturedActiveVehicleId)
     }
 
+    @Test
+    fun `active rental is loaded and published to vehicle location repository`() = runTest {
+        val vehicleLocationRepository = FakeVehicleLocationRepositoryForHomeTest()
+        val viewModel = createViewModel(
+            rentalRepository = FakeRentalRepositoryForHomeTest(
+                activeRental = ActiveRental(
+                    id = "active-rental-1",
+                    userId = "user-1",
+                    vehicleId = "suv-1",
+                    plan = RentalPlan.PerMinute,
+                    status = RentalStatus.Active,
+                    elapsedSeconds = 120.0,
+                    currentCost = 28.0,
+                    startedAt = Instant.parse("2026-07-18T10:00:00Z"),
+                    distanceKm = 1.1,
+                    durationMinutes = 2.0,
+                    startFee = 15.0,
+                    createdAt = Instant.parse("2026-07-18T10:00:00Z")
+                )
+            ),
+            vehicleLocationRepository = vehicleLocationRepository
+        )
+        advanceUntilIdle()
+
+        assertEquals("active-rental-1", viewModel.state.value.activeRental?.id)
+        assertEquals("suv-1", vehicleLocationRepository.capturedActiveVehicleId)
+        assertEquals("suv-1", viewModel.state.value.highlightedVehicle?.id)
+    }
+
+    @Test
+    fun `latest preparing rental is exposed so delivery checklist can be resumed`() = runTest {
+        val viewModel = createViewModel(
+            rentalRepository = FakeRentalRepositoryForHomeTest(
+                rentals = listOf(
+                    testRentalForHomeTest(
+                        id = "old-preparing",
+                        vehicleId = "sedan-1",
+                        createdAt = Instant.parse("2026-07-18T09:00:00Z")
+                    ),
+                    testRentalForHomeTest(
+                        id = "latest-preparing",
+                        vehicleId = "suv-1",
+                        createdAt = Instant.parse("2026-07-18T10:00:00Z")
+                    )
+                )
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals("latest-preparing", viewModel.state.value.pendingRental?.id)
+        assertEquals("suv-1", viewModel.state.value.highlightedVehicle?.id)
+    }
+
     private fun createViewModel(
         vehicleRepository: VehicleRepository = FakeVehicleRepositoryForHomeTest(),
+        rentalRepository: RentalRepository = FakeRentalRepositoryForHomeTest(),
         reservationRepository: ReservationRepository = FakeReservationRepositoryForHomeTest(),
         vehicleLocationRepository: VehicleLocationRepository = EmptyVehicleLocationRepositoryForHomeTest(),
         locationTracker: LocationTracker = FakeLocationTrackerForHomeTest()
     ): HomeViewModel {
         return HomeViewModel(
             vehicleUseCases = VehicleUseCases(vehicleRepository),
-            rentalUseCases = RentalUseCases(FakeRentalRepositoryForHomeTest(), reservationRepository),
+            rentalUseCases = RentalUseCases(rentalRepository, reservationRepository),
             vehicleLocationRepository = vehicleLocationRepository,
             locationTracker = locationTracker
         )
@@ -284,18 +341,21 @@ private class FakeReservationRepositoryForHomeTest(
     override suspend fun cancelReservation(id: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
 }
 
-private class FakeRentalRepositoryForHomeTest : com.example.rencar_pair.domain.repository.RentalRepository {
+private class FakeRentalRepositoryForHomeTest(
+    private val activeRental: ActiveRental? = null,
+    private val rentals: List<Rental> = emptyList()
+) : RentalRepository {
     override suspend fun createRental(
         vehicleId: String,
         plan: com.example.rencar_pair.domain.model.RentalPlan?,
         endDate: String?
     ): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
-    override suspend fun getMyRentals(): NetworkResult<List<Rental>> = NetworkResult.Error("Not implemented")
+    override suspend fun getMyRentals(): NetworkResult<List<Rental>> = NetworkResult.Success(rentals)
 
     override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
-    override suspend fun getActiveRental(): NetworkResult<com.example.rencar_pair.domain.model.ActiveRental?> = NetworkResult.Error("Not implemented")
+    override suspend fun getActiveRental(): NetworkResult<ActiveRental?> = NetworkResult.Success(activeRental)
 
     override suspend fun getPreparationPhotos(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
 
@@ -407,6 +467,32 @@ private fun testVehicle(
         latitude = latitude,
         longitude = longitude,
         rangeKm = rangeKm
+    )
+}
+
+private fun testRentalForHomeTest(
+    id: String,
+    vehicleId: String,
+    createdAt: Instant
+): Rental {
+    return Rental(
+        id = id,
+        userId = "user-1",
+        vehicleId = vehicleId,
+        plan = RentalPlan.PerMinute,
+        status = RentalStatus.Preparing,
+        paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+        paymentMethod = null,
+        totalPrice = 0.0,
+        startFee = 15.0,
+        serviceFee = null,
+        distanceKm = null,
+        durationMinutes = null,
+        discountAmount = 0.0,
+        startedAt = null,
+        endedAt = null,
+        scheduledEndDate = null,
+        createdAt = createdAt
     )
 }
 
