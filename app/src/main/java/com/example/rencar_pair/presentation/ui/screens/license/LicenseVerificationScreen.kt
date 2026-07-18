@@ -92,10 +92,10 @@ fun LicenseVerificationScreenContent(
     if (cameraType != null) {
         RenCarCameraPreview(
             onPhotoCaptured = { uri ->
-                if (cameraType == "FRONT") {
-                    onIntent(LicenseVerificationIntent.PickFrontImage(uri))
-                } else {
-                    onIntent(LicenseVerificationIntent.PickBackImage(uri))
+                when (cameraType) {
+                    "FRONT" -> onIntent(LicenseVerificationIntent.PickFrontImage(uri))
+                    "BACK" -> onIntent(LicenseVerificationIntent.PickBackImage(uri))
+                    "SELFIE" -> onIntent(LicenseVerificationIntent.PickSelfieImage(uri))
                 }
                 cameraType = null
             },
@@ -164,15 +164,15 @@ fun LicenseVerificationScreenContent(
                         .padding(horizontal = 22.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    StepItem(number = 1, title = "Ehliyet", isActive = true)
+                    StepItem(number = 1, title = "Ehliyet", currentStep = state.currentStep)
                     Spacer(modifier = Modifier.weight(1f))
-                    Box(modifier = Modifier.height(2.dp).weight(1.5f).background(MaterialTheme.colorScheme.outlineVariant))
+                    Box(modifier = Modifier.height(2.dp).weight(1.5f).background(if (state.currentStep >= 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant))
                     Spacer(modifier = Modifier.weight(1f))
-                    StepItem(number = 2, title = "Selfie", isActive = false)
+                    StepItem(number = 2, title = "Selfie", currentStep = state.currentStep)
                     Spacer(modifier = Modifier.weight(1f))
-                    Box(modifier = Modifier.height(2.dp).weight(1.5f).background(MaterialTheme.colorScheme.outlineVariant))
+                    Box(modifier = Modifier.height(2.dp).weight(1.5f).background(if (state.currentStep >= 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant))
                     Spacer(modifier = Modifier.weight(1f))
-                    StepItem(number = 3, title = "Onay", isActive = false)
+                    StepItem(number = 3, title = "Onay", currentStep = state.currentStep)
                 }
             }
         }
@@ -185,175 +185,264 @@ fun LicenseVerificationScreenContent(
                 .padding(horizontal = 18.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Front Image Box
-            Column {
-                Text(
-                    text = "Ehliyet ön yüz",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                if (state.hasFrontImage) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(118.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { if (canPickImage) cameraType = "FRONT" }
-                    ) {
-                        Text(
-                            text = "Foto",
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Row(
+            if (state.currentStep == 1) {
+                // Front Image Box
+                Column {
+                    Text(
+                        text = "Ehliyet ön yüz",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    if (state.hasFrontImage) {
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                                .background(Color(0xFF1FB370), RoundedCornerShape(7.dp))
-                                .padding(horizontal = 8.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                .fillMaxWidth()
+                                .height(118.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { if (canPickImage) cameraType = "FRONT" }
                         ) {
-                            Icon(
-                                painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(11.dp)
-                            )
                             Text(
-                                text = "Yüklendi",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White
-                                )
+                                text = "Foto",
+                                modifier = Modifier.align(Alignment.Center),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(118.dp)
-                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
-                            .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
-                            .clickable { if (canPickImage) cameraType = "FRONT" },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            Box(
+                            Row(
                                 modifier = Modifier
-                                    .size(42.dp)
-                                    .background(Color(0xFFEAF2FC), RoundedCornerShape(13.dp)),
-                                contentAlignment = Alignment.Center
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .background(Color(0xFF1FB370), RoundedCornerShape(7.dp))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                    painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(22.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Text(
+                                    text = "Yüklendi",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
+                                    )
                                 )
                             }
-                            Text(
-                                text = "Ön yüzü çek veya yükle",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(118.dp)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+                                .clickable { if (canPickImage) cameraType = "FRONT" },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .background(Color(0xFFEAF2FC), RoundedCornerShape(13.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "Ön yüzü çek veya yükle",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                 }
-            }
-
-            // Back Image Box
-            Column {
-                Text(
-                    text = "Ehliyet arka yüz",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                if (state.hasBackImage) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(118.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable { if (canPickImage) cameraType = "BACK" }
-                    ) {
-                        Text(
-                            text = "Foto",
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Row(
+    
+                // Back Image Box
+                Column {
+                    Text(
+                        text = "Ehliyet arka yüz",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    if (state.hasBackImage) {
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(8.dp)
-                                .background(Color(0xFF1FB370), RoundedCornerShape(7.dp))
-                                .padding(horizontal = 8.dp, vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                .fillMaxWidth()
+                                .height(118.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { if (canPickImage) cameraType = "BACK" }
                         ) {
-                            Icon(
-                                painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(11.dp)
-                            )
                             Text(
-                                text = "Yüklendi",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White
-                                )
+                                text = "Foto",
+                                modifier = Modifier.align(Alignment.Center),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(118.dp)
-                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
-                            .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
-                            .clickable { if (canPickImage) cameraType = "BACK" },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            Box(
+                            Row(
                                 modifier = Modifier
-                                    .size(42.dp)
-                                    .background(Color(0xFFEAF2FC), RoundedCornerShape(13.dp)), // Use surfaceVariant or custom light blue for dark mode compat, but keeping simple
-                                contentAlignment = Alignment.Center
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .background(Color(0xFF1FB370), RoundedCornerShape(7.dp))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                    painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(22.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Text(
+                                    text = "Yüklendi",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
+                                    )
                                 )
                             }
-                            Text(
-                                text = "Arka yüzü çek veya yükle",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(118.dp)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+                                .clickable { if (canPickImage) cameraType = "BACK" },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .background(Color(0xFFEAF2FC), RoundedCornerShape(13.dp)), // Use surfaceVariant or custom light blue for dark mode compat, but keeping simple
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "Arka yüzü çek veya yükle",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 )
+                            }
+                        }
+                    }
+                }
+            } else if (state.currentStep == 2) {
+                // Selfie Image Box
+                Column {
+                    Text(
+                        text = "Selfie fotoğrafınız",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    if (state.hasSelfieImage) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { if (canPickImage) cameraType = "SELFIE" }
+                        ) {
+                            Text(
+                                text = "Foto",
+                                modifier = Modifier.align(Alignment.Center),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(8.dp)
+                                    .background(Color(0xFF1FB370), RoundedCornerShape(7.dp))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = android.R.drawable.ic_menu_edit),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Text(
+                                    text = "Yüklendi",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color.White
+                                    )
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+                                .clickable { if (canPickImage) cameraType = "SELFIE" },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(52.dp)
+                                        .background(Color(0xFFEAF2FC), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "Yüzünüzü net gösterecek bir selfie çekin",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
+                            }
                         }
                     }
                 }
@@ -395,26 +484,44 @@ fun LicenseVerificationScreenContent(
             Spacer(modifier = Modifier.weight(1f))
 
             // Primary Button
-            PrimaryButton(
-                text = if (state.isLoading) "İşleniyor..." else primaryButtonTextFor(phase),
-                onClick = {
-                    when (phase) {
-                        LicenseUiPhase.ReadyToSubmit -> onIntent(LicenseVerificationIntent.Upload)
-                        LicenseUiPhase.Reviewing,
-                        LicenseUiPhase.Approved -> onContinue()
-                        LicenseUiPhase.NeedsPhotos,
-                        LicenseUiPhase.Rejected -> Unit
+            if (state.currentStep == 1) {
+                PrimaryButton(
+                    text = "Devam Et",
+                    onClick = {
+                        onIntent(LicenseVerificationIntent.NextStep)
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                )
+            } else {
+                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = { onIntent(LicenseVerificationIntent.PreviousStep) },
+                        modifier = Modifier.weight(0.3f),
+                        enabled = !state.isLoading
+                    ) {
+                        Text("Geri")
                     }
-                },
-                enabled = !state.isLoading && phase.primaryEnabled,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
-            )
+                    PrimaryButton(
+                        text = if (state.isLoading) "İşleniyor..." else primaryButtonTextFor(phase),
+                        onClick = {
+                            if (phase == LicenseUiPhase.ReadyToSubmit) {
+                                onIntent(LicenseVerificationIntent.Upload)
+                            } else if (phase == LicenseUiPhase.Approved) {
+                                onContinue()
+                            }
+                        },
+                        enabled = !state.isLoading,
+                        modifier = Modifier.weight(0.7f)
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun StepItem(number: Int, title: String, isActive: Boolean) {
+private fun StepItem(number: Int, title: String, currentStep: Int) {
+    val isActive = number == currentStep
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
             modifier = Modifier

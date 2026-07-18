@@ -16,7 +16,7 @@ class FakeLicenseRepository : LicenseRepository {
         return NetworkResult.Success(currentLicense)
     }
 
-    override suspend fun upload(frontPath: String, backPath: String): NetworkResult<DriverLicense> {
+    override suspend fun upload(frontPath: String, backPath: String, selfiePath: String): NetworkResult<DriverLicense> {
         delay(1500)
         currentLicense = currentLicense.copy(
             status = LicenseStatus.Pending,
