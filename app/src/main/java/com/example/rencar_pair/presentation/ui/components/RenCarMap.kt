@@ -28,6 +28,8 @@ import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
+import org.maplibre.geojson.LineString
+import org.maplibre.android.style.layers.LineLayer
 
 val DEFAULT_CENTER: LatLng = LatLng(41.0082, 28.9784)
 
@@ -63,6 +65,8 @@ fun RenCarMap(
     initialZoom: Double = 13.0,
     controller: RencarMapController? = null,
     markers: List<RenCarMapMarker> = emptyList(),
+    routePoints: List<LatLng> = emptyList(),
+    vehicleLocation: LatLng? = null,
     onMarkerClick: ((String) -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -128,6 +132,29 @@ fun RenCarMap(
                         PropertyFactory.circleStrokeWidth(3f)
                     )
                 )
+                
+                // Route layer
+                loaded.addSource(GeoJsonSource("route"))
+                loaded.addLayerBelow(
+                    LineLayer("route-layer", "route").withProperties(
+                        PropertyFactory.lineColor(Color.parseColor("#151515")),
+                        PropertyFactory.lineWidth(4.5f),
+                        PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
+                        PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
+                    ), "me-halo-layer"
+                )
+
+                // Vehicle layer
+                loaded.addSource(GeoJsonSource("vehicle"))
+                loaded.addLayer(
+                    CircleLayer("vehicle-layer", "vehicle").withProperties(
+                        PropertyFactory.circleColor(Color.parseColor("#151515")),
+                        PropertyFactory.circleRadius(10f),
+                        PropertyFactory.circleStrokeColor(Color.WHITE),
+                        PropertyFactory.circleStrokeWidth(3f)
+                    )
+                )
+                
                 mapAndStyle = map to loaded
             }
         }
@@ -151,6 +178,32 @@ fun RenCarMap(
 
         hasZoomedToUser = true
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 13.0))
+    }
+
+    LaunchedEffect(mapAndStyle, routePoints) {
+        val (_, style) = mapAndStyle ?: return@LaunchedEffect
+        val source = style.getSourceAs<GeoJsonSource>("route") ?: return@LaunchedEffect
+        if (routePoints.isEmpty()) {
+            source.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
+        } else {
+            val points = routePoints.map { Point.fromLngLat(it.longitude, it.latitude) }
+            source.setGeoJson(LineString.fromLngLats(points))
+        }
+    }
+
+    var hasZoomedToVehicle by remember { mutableStateOf(false) }
+    LaunchedEffect(mapAndStyle, vehicleLocation) {
+        val (map, style) = mapAndStyle ?: return@LaunchedEffect
+        val source = style.getSourceAs<GeoJsonSource>("vehicle") ?: return@LaunchedEffect
+        if (vehicleLocation == null) {
+            source.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
+        } else {
+            source.setGeoJson(Point.fromLngLat(vehicleLocation.longitude, vehicleLocation.latitude))
+            if (!hasZoomedToVehicle) {
+                hasZoomedToVehicle = true
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(vehicleLocation, 15.0))
+            }
+        }
     }
 
     LaunchedEffect(mapAndStyle, markers) {
