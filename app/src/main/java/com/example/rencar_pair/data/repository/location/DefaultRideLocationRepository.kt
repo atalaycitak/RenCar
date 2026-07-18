@@ -16,16 +16,29 @@ class DefaultRideLocationRepository(
             namespace = "https://rencarv2.halitkalayci.com/ws/locations",
             eventName = "my-vehicle"
         ).mapNotNull { envelope ->
-            val vehicle = envelope.optJSONObject("vehicle") ?: envelope
+            val vehicle = listOfNotNull(
+                envelope.optJSONObject("vehicle"),
+                envelope.optJSONObject("data")?.optJSONObject("vehicle"),
+                envelope.optJSONObject("data")?.optJSONObject("location"),
+                envelope.optJSONObject("data"),
+                envelope.optJSONObject("location"),
+                envelope
+            ).firstOrNull { it.has("latitude") || it.has("lat") } ?: envelope
             
-            val latitude = vehicle.optDouble("latitude", Double.NaN)
-            val longitude = vehicle.optDouble("longitude", Double.NaN)
+            val latitude = vehicle.optFiniteDouble("latitude")
+                ?: vehicle.optFiniteDouble("lat")
+                ?: return@mapNotNull null
+            val longitude = vehicle.optFiniteDouble("longitude")
+                ?: vehicle.optFiniteDouble("lng")
+                ?: vehicle.optFiniteDouble("lon")
+                ?: return@mapNotNull null
             
-            if (!latitude.isFinite() || !longitude.isFinite()) {
-                null
-            } else {
-                VehiclePoint(latitude, longitude)
-            }
+            VehiclePoint(latitude, longitude)
         }
+    }
+
+    private fun JSONObject.optFiniteDouble(name: String): Double? {
+        if (!has(name)) return null
+        return optDouble(name, Double.NaN).takeIf { it.isFinite() }
     }
 }

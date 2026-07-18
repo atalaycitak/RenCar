@@ -30,7 +30,7 @@ import coil.compose.AsyncImage
 fun VehicleDetailBottomSheet(
     vehicle: Vehicle,
     onDismissRequest: () -> Unit,
-    onReserveClick: () -> Unit,
+    onDetailsClick: () -> Unit,
     onUnlockClick: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -243,7 +243,7 @@ fun VehicleDetailBottomSheet(
             Spacer(modifier = Modifier.height(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(11.dp)) {
                 Button(
-                    onClick = onReserveClick,
+                    onClick = onDetailsClick,
                     enabled = vehicle.canReserve,
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                     border = androidx.compose.foundation.BorderStroke(1.7.dp, MaterialTheme.colorScheme.primary),
@@ -253,9 +253,9 @@ fun VehicleDetailBottomSheet(
                         .height(56.dp)
                 ) {
                     Text(
-                        text = "Rezerve Et",
+                        text = "Detay / Kirala",
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     )

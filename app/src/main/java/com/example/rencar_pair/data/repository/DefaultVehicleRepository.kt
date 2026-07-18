@@ -19,10 +19,11 @@ class DefaultVehicleRepository(
         limit: Int?,
         includeBusy: Boolean
     ): NetworkResult<List<Vehicle>> {
+        val vehicleTypeQuery = type?.takeIf { it in VEHICLE_TYPE_QUERIES }
         return safeApiCall(
             call = {
                 api.getVehicles(
-                    type = type,
+                    type = vehicleTypeQuery,
                     segment = type,
                     includeBusy = includeBusy.takeIf { it },
                     page = page,
@@ -69,6 +70,10 @@ class DefaultVehicleRepository(
             canReserve = canReserve ?: (vehicleStatus == VehicleStatus.Available),
             canUnlock = canUnlock ?: false
         )
+    }
+
+    private companion object {
+        val VEHICLE_TYPE_QUERIES = setOf("SEDAN", "SUV", "HATCHBACK", "STATION", "MINIVAN")
     }
 }
 

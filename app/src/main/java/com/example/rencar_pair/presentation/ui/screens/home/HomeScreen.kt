@@ -111,16 +111,6 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(state.activeRental?.id) {
-        state.activeRental?.id?.let(onNavigateToActiveRental)
-    }
-
-    LaunchedEffect(state.activeRental?.id, state.activeReservation?.vehicleId) {
-        if (state.activeRental == null) {
-            state.activeReservation?.vehicleId?.let(onReserveVehicle)
-        }
-    }
-
     HomeScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
@@ -149,7 +139,10 @@ fun HomeScreenContent(
     val visibleVehicles = state.visibleVehicles
     val highlightedVehicle = state.highlightedVehicle
     val highlightedDistanceInfo = highlightedVehicle?.let { state.distanceInfoFor(it) }
-    val detailVehicle = state.selectedVehicle ?: state.activeReservationVehicle
+    val selectedVehicle = state.selectedVehicle
+    val detailVehicle = selectedVehicle ?: state.activeReservationVehicle
+    val focusedStatusVehicle = selectedVehicle ?: state.activeReservationVehicle
+    val focusedStatusDistanceInfo = focusedStatusVehicle?.let { state.distanceInfoFor(it) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -160,16 +153,16 @@ fun HomeScreenContent(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            val centerLat = state.selectedVehicle?.latitude
+            val centerLat = selectedVehicle?.latitude
                 ?: highlightedVehicle?.latitude
                 ?: state.userLocation?.latitude
                 ?: 41.0082
-            val centerLng = state.selectedVehicle?.longitude
+            val centerLng = selectedVehicle?.longitude
                 ?: highlightedVehicle?.longitude
                 ?: state.userLocation?.longitude
                 ?: 28.9784
 
-            val selectedVehicleId = state.selectedVehicle?.id ?: highlightedVehicle?.id
+            val selectedVehicleId = selectedVehicle?.id ?: state.activeReservationVehicle?.id
             val mapMarkers = remember(visibleVehicles, selectedVehicleId, state.userLocation) {
                 visibleVehicles.map { vehicle ->
                     val distanceInfo = state.distanceInfoFor(vehicle)
@@ -264,8 +257,8 @@ fun HomeScreenContent(
                 }
 
                 LiveMapStatusPanel(
-                    vehicle = highlightedVehicle,
-                    distanceInfo = highlightedDistanceInfo,
+                    vehicle = focusedStatusVehicle,
+                    distanceInfo = focusedStatusDistanceInfo,
                     hasLiveVehicleUpdates = state.hasLiveVehicleUpdates,
                     streamMode = state.vehicleLocationStreamMode,
                     modifier = Modifier
@@ -283,7 +276,7 @@ fun HomeScreenContent(
                     distanceInfo = highlightedDistanceInfo,
                     selectedVehicleType = state.selectedVehicleType,
                     isReservationLocked = state.isReservationLocked,
-                    isSelected = highlightedVehicle?.id == state.selectedVehicle?.id,
+                    isSelected = selectedVehicle != null && highlightedVehicle?.id == selectedVehicle.id,
                     onFindNearestClick = {
                         highlightedVehicle?.let { vehicle ->
                             onIntent(HomeIntent.SelectVehicle(vehicle.id))
@@ -297,6 +290,12 @@ fun HomeScreenContent(
                         val pending = state.pendingRental
                         if (pending != null) {
                             onResumeDeliveryChecklist(pending.id, pending.vehicleId)
+                        }
+                    },
+                    onSelectedVehicleDetailsClick = {
+                        highlightedVehicle?.let { vehicle ->
+                            onIntent(HomeIntent.SelectVehicle(null))
+                            onVehicleDetails(vehicle.id)
                         }
                     },
                     onVehicleTypeFilterClick = { type ->
@@ -325,9 +324,9 @@ fun HomeScreenContent(
                             onIntent(HomeIntent.SelectVehicle(null))
                         }
                     },
-                    onReserveClick = {
+                    onDetailsClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
-                        onReserveVehicle(vehicle.id)
+                        onVehicleDetails(vehicle.id)
                     },
                     onUnlockClick = {
                         onIntent(HomeIntent.SelectVehicle(null))
@@ -590,6 +589,7 @@ private fun HomeBottomSheet(
     onFindNearestClick: () -> Unit,
     onActiveRentalClick: () -> Unit,
     onPendingRentalClick: () -> Unit,
+    onSelectedVehicleDetailsClick: () -> Unit,
     onVehicleTypeFilterClick: (VehicleType?) -> Unit
 ) {
     Surface(
@@ -649,7 +649,6 @@ private fun HomeBottomSheet(
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = when {
-                                activeRentalId != null -> "Aktif kiralaman devam ediyor"
                                 activeReservationId != null -> "Aktif rezervasyonun devam ediyor"
                                 pendingRentalId != null && pendingRentalVehicleId == vehicle.id ->
                                     "Fotoğraf kontrolü yarım kaldı"
@@ -714,20 +713,52 @@ private fun HomeBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            if (activeRentalId != null && !isReservationLocked) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+                        .clickable(onClick = onActiveRentalClick)
+                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Aktif kiralaman devam ediyor",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    Text(
+                        text = "Yolculuğa dön",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             PrimaryButton(
                 text = when {
-                    activeRentalId != null -> "Aktif Kiralamaya Dön"
+                    isSelected -> "Detay / Kirala"
                     activeReservationId != null -> "Rezerve Aracı Aç"
                     pendingRentalId != null -> "Fotoğraf Kontrolüne Dön"
-                    isSelected -> "Seçili Araca Git"
-                    else -> "En Yakın Aracı Bul"
+                    featuredVehicle != null -> "En Yakın Aracı Bul"
+                    else -> "Uygun araç yok"
                 },
                 onClick = when {
-                    activeRentalId != null -> onActiveRentalClick
+                    isSelected -> onSelectedVehicleDetailsClick
                     activeReservationId != null -> onFindNearestClick
                     pendingRentalId != null -> onPendingRentalClick
                     else -> onFindNearestClick
                 },
+                enabled = isSelected ||
+                    activeReservationId != null ||
+                    pendingRentalId != null ||
+                    featuredVehicle != null,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -774,12 +805,18 @@ private fun getHexColorForVehicle(vehicle: Vehicle): String {
     if (vehicle.status == VehicleStatus.Rented || vehicle.status == VehicleStatus.Reserved) {
         return "#9AA3AE"
     }
+    val segment = vehicle.segment?.trim()?.uppercase()
     return when (vehicle.type) {
         VehicleType.Hatchback -> "#F5821F"
         VehicleType.Sedan -> "#7C5CE6"
         VehicleType.Suv -> "#E6A700"
         VehicleType.Minivan -> "#0AB5A6"
-        else -> "#0AB5A6"
+        else -> when (segment) {
+            "ECONOMY", "ECONOMIC", "EKONOMIK", "EKONOMİK" -> "#F5821F"
+            "COMFORT", "KONFOR" -> "#7C5CE6"
+            "SUV" -> "#E6A700"
+            else -> "#0AB5A6"
+        }
     }
 }
 

@@ -20,6 +20,7 @@ import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMapOptions
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -74,7 +75,11 @@ fun RenCarMap(
 
     val mapView = remember {
         MapLibre.getInstance(context)
-        MapView(context).apply { onCreate(null) }
+        val options = MapLibreMapOptions()
+            .textureMode(true)
+            .translucentTextureSurface(false)
+        options.renderSurfaceOnTop(false)
+        MapView(context, options).apply { onCreate(null) }
     }
 
     var mapAndStyle by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
@@ -137,8 +142,10 @@ fun RenCarMap(
                 loaded.addSource(GeoJsonSource("route"))
                 loaded.addLayerBelow(
                     LineLayer("route-layer", "route").withProperties(
-                        PropertyFactory.lineColor(Color.parseColor("#151515")),
-                        PropertyFactory.lineWidth(4.5f),
+                        PropertyFactory.lineColor(Color.parseColor("#1976D2")),
+                        PropertyFactory.lineWidth(4.0f),
+                        PropertyFactory.lineOpacity(0.82f),
+                        PropertyFactory.lineDasharray(arrayOf(1.4f, 1.2f)),
                         PropertyFactory.lineCap(org.maplibre.android.style.layers.Property.LINE_CAP_ROUND),
                         PropertyFactory.lineJoin(org.maplibre.android.style.layers.Property.LINE_JOIN_ROUND)
                     ), "me-halo-layer"
@@ -148,7 +155,7 @@ fun RenCarMap(
                 loaded.addSource(GeoJsonSource("vehicle"))
                 loaded.addLayer(
                     CircleLayer("vehicle-layer", "vehicle").withProperties(
-                        PropertyFactory.circleColor(Color.parseColor("#151515")),
+                        PropertyFactory.circleColor(Color.parseColor("#1976D2")),
                         PropertyFactory.circleRadius(10f),
                         PropertyFactory.circleStrokeColor(Color.WHITE),
                         PropertyFactory.circleStrokeWidth(3f)

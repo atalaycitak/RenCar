@@ -4,6 +4,7 @@ data class User(
     val id: String,
     val fullName: String,
     val token: String,
+    val phone: String? = null,
     val role: UserRole = UserRole.Pending
 )
 

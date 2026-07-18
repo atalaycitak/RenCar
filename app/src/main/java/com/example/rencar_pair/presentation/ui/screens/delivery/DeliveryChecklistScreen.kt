@@ -76,7 +76,9 @@ fun DeliveryChecklistScreen(
                 viewModel.onIntent(DeliveryChecklistIntent.SelectPhoto(side, uri))
                 activeCameraSide = null
             },
-            onCancel = { activeCameraSide = null }
+            onCancel = { activeCameraSide = null },
+            guideText = "${side.displayName()} tarafını çerçevenin içine yerleştirin",
+            filePrefix = "delivery_${side.name.lowercase()}"
         )
         return
     }
@@ -88,6 +90,13 @@ fun DeliveryChecklistScreen(
         onDone = onDone,
         onPickPhoto = { side -> activeCameraSide = side }
     )
+}
+
+private fun RentalPhotoSide.displayName(): String = when (this) {
+    RentalPhotoSide.Front -> "Aracın ön"
+    RentalPhotoSide.Back -> "Aracın arka"
+    RentalPhotoSide.Left -> "Aracın sol"
+    RentalPhotoSide.Right -> "Aracın sağ"
 }
 
 @Composable

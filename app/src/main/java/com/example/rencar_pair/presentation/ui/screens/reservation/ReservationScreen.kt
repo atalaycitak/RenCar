@@ -2,6 +2,7 @@ package com.example.rencar_pair.presentation.ui.screens.reservation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rencar_pair.R
+import com.example.rencar_pair.domain.model.RentalPlan
 import com.example.rencar_pair.domain.model.ReservationQuote
 import com.example.rencar_pair.domain.model.Vehicle
 import com.example.rencar_pair.domain.model.VehicleType
@@ -58,6 +60,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ReservationScreen(
     onBack: () -> Unit,
     onDeliveryChecklist: (String, String) -> Unit,
+    onActiveRental: (String) -> Unit,
     viewModel: ReservationViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -67,6 +70,9 @@ fun ReservationScreen(
             when (effect) {
                 is ReservationEffect.NavigateToDelivery -> {
                     onDeliveryChecklist(effect.rentalId, effect.vehicleId)
+                }
+                is ReservationEffect.NavigateToActiveRental -> {
+                    onActiveRental(effect.rentalId)
                 }
             }
         }
@@ -276,6 +282,11 @@ private fun ReservationView(
             }
         }
 
+        PlanSelector(
+            selectedPlan = state.selectedPlan,
+            onPlanSelected = { onIntent(ReservationIntent.SelectPlan(it)) }
+        )
+
         // Pricing Breakdown Card
         Box(
             modifier = Modifier
@@ -285,6 +296,7 @@ private fun ReservationView(
                 .padding(16.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                QuoteRow("Plan", state.selectedPlan.displayName())
                 QuoteRow("Günlük fiyat", "₺${quote.pricePerDay.toInt()}")
                 QuoteRow("Süre", "${quote.days} gün")
                 QuoteRow("Servis bedeli", "₺${quote.serviceFee.toInt()}")
@@ -329,6 +341,7 @@ private fun ReservationView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { onIntent(ReservationIntent.ToggleTermsAccepted) }
                 .padding(horizontal = 4.dp, vertical = 2.dp),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(11.dp)
@@ -336,15 +349,25 @@ private fun ReservationView(
             Box(
                 modifier = Modifier
                     .size(22.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)),
+                    .background(
+                        if (state.termsAccepted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                        RoundedCornerShape(7.dp)
+                    )
+                    .border(
+                        1.3.dp,
+                        if (state.termsAccepted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                        RoundedCornerShape(7.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(14.dp)
-                )
+                if (state.termsAccepted) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
             Text(
                 text = "Kullanım şartlarını ve kasko/sigorta koşullarını okudum, onaylıyorum.",
@@ -367,16 +390,68 @@ private fun ReservationView(
         PrimaryButton(
             text = when {
                 state.isSubmitting -> "İşleniyor..."
-                state.canUnlockSelectedVehicle -> "Kilidi Aç ve Fotoğraflara Geç"
-                else -> "15 dk Ücretsiz Rezerve Et"
+                else -> "Rezervasyonu Tamamla"
             },
             onClick = { onIntent(ReservationIntent.ConfirmReservation) },
-            enabled = !state.isSubmitting,
+            enabled = state.canSubmit,
             modifier = Modifier.fillMaxWidth()
         )
         
         Spacer(modifier = Modifier.height(20.dp))
     }
+}
+
+@Composable
+private fun PlanSelector(
+    selectedPlan: RentalPlan,
+    onPlanSelected: (RentalPlan) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        listOf(RentalPlan.PerMinute, RentalPlan.Hourly, RentalPlan.Daily).forEach { plan ->
+            val selected = selectedPlan == plan
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(
+                        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                        RoundedCornerShape(14.dp)
+                    )
+                    .border(
+                        1.dp,
+                        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                        RoundedCornerShape(14.dp)
+                    )
+                    .clickable { onPlanSelected(plan) }
+                    .padding(horizontal = 10.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = plan.shortLabel(),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
+        }
+    }
+}
+
+private fun RentalPlan.shortLabel(): String = when (this) {
+    RentalPlan.PerMinute -> "Dakikalık"
+    RentalPlan.Hourly -> "Saatlik"
+    RentalPlan.Daily -> "Günlük"
+    RentalPlan.Unknown -> "Plan"
+}
+
+private fun RentalPlan.displayName(): String = when (this) {
+    RentalPlan.PerMinute -> "Dakikalık kullanım"
+    RentalPlan.Hourly -> "Saatlik kullanım"
+    RentalPlan.Daily -> "Günlük kiralama"
+    RentalPlan.Unknown -> "Plan seçilmedi"
 }
 
 private fun Vehicle.reservationSpecSummary(): String {

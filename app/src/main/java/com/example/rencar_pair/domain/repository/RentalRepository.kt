@@ -59,6 +59,8 @@ interface RentalRepository {
      */
     suspend fun finishRental(rentalId: String): NetworkResult<FinishedRental>
 
+    suspend fun returnRental(rentalId: String): NetworkResult<Rental>
+
     /**
      * POST /rentals/{id}/pay — Ödeme işlemini gerçekleştirir.
      * CARD yöntemi seçilirse [cardId] zorunludur.

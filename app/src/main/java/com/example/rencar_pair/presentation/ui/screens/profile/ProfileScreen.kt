@@ -182,7 +182,7 @@ fun ProfileScreenContent(
                                     )
                                 )
                                 Text(
-                                    text = "Telefon bilgisi yok",
+                                    text = state.user?.phone?.takeIf { it.isNotBlank() } ?: "Telefon bilgisi yok",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium,

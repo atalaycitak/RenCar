@@ -33,5 +33,6 @@ sealed interface ReturnVehicleIntent : MviIntent {
 
 sealed interface ReturnVehicleEffect : MviEffect {
     data class NavigateToSummary(val rentalId: String) : ReturnVehicleEffect
+    data object NavigateToHome : ReturnVehicleEffect
     data class ShowError(val message: String) : ReturnVehicleEffect
 }

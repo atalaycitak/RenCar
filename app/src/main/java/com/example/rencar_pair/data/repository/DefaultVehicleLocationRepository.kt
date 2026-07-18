@@ -72,14 +72,23 @@ class DefaultVehicleLocationRepository(
             else -> null
         } ?: return null
 
-        val vehicle = envelope.optJSONObject("vehicle") ?: envelope
+        val vehicle = listOfNotNull(
+            envelope.optJSONObject("vehicle"),
+            envelope.optJSONObject("data")?.optJSONObject("vehicle"),
+            envelope.optJSONObject("data")?.optJSONObject("location"),
+            envelope.optJSONObject("data"),
+            envelope.optJSONObject("location"),
+            envelope
+        ).firstOrNull { it.has("latitude") || it.has("lat") } ?: envelope
         val vehicleId = vehicle.optString("vehicleId", vehicle.optString("id"))
             .ifBlank { activeVehicleId.orEmpty() }
         if (vehicleId.isBlank()) return null
 
-        val latitude = vehicle.optDouble("latitude", Double.NaN)
-        val longitude = vehicle.optDouble("longitude", Double.NaN)
-        if (!latitude.isFinite() || !longitude.isFinite()) return null
+        val latitude = vehicle.optFiniteDouble("latitude") ?: vehicle.optFiniteDouble("lat") ?: return null
+        val longitude = vehicle.optFiniteDouble("longitude")
+            ?: vehicle.optFiniteDouble("lng")
+            ?: vehicle.optFiniteDouble("lon")
+            ?: return null
 
         return VehiclePosition(
             vehicleId = vehicleId,
@@ -88,6 +97,11 @@ class DefaultVehicleLocationRepository(
             status = VehicleStatus.fromApiString(vehicle.optString("status", "RENTED")),
             updatedAt = envelope.optString("ts", vehicle.optString("updatedAt")).takeIf { it.isNotBlank() }
         )
+    }
+
+    private fun JSONObject.optFiniteDouble(name: String): Double? {
+        if (!has(name)) return null
+        return optDouble(name, Double.NaN).takeIf { it.isFinite() }
     }
 
     private companion object {

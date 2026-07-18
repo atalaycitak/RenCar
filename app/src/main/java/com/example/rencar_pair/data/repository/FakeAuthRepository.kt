@@ -25,6 +25,7 @@ class FakeAuthRepository : AuthRepository {
                 id = "fake_id",
                 fullName = "Fake User",
                 token = "fake_token",
+                phone = phone,
                 role = UserRole.Customer
             )
             NetworkResult.Success(currentUser!!)
@@ -44,6 +45,7 @@ class FakeAuthRepository : AuthRepository {
             id = "fake_id",
             fullName = fullName,
             token = "fake_token",
+            phone = phone,
             role = UserRole.Customer
         )
         return NetworkResult.Success(currentUser!!)

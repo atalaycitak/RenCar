@@ -66,12 +66,13 @@ class ReservationViewModelTest {
         val viewModel = createViewModel(reservationRepository = reservationRepository)
 
         advanceUntilIdle()
+        viewModel.onIntent(ReservationIntent.ToggleTermsAccepted)
         viewModel.onIntent(ReservationIntent.ConfirmReservation)
         advanceUntilIdle()
 
         assertEquals("reservation-1", viewModel.state.value.activeReservation?.id)
         assertEquals("vehicle-1", reservationRepository.reservedVehicleId)
-        assertEquals(null, viewModel.state.value.rentalId)
+        assertEquals("rental-1", viewModel.state.value.rentalId)
     }
 
     @Test
@@ -86,6 +87,7 @@ class ReservationViewModelTest {
         )
 
         advanceUntilIdle()
+        viewModel.onIntent(ReservationIntent.ToggleTermsAccepted)
         viewModel.onIntent(ReservationIntent.ConfirmReservation)
         advanceUntilIdle()
 
@@ -172,7 +174,7 @@ private class FakeReservationRepositoryForTest : ReservationRepository {
 
     override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
-    override suspend fun returnRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+    override suspend fun returnRental(rentalId: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 }
 
 private class FakeRentalRepositoryForTest : com.example.rencar_pair.domain.repository.RentalRepository {
@@ -228,6 +230,8 @@ private class FakeRentalRepositoryForTest : com.example.rencar_pair.domain.repos
     override suspend fun startRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
 
     override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun returnRental(rentalId: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
     override suspend fun payRental(
         rentalId: String,
