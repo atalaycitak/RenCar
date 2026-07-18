@@ -14,6 +14,8 @@ data class DeliveryChecklistState(
     val backPhotoTaken: Boolean = false,
     val leftPhotoTaken: Boolean = false,
     val rightPhotoTaken: Boolean = false,
+    val selectedPhotoUris: Map<RentalPhotoSide, String> = emptyMap(),
+    val failedPhotoSides: Set<RentalPhotoSide> = emptySet(),
     val isLoading: Boolean = false,
     val isUploading: Boolean = false,
     val uploadingSide: RentalPhotoSide? = null,
@@ -22,6 +24,7 @@ data class DeliveryChecklistState(
 ) : MviState {
     val completedPhotoCount: Int = listOf(frontPhotoTaken, backPhotoTaken, leftPhotoTaken, rightPhotoTaken).count { it }
     val canComplete: Boolean = completedPhotoCount == 4
+    val remainingPhotoCount: Int = 4 - completedPhotoCount
 
     fun isPhotoTaken(side: RentalPhotoSide): Boolean = when (side) {
         RentalPhotoSide.Front -> frontPhotoTaken
@@ -29,6 +32,10 @@ data class DeliveryChecklistState(
         RentalPhotoSide.Left -> leftPhotoTaken
         RentalPhotoSide.Right -> rightPhotoTaken
     }
+
+    fun selectedPhotoUri(side: RentalPhotoSide): String? = selectedPhotoUris[side]
+
+    fun hasUploadFailed(side: RentalPhotoSide): Boolean = side in failedPhotoSides
 }
 
 sealed interface DeliveryChecklistIntent : MviIntent {
