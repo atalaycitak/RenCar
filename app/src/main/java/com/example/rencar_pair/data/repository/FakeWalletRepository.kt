@@ -16,7 +16,7 @@ class FakeWalletRepository : WalletRepository {
         WalletTransaction(
             id = "wtx_001",
             amount = 500.0,
-            date = System.currentTimeMillis() - 86400000L,
+            createdAt = "2026-07-17T10:00:00.000Z",
             type = WalletTransactionType.TOP_UP
         )
     )
@@ -27,7 +27,7 @@ class FakeWalletRepository : WalletRepository {
             NetworkResult.Success(
                 WalletInfo(
                     balance = currentBalance,
-                    transactions = transactions.toList().sortedByDescending { it.date }
+                    transactions = transactions.toList().sortedByDescending { it.createdAt }
                 )
             )
         }
@@ -49,14 +49,14 @@ class FakeWalletRepository : WalletRepository {
                 WalletTransaction(
                     id = "wtx_${System.currentTimeMillis()}",
                     amount = amount,
-                    date = System.currentTimeMillis(),
+                    createdAt = java.time.Instant.now().toString(),
                     type = WalletTransactionType.TOP_UP
                 )
             )
             NetworkResult.Success(
                 WalletInfo(
                     balance = currentBalance,
-                    transactions = transactions.toList().sortedByDescending { it.date }
+                    transactions = transactions.toList().sortedByDescending { it.createdAt }
                 )
             )
         }
