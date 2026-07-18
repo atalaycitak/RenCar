@@ -19,8 +19,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -139,7 +139,7 @@ fun LoginScreenContent(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.ArrowBack, // Mock back icon or similar
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Geri",
                     tint = textPrimary,
                     modifier = Modifier.size(22.dp)
@@ -231,7 +231,7 @@ fun LoginScreenContent(
             ) {
                 // Info icon
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_dialog_info),
+                    imageVector = Icons.Default.Info,
                     contentDescription = null,
                     tint = textSecondary,
                     modifier = Modifier.size(17.dp)

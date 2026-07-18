@@ -16,7 +16,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,7 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -194,7 +201,7 @@ fun ProfileScreenContent(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_edit),
+                                    imageVector = Icons.Default.Edit,
                                     contentDescription = "Profili düzenle yakında",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                                     modifier = Modifier.size(18.dp)
@@ -222,7 +229,7 @@ fun ProfileScreenContent(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_agenda), // Mock Document Icon
+                                    imageVector = Icons.Default.Badge,
                                     contentDescription = null,
                                     tint = Color(0xFF1A9E63),
                                     modifier = Modifier.size(22.dp)
@@ -272,27 +279,27 @@ fun ProfileScreenContent(
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                         ) {
                             ProfileMenuItem(
-                                iconId = android.R.drawable.ic_menu_today, // Mock icon
+                                icon = Icons.Default.CreditCard,
                                 title = "Ödeme yöntemleri",
                                 onClick = onNavigateToWallet
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
-                                iconId = android.R.drawable.ic_menu_preferences, // Mock icon
+                                icon = Icons.Default.Settings,
                                 title = "Ayarlar",
                                 enabled = false,
                                 onClick = {}
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
-                                iconId = android.R.drawable.ic_menu_help, // Mock icon
+                                icon = Icons.AutoMirrored.Filled.HelpOutline,
                                 title = "Yardım & destek",
                                 enabled = false,
                                 onClick = {}
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
-                                iconId = android.R.drawable.ic_menu_share, // Mock icon
+                                icon = Icons.Default.Share,
                                 title = "Davet et · ₺50 kazan",
                                 enabled = false,
                                 onClick = {}
@@ -314,7 +321,7 @@ fun ProfileScreenContent(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                painter = painterResource(id = android.R.drawable.ic_menu_close_clear_cancel), // Mock Exit Icon
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
                                 contentDescription = "Logout",
                                 tint = Color(0xFFE5484D),
                                 modifier = Modifier.size(19.dp)
@@ -339,7 +346,7 @@ fun ProfileScreenContent(
 
 @Composable
 fun ProfileMenuItem(
-    iconId: Int,
+    icon: ImageVector,
     title: String,
     enabled: Boolean = true,
     onClick: () -> Unit
@@ -368,7 +375,7 @@ fun ProfileMenuItem(
             horizontalArrangement = Arrangement.spacedBy(13.dp)
         ) {
             Icon(
-                painter = painterResource(id = iconId),
+                imageVector = icon,
                 contentDescription = title,
                 tint = iconColor,
                 modifier = Modifier.size(20.dp)

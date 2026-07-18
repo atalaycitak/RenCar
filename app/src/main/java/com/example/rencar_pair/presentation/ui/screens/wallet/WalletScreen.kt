@@ -18,6 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -38,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -240,7 +242,7 @@ private fun BalanceCard(balance: Double, onTopUpClick: () -> Unit) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_input_add),
+                    imageVector = Icons.Default.Add,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)
@@ -522,9 +524,7 @@ fun TransactionItem(tx: WalletTransaction, isLast: Boolean) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                painter = painterResource(
-                    id = if (isTopUp) android.R.drawable.ic_input_add else android.R.drawable.ic_menu_delete
-                ),
+                imageVector = if (isTopUp) Icons.Default.Add else Icons.Default.Delete,
                 contentDescription = null,
                 tint = if (isTopUp) Color(0xFF1A9E63) else Color(0xFFE5484D),
                 modifier = Modifier.size(18.dp)

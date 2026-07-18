@@ -22,7 +22,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,13 +45,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.rencar_pair.R
 import com.example.rencar_pair.domain.model.LicenseStatus
 import com.example.rencar_pair.presentation.ui.components.PrimaryButton
 import com.example.rencar_pair.presentation.ui.components.RenCarCameraPreview
@@ -133,7 +133,7 @@ fun LicenseVerificationScreenContent(
                             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(13.dp))
                     ) {
                         Icon(
-                            painter = painterResource(id = android.R.drawable.ic_media_previous),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Geri",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -221,7 +221,7 @@ fun LicenseVerificationScreenContent(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
+                                    imageVector = Icons.Default.CheckCircle,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(11.dp)
@@ -254,7 +254,7 @@ fun LicenseVerificationScreenContent(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                        imageVector = Icons.Default.CameraAlt,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(22.dp)
@@ -308,7 +308,7 @@ fun LicenseVerificationScreenContent(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_edit), // placeholder check
+                                    imageVector = Icons.Default.CheckCircle,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(11.dp)
@@ -341,7 +341,7 @@ fun LicenseVerificationScreenContent(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                        imageVector = Icons.Default.CameraAlt,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(22.dp)
@@ -395,7 +395,7 @@ fun LicenseVerificationScreenContent(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    painter = painterResource(id = android.R.drawable.ic_menu_edit),
+                                    imageVector = Icons.Default.CheckCircle,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(11.dp)
@@ -428,7 +428,7 @@ fun LicenseVerificationScreenContent(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                                        imageVector = Icons.Default.CameraAlt,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(26.dp)
@@ -458,7 +458,7 @@ fun LicenseVerificationScreenContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_dialog_info),
+                    imageVector = Icons.Default.Info,
                     contentDescription = null,
                     tint = Color(0xFF2C5A8C),
                     modifier = Modifier.size(18.dp).padding(top = 1.dp)

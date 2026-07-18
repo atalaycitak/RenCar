@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -102,7 +104,7 @@ fun ReservationScreenContent(
                         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(13.dp))
                 ) {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_media_previous), // Replace with custom arrow back if needed
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Geri",
                         tint = MaterialTheme.colorScheme.onSurface
                     )
@@ -338,7 +340,7 @@ private fun ReservationView(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = android.R.drawable.ic_input_add), // Check icon placeholder
+                    imageVector = Icons.Default.Check,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(14.dp)
