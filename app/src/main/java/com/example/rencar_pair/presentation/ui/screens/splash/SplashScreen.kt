@@ -33,6 +33,7 @@ import org.koin.androidx.compose.koinViewModel
 fun SplashScreen(
     onNavigateToOnboarding: () -> Unit,
     onNavigateToLicenseVerification: () -> Unit,
+    onNavigateToHome: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SplashViewModel = koinViewModel()
 ) {
@@ -53,6 +54,7 @@ fun SplashScreen(
             when (effect) {
                 SplashEffect.NavigateToOnboarding -> onNavigateToOnboarding()
                 SplashEffect.NavigateToLicenseVerification -> onNavigateToLicenseVerification()
+                SplashEffect.NavigateToHome -> onNavigateToHome()
             }
         }
     }

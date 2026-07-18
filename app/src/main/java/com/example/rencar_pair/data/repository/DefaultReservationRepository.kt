@@ -12,6 +12,9 @@ import com.example.rencar_pair.data.remote.dto.RentalResponse
 import com.example.rencar_pair.data.remote.dto.ReservationResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.PaymentMethod
+import com.example.rencar_pair.domain.model.PaymentStatus
+import com.example.rencar_pair.domain.model.RentalPlan
 import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.Reservation
 import com.example.rencar_pair.domain.model.ReservationStatus
@@ -88,18 +91,30 @@ class DefaultReservationRepository(
     }
 
     private fun RentalResponse.toDomain(): Rental {
-        val startIso = startedAt ?: startDate ?: createdAt
-        val endIso = endDate ?: endedAt ?: startIso
         return Rental(
             id = id,
             userId = userId,
             vehicleId = vehicleId,
-            startDate = Instant.parse(startIso),
-            endDate = Instant.parse(endIso),
-            totalPrice = totalPrice ?: 0.0,
-            status = RentalStatus.fromApiString(status)
+            plan = RentalPlan.fromApiString(plan),
+            status = RentalStatus.fromApiString(status),
+            paymentStatus = PaymentStatus.fromApiString(paymentStatus),
+            paymentMethod = PaymentMethod.fromApiString(paymentMethod),
+            totalPrice = totalPrice,
+            startFee = startFee,
+            serviceFee = serviceFee,
+            distanceKm = distanceKm,
+            durationMinutes = durationMinutes,
+            discountAmount = discountAmount,
+            startedAt = (startedAt ?: startDate)?.parseInstantOrNull(),
+            endedAt = endedAt?.parseInstantOrNull(),
+            scheduledEndDate = endDate?.parseInstantOrNull(),
+            createdAt = Instant.parse(createdAt)
         )
     }
+
+    private fun String.parseInstantOrNull(): Instant? = try {
+        Instant.parse(this)
+    } catch (e: Exception) { null }
 
     private fun ReservationResponse.toDomain(): Reservation {
         return Reservation(

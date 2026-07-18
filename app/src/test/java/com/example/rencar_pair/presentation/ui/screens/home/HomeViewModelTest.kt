@@ -229,7 +229,7 @@ class HomeViewModelTest {
     ): HomeViewModel {
         return HomeViewModel(
             vehicleUseCases = VehicleUseCases(vehicleRepository),
-            rentalUseCases = RentalUseCases(reservationRepository),
+            rentalUseCases = RentalUseCases(FakeRentalRepositoryForHomeTest(), reservationRepository),
             vehicleLocationRepository = vehicleLocationRepository,
             locationTracker = locationTracker
         )
@@ -249,10 +249,20 @@ private class FakeReservationRepositoryForHomeTest(
                 id = "rental-1",
                 userId = "user-1",
                 vehicleId = vehicleId,
-                startDate = Instant.parse("2026-07-16T19:00:00Z"),
-                endDate = Instant.parse("2026-07-16T19:00:00Z"),
+                plan = com.example.rencar_pair.domain.model.RentalPlan.PerMinute,
+                status = RentalStatus.Preparing,
+                paymentStatus = com.example.rencar_pair.domain.model.PaymentStatus.Unpaid,
+                paymentMethod = null,
                 totalPrice = 0.0,
-                status = RentalStatus.Preparing
+                startFee = 15.0,
+                serviceFee = null,
+                distanceKm = null,
+                durationMinutes = null,
+                discountAmount = 0.0,
+                startedAt = Instant.parse("2026-07-16T19:00:00Z"),
+                endedAt = null,
+                scheduledEndDate = Instant.parse("2026-07-16T19:00:00Z"),
+                createdAt = Instant.parse("2026-07-16T19:00:00Z")
             )
         )
     }
@@ -265,13 +275,48 @@ private class FakeReservationRepositoryForHomeTest(
         return NetworkResult.Success(emptyList())
     }
 
-    override suspend fun getRental(id: String): NetworkResult<Rental> {
-        return NetworkResult.Error("Rental not found")
-    }
+    override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
 
-    override suspend fun returnRental(id: String): NetworkResult<Rental> {
-        return NetworkResult.Error("Rental not found")
-    }
+    override suspend fun returnRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun createReservation(vehicleId: String): NetworkResult<Reservation> = NetworkResult.Error("Not implemented")
+
+    override suspend fun cancelReservation(id: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+}
+
+private class FakeRentalRepositoryForHomeTest : com.example.rencar_pair.domain.repository.RentalRepository {
+    override suspend fun createRental(
+        vehicleId: String,
+        plan: com.example.rencar_pair.domain.model.RentalPlan?,
+        endDate: String?
+    ): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getMyRentals(): NetworkResult<List<Rental>> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getRental(id: String): NetworkResult<Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getActiveRental(): NetworkResult<com.example.rencar_pair.domain.model.ActiveRental?> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getPreparationPhotos(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
+
+    override suspend fun uploadPreparationPhoto(
+        rentalId: String,
+        side: com.example.rencar_pair.domain.model.RentalPhotoSide,
+        photoUri: String
+    ): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
+
+    override suspend fun startRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+
+    override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun payRental(
+        rentalId: String,
+        method: com.example.rencar_pair.domain.model.PaymentMethod,
+        cardId: String?,
+        discountCode: String?
+    ): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+
+    override suspend fun cancelRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
 }
 
 private class FakeVehicleRepositoryForHomeTest : VehicleRepository {

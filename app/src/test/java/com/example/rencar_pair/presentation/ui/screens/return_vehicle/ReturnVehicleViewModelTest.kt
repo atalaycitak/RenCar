@@ -61,7 +61,6 @@ class ReturnVehicleViewModelTest {
         val effect = viewModel.effect.first()
 
         assertEquals("rental-1", repository.returnedRentalId)
-        assertEquals("Sag arka tampon cizik", repository.damageNote)
         assertTrue(effect is ReturnVehicleEffect.NavigateToSummary)
         assertEquals("rental-1", (effect as ReturnVehicleEffect.NavigateToSummary).rentalId)
     }
@@ -82,20 +81,41 @@ class ReturnVehicleViewModelTest {
 
 private class FakeRentalRepositoryForReturnTest : RentalRepository {
     var returnedRentalId: String? = null
-    var damageNote: String? = null
 
-    override suspend fun returnVehicle(
+    override suspend fun createRental(
+        vehicleId: String,
+        plan: com.example.rencar_pair.domain.model.RentalPlan?,
+        endDate: String?
+    ): NetworkResult<com.example.rencar_pair.domain.model.Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getMyRentals(): NetworkResult<List<com.example.rencar_pair.domain.model.Rental>> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getRental(id: String): NetworkResult<com.example.rencar_pair.domain.model.Rental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getActiveRental(): NetworkResult<com.example.rencar_pair.domain.model.ActiveRental?> = NetworkResult.Error("Not implemented")
+
+    override suspend fun getPreparationPhotos(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
+
+    override suspend fun uploadPreparationPhoto(
         rentalId: String,
-        photos: List<String>,
-        damageNote: String
-    ): NetworkResult<Unit> {
+        side: com.example.rencar_pair.domain.model.RentalPhotoSide,
+        photoUri: String
+    ): NetworkResult<com.example.rencar_pair.domain.model.RentalPhotosState> = NetworkResult.Error("Not implemented")
+
+    override suspend fun startRental(rentalId: String): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+
+    override suspend fun finishRental(rentalId: String): NetworkResult<com.example.rencar_pair.domain.model.FinishedRental> = NetworkResult.Error("Not implemented")
+
+    override suspend fun payRental(
+        rentalId: String,
+        method: com.example.rencar_pair.domain.model.PaymentMethod,
+        cardId: String?,
+        discountCode: String?
+    ): NetworkResult<Unit> = NetworkResult.Error("Not implemented")
+
+    override suspend fun cancelRental(rentalId: String): NetworkResult<Unit> {
         returnedRentalId = rentalId
-        this.damageNote = damageNote
-        return if (photos.size == 4) {
-            NetworkResult.Success(Unit)
-        } else {
-            NetworkResult.Error("Missing photos")
-        }
+        return NetworkResult.Success(Unit)
     }
 }
 

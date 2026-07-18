@@ -8,7 +8,7 @@ import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.NetworkResult
-import com.example.rencar_pair.domain.model.PaymentMethod
+import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.model.PaymentResult
 import com.example.rencar_pair.domain.model.PaymentStatus
 import com.example.rencar_pair.domain.repository.PaymentRepository
@@ -49,7 +49,7 @@ class DefaultPaymentRepository(
         expireYear: String,
         cvc: String,
         cardHolderName: String
-    ): NetworkResult<PaymentMethod> {
+    ): NetworkResult<SavedCard> {
         if (cardNumber.length < 16) {
             return NetworkResult.Error("Gecersiz kart numarasi")
         }
@@ -76,7 +76,7 @@ class DefaultPaymentRepository(
         }
     }
 
-    override suspend fun getSavedCards(): NetworkResult<List<PaymentMethod>> {
+    override suspend fun getSavedCards(): NetworkResult<List<SavedCard>> {
         val result = safeApiCall(
             call = { api.getPaymentCards() },
             transform = { cards -> cards.orEmpty().map { it.toDomain() } }
@@ -88,16 +88,15 @@ class DefaultPaymentRepository(
 
     private fun ProcessPaymentResponse.toDomain(): PaymentResult {
         return PaymentResult(
-            status = PaymentStatus.fromApiString(paymentStatus),
             transactionId = null,
             errorMessage = null
         )
     }
 
-    private fun CardResponse.toDomain(): PaymentMethod {
+    private fun CardResponse.toDomain(): SavedCard {
         val resolvedBrand = brand
         val resolvedLast4 = last4
-        return PaymentMethod(
+        return SavedCard(
             cardToken = id,
             cardAlias = "$resolvedBrand $resolvedLast4".trim(),
             binNumber = resolvedLast4,

@@ -20,10 +20,14 @@ class SplashViewModel(
 
     private fun checkAuth() {
         launchCoroutine {
-            when (authUseCases.getCurrentUser()) {
+            when (val result = authUseCases.getCurrentUser()) {
                 is NetworkResult.Success -> {
                     updateState { it.copy(isCheckingAuth = false) }
-                    emitEffect(SplashEffect.NavigateToLicenseVerification)
+                    if (result.data.role == com.example.rencar_pair.domain.model.UserRole.Pending) {
+                        emitEffect(SplashEffect.NavigateToLicenseVerification)
+                    } else {
+                        emitEffect(SplashEffect.NavigateToHome)
+                    }
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isCheckingAuth = false) }

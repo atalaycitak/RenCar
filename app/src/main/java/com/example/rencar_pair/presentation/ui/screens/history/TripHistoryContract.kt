@@ -12,7 +12,7 @@ data class TripHistoryState(
     val errorMessage: String? = null
 ) : MviState {
     val totalSpent: Double
-        get() = rentals.sumOf { it.totalPrice }
+        get() = rentals.sumOf { it.totalPrice ?: 0.0 }
 }
 
 sealed interface TripHistoryIntent : MviIntent {

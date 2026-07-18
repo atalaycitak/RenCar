@@ -1,7 +1,7 @@
 package com.example.rencar_pair.presentation.ui.screens.trip_summary
 
 import androidx.compose.runtime.Stable
-import com.example.rencar_pair.domain.model.PaymentMethod
+import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
@@ -11,7 +11,7 @@ import com.example.rencar_pair.presentation.mvi.MviState
 data class TripSummaryState(
     val rentalId: String = "",
     val rental: Rental? = null,
-    val savedCards: List<PaymentMethod> = emptyList(),
+    val savedCards: List<SavedCard> = emptyList(),
     val selectedCardToken: String? = null,
     val isAddCardDialogVisible: Boolean = false,
     val isSavingCard: Boolean = false,
