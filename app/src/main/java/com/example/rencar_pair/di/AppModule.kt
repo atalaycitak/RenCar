@@ -14,7 +14,11 @@ import com.example.rencar_pair.domain.repository.ReservationRepository
 import com.example.rencar_pair.domain.repository.VehicleRepository
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.repository.WalletRepository
+import com.example.rencar_pair.domain.repository.RideLocationRepository
+import com.example.rencar_pair.data.repository.location.DefaultRideLocationRepository
+import com.example.rencar_pair.data.socket.RenCarSocketClient
 import com.example.rencar_pair.domain.usecase.AuthUseCases
+import com.example.rencar_pair.domain.usecase.ObserveActiveVehicleLocationUseCase
 import com.example.rencar_pair.domain.usecase.CalculateReservationQuoteUseCase
 import com.example.rencar_pair.domain.usecase.LicenseUseCases
 import com.example.rencar_pair.domain.usecase.LoginUseCase
@@ -51,6 +55,8 @@ val appModule = module {
 
     single { (androidContext() as RenCarApplication).applicationScope }
 
+    single { RenCarSocketClient(get()) }
+
     // Repositories
     single<AuthRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeAuthRepository() else DefaultAuthRepository(get(), get(), get(), get())
@@ -76,6 +82,7 @@ val appModule = module {
     single<WalletRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository(get())
     }
+    single<RideLocationRepository> { DefaultRideLocationRepository(get()) }
 
     single { LocationServices.getFusedLocationProviderClient(androidContext()) }
 
@@ -95,6 +102,7 @@ val appModule = module {
     single { CalculateReservationQuoteUseCase() }
     single { ReturnVehicleUseCase(get()) }
     single { com.example.rencar_pair.domain.usecase.rental.RentalPhotoUseCases(get()) }
+    single { ObserveActiveVehicleLocationUseCase(get()) }
 
     viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)
