@@ -38,8 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.rencar_pair.R
+import com.example.rencar_pair.presentation.ui.components.RenCarMap
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.androidx.compose.koinViewModel
+import org.maplibre.android.geometry.LatLng
 
 @Composable
 fun ActiveRentalScreen(
@@ -92,18 +94,12 @@ fun ActiveRentalScreenContent(
             .fillMaxSize()
             .background(Color(0xFFE9EDF2)) // Placeholder for Map background
     ) {
-        // Map Placeholder Graphic
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(id = android.R.drawable.ic_dialog_map),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                modifier = Modifier.size(120.dp)
-            )
-        }
+        RenCarMap(
+            myLocation = null,
+            routePoints = state.routePoints.map { LatLng(it.latitude, it.longitude) },
+            vehicleLocation = state.vehicleLocation?.let { LatLng(it.latitude, it.longitude) },
+            modifier = Modifier.fillMaxSize()
+        )
 
         // Top Status Pill
         Row(
@@ -116,13 +112,17 @@ fun ActiveRentalScreenContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            val isConnected = state.isGpsConnected
+            val statusColor = if (isConnected) Color(0xFF34C98A) else Color(0xFFE2B93B)
+            val statusText = if (isConnected) "Araç konumu güncelleniyor" else "Aracın GPS bağlantısı bekleniyor"
+            
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(Color(0xFF34C98A), CircleShape)
+                    .background(statusColor, CircleShape)
             )
             Text(
-                text = "Kiralama aktif · Renault Clio",
+                text = statusText,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -131,22 +131,7 @@ fun ActiveRentalScreenContent(
             )
         }
 
-        // Central Car Icon / Marker (Mock)
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(34.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                .border(4.dp, MaterialTheme.colorScheme.background, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(id = android.R.drawable.ic_menu_directions), // Car
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(16.dp)
-            )
-        }
+        // The map already displays the marker, so the mock center icon is removed.
 
         // Bottom Info Sheet
         Box(

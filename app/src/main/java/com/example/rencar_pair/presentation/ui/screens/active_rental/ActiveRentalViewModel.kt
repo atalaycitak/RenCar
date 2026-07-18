@@ -1,6 +1,8 @@
 package com.example.rencar_pair.presentation.ui.screens.active_rental
 
 import com.example.rencar_pair.domain.NetworkResult
+import com.example.rencar_pair.domain.location.distanceTo
+import com.example.rencar_pair.domain.usecase.ObserveActiveVehicleLocationUseCase
 import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
@@ -12,7 +14,8 @@ import java.time.Instant
 
 class ActiveRentalViewModel(
     private val rentalUseCases: RentalUseCases,
-    private val vehicleUseCases: VehicleUseCases
+    private val vehicleUseCases: VehicleUseCases,
+    private val observeActiveVehicleLocationUseCase: ObserveActiveVehicleLocationUseCase
 ) : BaseMviViewModel<ActiveRentalState, ActiveRentalIntent, ActiveRentalEffect>(
     ActiveRentalState()
 ) {
@@ -46,6 +49,7 @@ class ActiveRentalViewModel(
                     }
                     loadVehicle(result.data.vehicleId)
                     startTimer()
+                    startLocationTracking()
                 }
                 is NetworkResult.Error -> {
                     updateState { it.copy(isLoading = false, errorMessage = result.message) }
@@ -59,6 +63,30 @@ class ActiveRentalViewModel(
             when (val result = vehicleUseCases.getVehicleDetail(vehicleId)) {
                 is NetworkResult.Success -> updateState { it.copy(vehicle = result.data) }
                 is NetworkResult.Error -> emitEffect(ActiveRentalEffect.ShowError(result.message))
+            }
+        }
+    }
+
+    private fun startLocationTracking() {
+        launchCoroutine {
+            observeActiveVehicleLocationUseCase().collect { point ->
+                val current = currentState()
+                val lastPoint = current.vehicleLocation
+                
+                val addedDistance = if (lastPoint != null) {
+                    lastPoint.distanceTo(point)
+                } else {
+                    0.0
+                }
+
+                updateState {
+                    it.copy(
+                        isGpsConnected = true,
+                        vehicleLocation = point,
+                        routePoints = it.routePoints + point,
+                        distanceKm = it.distanceKm + addedDistance
+                    )
+                }
             }
         }
     }
@@ -90,8 +118,7 @@ class ActiveRentalViewModel(
             updateState {
                 it.copy(
                     elapsedMinutes = current.elapsedMinutes + 1,
-                    currentCost = current.currentCost + COST_PER_MINUTE,
-                    distanceKm = current.distanceKm + DISTANCE_PER_MINUTE_KM
+                    currentCost = current.currentCost + COST_PER_MINUTE
                 )
             }
         }
@@ -116,6 +143,5 @@ class ActiveRentalViewModel(
     private companion object {
         const val TICK_INTERVAL_MS = 60_000L
         const val COST_PER_MINUTE = 2.5
-        const val DISTANCE_PER_MINUTE_KM = 0.5
     }
 }

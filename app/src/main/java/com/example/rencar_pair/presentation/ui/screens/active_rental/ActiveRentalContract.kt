@@ -3,6 +3,7 @@ package com.example.rencar_pair.presentation.ui.screens.active_rental
 import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.Rental
 import com.example.rencar_pair.domain.model.Vehicle
+import com.example.rencar_pair.domain.model.VehiclePoint
 import com.example.rencar_pair.presentation.mvi.MviEffect
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
@@ -16,7 +17,10 @@ data class ActiveRentalState(
     val currentCost: Double = 0.0,
     val isFinishing: Boolean = false,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val routePoints: List<VehiclePoint> = emptyList(),
+    val vehicleLocation: VehiclePoint? = null,
+    val isGpsConnected: Boolean = false
 ) : MviState
 
 sealed interface ActiveRentalIntent : MviIntent {
