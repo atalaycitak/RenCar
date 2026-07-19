@@ -7,12 +7,13 @@ const val OSM_STYLE_JSON: String = """
     "osm": {
       "type": "raster",
       "tiles": [
-        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+        "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
       ],
       "tileSize": 256,
-      "attribution": "© OpenStreetMap contributors"
+      "attribution": "© OpenStreetMap contributors © CARTO"
     }
   },
   "layers": [
