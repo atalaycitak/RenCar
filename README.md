@@ -1,145 +1,241 @@
 # RenCar
 
-RenCar, yakındaki uygun aracı harita üzerinden bulup kısa sürede kiralama akışını tamamlamayı hedefleyen bir Android bitirme projesidir. Projede amacımız sadece ekranları göstermek değil, kullanıcının uygulamaya ilk girişinden ödeme adımına kadar ilerleyebildiği gerçekçi ve uçtan uca bir mobil deneyim oluşturmaktı.
+RenCar, kullanıcıların harita üzerinden yakındaki araçları bulup rezervasyon oluşturabildiği, teslim kontrolünden sonra aktif yolculuğa geçebildiği ve kiralama sonunda cüzdan/kart ödeme akışına ulaşabildiği Android araç kiralama uygulamasıdır.
+
+Bu proje bizim bitirme projemiz olarak geliştirildi. Amacımız sadece ekranları göstermek değil, bir araç kiralama uygulamasında beklenen ana süreci uçtan uca çalışan bir mobil deneyim haline getirmekti. Bu yüzden uygulamayı harita, rezervasyon, aktif kiralama, ödeme, geçmiş, profil ve tema desteğiyle birlikte ele aldık.
 
 **Takım Üyeleri**
 
 - Zeynep Özkan
 - Atalay Çıtak
 
+## Projenin Kısa Özeti
+
+RenCar'da kullanıcı önce giriş veya kayıt adımlarını tamamlar. Daha sonra harita ekranında kendisine yakın araçları görür, araç seçer, detay ve rezervasyon adımlarına ilerler. Kiralama başlamadan önce teslim kontrolü yapılır. Yolculuk başladıktan sonra süre, ücret, mesafe ve rota bilgisi takip edilir. Kiralama tamamlandığında kullanıcı ödeme ekranına yönlendirilir.
+
+Bu akışı kurarken özellikle üç noktaya odaklandık:
+
+- Harita merkezli gerçek bir kiralama deneyimi oluşturmak
+- Ekranlar arasında seçilen araç ve kiralama bilgisini kaybetmeden ilerlemek
+- UI tarafını, API entegrasyonunu ve state yönetimini sürdürülebilir bir mimariyle bağlamak
+
 ## Ekran Görüntüleri
 
-| Ana Harita (Home) | Araç Detayı | Rezervasyon |
+| Ana Harita | Araç Detayı | Rezervasyon |
 | :---: | :---: | :---: |
 | <img src="docs/assets/home.jpeg" width="250" alt="Ana Harita" /> | <img src="docs/assets/cardetail.jpeg" width="250" alt="Araç Detayı" /> | <img src="docs/assets/reservation.jpeg" width="250" alt="Rezervasyon" /> |
 
-| Aktif Kiralama (Simülasyon) | Cüzdan | Profil |
+| Aktif Kiralama | Cüzdan | Koyu Tema Cüzdan |
 | :---: | :---: | :---: |
-| <img src="docs/assets/active-ride.jpeg" width="250" alt="Aktif Kiralama" /> | <img src="docs/assets/wallet.jpeg" width="250" alt="Cüzdan" /> | <img src="docs/assets/profile.jpeg" width="250" alt="Profil" /> |
+| <img src="docs/assets/active-ride.jpeg" width="250" alt="Aktif Kiralama" /> | <img src="docs/assets/wallet.jpeg" width="250" alt="Cüzdan" /> | <img src="docs/assets/dark-theme-wallet.jpeg" width="250" alt="Koyu Tema Cüzdan" /> |
 
-| Geçmiş (History) | Iyzico 3D Ödeme | |
+| Geçmiş | Iyzico WebView Denemesi | Profil |
 | :---: | :---: | :---: |
-| <img src="docs/assets/history.jpeg" width="250" alt="Kiralama Geçmişi" /> | <img src="docs/assets/iyzico.jpeg" width="250" alt="Iyzico 3D Ödeme" /> | |
-
-## Projenin Amacı
-
-RenCar ile kullanıcıların yakınındaki araçları harita üzerinde görmesini, uygun aracı seçmesini, rezervasyon oluşturmasını, teslim öncesi araç fotoğraflarını yüklemesini, aktif yolculuğunu takip etmesini ve kiralama sonunda ödeme adımına geçmesini sağladık.
-
-Bu süreçte özellikle gerçek bir araç kiralama uygulamasında beklenen akışa yaklaşmaya çalıştık. Kullanıcıyı karışık veya yarım kalmış ekranlara yönlendirmek yerine, adımların sırayla ve anlaşılır ilerlemesine dikkat ettik.
-
-## Geliştirme Odağımız
-
-Bu projede en çok önem verdiğimiz nokta, kullanıcının uygulama içinde kaybolmadan ilerleyebilmesiydi. Bu yüzden ekranları tek tek hazırlamanın yanında, bu ekranların birbirine doğru sırayla bağlanmasına da özellikle dikkat ettik.
-
-Kullanıcının önce ana haritada yakınındaki araçları görmesini, sonra gerçekten seçtiği araçla detay ve rezervasyon adımlarına ilerlemesini hedefledik. Kiralama başladıktan sonra da aktif yolculuk ekranında süre, ücret, mesafe ve rota bilgisinin anlaşılır şekilde takip edilebilmesini istedik.
-
-API tarafında da sadece ekrana veri basmakla kalmadık. Araç listeleme, aktif rezervasyon, aktif kiralama, kiralama başlatma, kiralama bitirme ve ödeme akışlarının backend dokümanındaki endpointlerle uyumlu olmasına dikkat ettik. Böylece uygulama hem görsel olarak prototipe yaklaştı hem de gerçek servislerle daha tutarlı çalışacak hale geldi.
-
-## Neler Yaptık?
-
-Öncelikle kullanıcının uygulamaya girişten sonra doğrudan aktif kiralama ekranına yönlenmesini engelledik. İlk karşılaşılan ekranın ana harita ve yakındaki araçlar ekranı olmasını sağladık.
-
-Ana ekrandaki araç gösterimini daha anlamlı hale getirdik. Araçları 15 dakikalık yakınlık kuralına göre filtreledik, kategori seçimlerini toparladık ve marker seçildiğinde kullanıcının hangi aracı seçtiğini daha net görebileceği bir kart yapısı oluşturduk.
-
-Araç seçimi sonrası akışı seçilen gerçek araç üzerinden bağladık. Kullanıcı artık araç kartındaki Detay / Kirala butonu ile araç detay ekranına, oradan rezervasyon onayına, ardından teslim öncesi fotoğraf kontrolüne ve aktif yolculuk ekranına ilerleyebiliyor.
-
-Aktif yolculuk ekranında rota çizimini de iyileştirdik. Daha doğal görünen, mavi tonlu, kesikli ve üst üste binmeyen bir rota simülasyonu hazırladık. Böylece yolculuk ekranı demo hissinden biraz daha uzaklaşıp canlı takip ekranına daha yakın bir hale geldi.
-
-Kiralama bitirme kısmında API dokümanına göre doğru endpoint kullanımını düzenledik. Normal kiralama bitirme akışında `POST /rentals/{id}/finish` endpoint'ini kullandık. Eski `return` endpoint'ini ise yalnızca gerekli olan geri uyumluluk senaryosu için bıraktık.
-
-Ödeme ve cüzdan tarafında kullanıcının kiralama bitince ödeme ekranına ulaşabilmesi, cüzdan/kart seçimlerini daha düzgün yapabilmesi ve ödeme sonrası ana ekrana dönebilmesi için akışı toparladık.
-
-Son olarak MapLibre kaynaklı siyah ekran riskini azaltmak için harita bileşeninde render ayarını güncelledik. Font dosyalarından kaynaklanan yükleme hatalarını da kaldırarak uygulamanın ilk açılışını daha stabil hale getirdik.
-
-## Öne Çıkan Detaylar
-
-- Proje sadece statik ekranlardan oluşmuyor; login, araç seçimi, rezervasyon, fotoğraf kontrolü, aktif yolculuk ve ödeme adımları birbirine bağlı ilerliyor.
-- Harita tarafında MapLibre kullanıldı ve araç marker'ları kullanıcı deneyiminin merkezine alındı.
-- Araçların gösteriminde 15 dakikalık yakınlık kuralı dikkate alındı.
-- Seçilen araç bilgisinin kaybolmaması için detay ve rezervasyon ekranları aynı araç üzerinden ilerleyecek şekilde düzenlendi.
-- Kiralama bitirme hatası API dokümanına göre doğru endpoint kullanılarak çözüldü.
-- Aktif yolculuk ekranında rota çizimi rastgele ama doğal ilerleyen bir simülasyon gibi çalışacak şekilde iyileştirildi.
-- UI metinlerinde daha anlaşılır ve kullanıcıya yakın Türkçe ifadeler tercih edildi.
-- MVI ve Clean Architecture yapısı korunarak ekran, ViewModel, use case ve repository sorumlulukları ayrıldı.
-- Değişiklikler sadece görsel düzeltme olarak bırakılmadı; ilgili ViewModel testleri de yeni akışa göre güncellendi.
+| <img src="docs/assets/history.jpeg" width="250" alt="Kiralama Geçmişi" /> | <img src="docs/assets/iyzico.jpeg" width="250" alt="Iyzico WebView" /> | <img src="docs/assets/profile.jpeg" width="250" alt="Profil" /> |
 
 ## Kullanıcı Akışı
 
-1. Kullanıcı onboarding ekranını görür.
-2. Telefon numarası ile giriş yapar ve OTP doğrulamasını tamamlar.
-3. Ana harita ekranında yakındaki uygun araçları görür.
-4. Haritadaki marker'lardan veya karttan araç seçer.
-5. Detay / Kirala ile araç detay ekranına gider.
-6. Rezervasyon onayı ekranında plan seçer ve şartları onaylar.
-7. Teslim öncesi 4 yön fotoğraf kontrolünü tamamlar.
-8. Aktif yolculuk ekranında süre, ücret, mesafe ve rota bilgisini takip eder.
-9. Kiralamayı bitirirken onay alır.
-10. Kiralama tamamlanınca ödeme ekranına geçer.
-11. Cüzdan veya kart ile ödeme yapıp ana ekrana döner.
+```text
+Splash
+-> Onboarding
+-> Login / Register
+-> OTP doğrulama
+-> Ehliyet kontrolü
+-> Harita
+-> Araç detay
+-> Rezervasyon
+-> Teslim kontrolü
+-> Aktif yolculuk
+-> Kiralama özeti
+-> Ödeme
+-> Geçmiş / Cüzdan / Profil
+```
+
+Kullanıcı uygulamaya tekrar girdiğinde kayıtlı oturum kontrol edilir. Kullanıcının rolüne ve mevcut kiralama durumuna göre harita, ehliyet kontrolü, teslim kontrolü veya aktif yolculuk gibi doğru ekrana yönlendirme yapılır.
+
+## Projede Odaklandığımız Noktalar
+
+### Harita Odaklı Kiralama Deneyimi
+
+Uygulamanın merkezine harita ekranını aldık. Araçlar MapLibre üzerinde marker olarak gösteriliyor. Kullanıcı marker seçtiğinde altta araç bilgilerini içeren bir kart açılıyor ve bu kart üzerinden detay ya da rezervasyon adımına geçilebiliyor.
+
+Harita ekranını sadece araçları listeleyen bir alan olarak düşünmedik. Kullanıcının konumu, araçların konumu, aktif rezervasyon ve aktif kiralama bilgisi aynı state içinde değerlendirilerek ekranın ne göstermesi gerektiği belirleniyor.
+
+### Konuma Göre Araç Filtreleme
+
+Araç filtreleme mantığını doğrudan ekran içinde tutmak yerine `FilterHomeVehiclesUseCase` içine aldık. Bu use case içinde araç tipi, fiyat, menzil, aktif rezervasyon ve kullanıcı konumu birlikte değerlendiriliyor.
+
+Kullanıcı konumu varsa araçla arasındaki mesafe haversine formülüyle hesaplanıyor. Daha sonra yaklaşık yürüme süresine göre 15 dakika içinde erişilebilir araçları göstermeye çalışıyoruz. Böylece ana ekranı, kullanıcının konumunu dikkate alan daha anlamlı bir araç keşif ekranı haline getirdik.
+
+### Uçtan Uca Kiralama Akışı
+
+Projede ana harita ve araç kartını, devam eden kiralama adımlarıyla birlikte ele aldık. Kullanıcı seçtiği araçla detay ekranına, oradan rezervasyon ekranına, sonrasında teslim kontrolüne ve aktif yolculuğa ilerleyebiliyor.
+
+Bu akışta `vehicleId` ve `rentalId` gibi bilgiler navigation route'larıyla taşınıyor. Böylece kullanıcı farklı ekranlara geçse bile hangi araç veya kiralama üzerinde işlem yaptığı korunuyor.
+
+### Teslim Kontrolü ve Aktif Yolculuk
+
+Kiralama başlamadan önce teslim kontrol ekranı ekledik. Bu ekran, aracın teslim alınmadan önce kontrol edilmesi fikrine dayanıyor. Aktif yolculuk ekranında ise süre, ücret, mesafe ve rota bilgisi birlikte gösteriliyor.
+
+Aktif yolculukta route points listesi harita üzerinde çiziliyor. Socket üzerinden araç konumu dinleme altyapısı da `RenCarSocketClient` ile hazırlandı. Demo akışta rota simülasyonu kullanılıyor; socket tarafı gerçek zamanlı konum verisi geldiğinde kullanılabilecek şekilde ayrılmış durumda.
+
+### Ödeme ve Cüzdan Deneyimi
+
+Kiralama bittikten sonra kullanıcı kiralama özeti ekranına gidiyor. Burada toplam tutar, cüzdan bakiyesi, kayıtlı kartlar ve ödeme yöntemi birlikte gösteriliyor.
+
+Cüzdan bakiyesi yeterliyse kullanıcı cüzdan ile ödeme yapabiliyor. Bakiye yetersizse bakiye yükleme veya kartla ödeme seçenekleri gösteriliyor. Cüzdan ekranında bakiye, kayıtlı kartlar ve son işlemler ayrı bölümler halinde sunuluyor.
+
+Iyzico için WebView tabanlı ayrı bir deneme akışı da hazırladık. Bu akış ana ödeme sürecinden izole tutuldu; cüzdan ekranındaki test butonu üzerinden ödeme sayfasının uygulama içinde açılması ve sonucunun yakalanması denenebiliyor.
+
+### Açık/Koyu Tema Desteği
+
+Uygulamada açık ve koyu tema desteği bulunuyor. Renkleri ekranların içine tek tek yazmak yerine Compose tema yapısı ve `MaterialTheme.colorScheme` üzerinden yönetmeye çalıştık.
+
+Ayarlar ekranında tema seçimi yapılabiliyor. Seçilen tema `ThemeManager` içindeki `StateFlow` ile tutuluyor ve `MainActivity` bu state'e göre uygulamayı açık, koyu veya sistem temasına göre güncelliyor.
+
+### Gerçek API ve Fake Repository Desteği
+
+Projede gerçek API'ye bağlanan repository'ler ile geliştirme/test için kullanılan fake repository'leri birlikte tuttuk. `BuildConfig.USE_FAKE_REPOSITORIES` değerine göre Koin tarafında hangi repository'nin kullanılacağı seçiliyor.
+
+Bu yapı geliştirme sırasında esneklik sağladı. Backend hazır olmadığında ekranları fake data ile test edebildik; gerçek senaryoda ise aynı ekranları gerçek API repository'leriyle çalıştırabildik.
 
 ## Teknik Yapı
 
-Projede Android tarafında modern ve sürdürülebilir bir yapı kurmaya çalıştık.
+Projede MVI ve Clean Architecture yaklaşımını birlikte kullandık. Amacımız ekran kodunu, iş kurallarını ve veri kaynaklarını birbirinden ayırmaktı.
 
-- **Kotlin** ile geliştirildi.
-- **Jetpack Compose** ile ekranlar oluşturuldu.
-- **MVI mimarisi** ile ekran state, intent ve effect yapıları ayrıldı.
-- **Clean Architecture** yaklaşımıyla presentation, domain ve data katmanları ayrıldı.
-- **Koin** ile dependency injection yapıldı.
-- **Retrofit** ve **Kotlinx Serialization** ile API iletişimi kuruldu.
-- **MapLibre** ile harita, marker ve rota gösterimi sağlandı.
-- **DataStore** ile oturum/token gibi veriler yönetildi.
-- **JUnit** ve coroutine test araçlarıyla ilgili ViewModel testleri yazıldı/güncellendi.
+```text
+Compose Screen
+-> ViewModel
+-> UseCase
+-> Repository
+-> Retrofit / DataStore / Socket
+```
+
+### Presentation Katmanı
+
+Bu katmanda Compose ekranları, ViewModel'ler, navigation route'ları ve ortak UI bileşenleri bulunuyor.
+
+Ekran state'leri `BaseMviViewModel` üzerinden `MutableStateFlow` ile tutuluyor. UI tarafı bu state'i dinliyor ve state değiştikçe yeniden çiziliyor. Snackbar, navigation veya tek seferlik mesajlar için `Channel` tabanlı effect yapısı kullanılıyor.
+
+### Domain Katmanı
+
+Domain katmanında model sınıfları, repository arayüzleri ve use case'ler bulunuyor. Örneğin araç filtreleme, kiralama bitirme, ödeme use case'leri ve repository sözleşmeleri bu katmanda yer alıyor.
+
+Bu katman sayesinde ekran tarafı doğrudan API detaylarını bilmek zorunda kalmıyor. ViewModel sadece hangi use case'i çağıracağını biliyor.
+
+### Data Katmanı
+
+Data katmanında Retrofit servisleri, DTO'lar, repository implementasyonları, DataStore yönetimi ve Socket.IO bağlantısı bulunuyor.
+
+`RenCarApi` içinde backend endpointleri tanımlandı. API cevaplarını her repository içinde tekrar tekrar kontrol etmemek için `safeApiCall` kullandık. Başarılı cevapları `NetworkResult.Success`, başarısız cevapları `NetworkResult.Error` olarak yönetiyoruz.
+
+Oturum tarafında access token, refresh token ve kullanıcı id bilgisi `DataStoreManager` ile saklanıyor. 401 durumlarında `TokenExpiredAuthenticator` refresh token ile yeni access token almaya çalışıyor. Aynı anda birden fazla refresh isteği oluşmaması için `Mutex` kullanıldı.
+
+## Kullanılan Teknolojiler
+
+- Kotlin
+- Jetpack Compose
+- Material 3
+- Navigation Compose
+- MVI
+- Clean Architecture
+- Koin
+- Retrofit
+- OkHttp
+- Kotlinx Serialization
+- DataStore
+- Coroutines
+- StateFlow
+- MapLibre
+- Socket.IO
+- CameraX
+- JUnit
 
 ## API Entegrasyonu
 
-Backend entegrasyonunda API dokümanı temel alındı:
+Backend entegrasyonunda RenCar API dokümanı temel alındı:
 
 [RenCar API Docs](https://rencarv2.halitkalayci.com/api/docs#)
 
-Özellikle şu akışlara dikkat edildi:
+Projede kullandığımız ana endpoint grupları:
 
 - `POST /auth/login`
 - `POST /auth/verify-otp`
 - `GET /auth/me`
 - `GET /vehicles`
+- `GET /vehicles/{id}`
 - `GET /reservations/active`
+- `POST /reservations`
 - `POST /rentals`
 - `GET /rentals/active`
+- `POST /rentals/{id}/photos`
+- `POST /rentals/{id}/start`
 - `POST /rentals/{id}/finish`
+- `POST /rentals/{id}/pay`
+- `GET /wallet`
+- `POST /wallet/topup`
+- `GET /cards`
+- `POST /cards`
 
-Kiralama bitirme işleminde plan tipine göre yanlış endpoint'e gitme problemi kontrol edildi. Normal aktif yolculuk bitirme senaryosu için `finish` endpoint'i kullanıldı.
-
-## Proje Yapısı
+## Proje Klasörleri
 
 ```text
 app/src/main/java/com/example/rencar_pair
 ├── data
+│   ├── local
 │   ├── remote
-│   └── repository
+│   ├── repository
+│   └── socket
 ├── di
 ├── domain
+│   ├── location
 │   ├── model
 │   ├── repository
 │   └── usecase
 └── presentation
+    ├── mvi
     ├── navigation
     └── ui
         ├── components
         └── screens
 ```
 
-Bu yapıda ekranlar doğrudan API çağırmıyor. Kullanıcı aksiyonları önce ViewModel'e gidiyor, ViewModel use case'leri çağırıyor, repository katmanı da API veya fake data tarafını yönetiyor.
+Öne çıkan ekranlar:
 
-## Kurulum ve Çalıştırma
+- `home`: Harita ve araç seçimi
+- `vehicle`: Araç detay ekranı
+- `reservation`: Rezervasyon oluşturma
+- `delivery`: Teslim kontrolü
+- `active_rental`: Aktif yolculuk takibi
+- `trip_summary`: Kiralama özeti ve ödeme
+- `wallet`: Cüzdan, kartlar ve son işlemler
+- `history`: Kiralama geçmişi
+- `profile`: Profil ekranı
+- `settings`: Tema ve ayarlar
+- `referral`: Referans ekranı
 
-Projeyi Android Studio ile açtıktan sonra Gradle sync yapılır. Ardından debug build alınabilir:
+## Testlerde Kontrol Ettiklerimiz
 
-```bash
-./gradlew compileDebugKotlin
+ViewModel testlerinde özellikle state geçişlerine ve kullanıcı aksiyonlarının doğru sonuç üretip üretmediğine odaklandık.
+
+Kontrol edilen başlıca alanlar:
+
+- Ana ekranda araç filtreleme ve seçili araç state'i
+- Rezervasyon sonrası doğru ekrana geçiş
+- Teslim kontrolü sonrası aktif yolculuk akışı
+- Aktif kiralamada süre, ücret, mesafe ve bitirme davranışı
+- Kiralama bitince ödeme ekranına geçiş
+- Cüzdan bakiyesi, kart seçimi ve ödeme hareketleri
+
+Testleri çalıştırmak için:
+
+```powershell
+.\gradlew.bat testDebugUnitTest
 ```
 
-Windows için:
+## Projeyi Çalıştırma
+
+Projeyi Android Studio ile açtıktan sonra Gradle sync yapılır. Debug build için:
 
 ```powershell
 .\gradlew.bat compileDebugKotlin
@@ -151,23 +247,12 @@ Emülatöre kurmak için:
 .\gradlew.bat installDebug
 ```
 
-## Test
+macOS veya Linux için:
 
-Bu geliştirme sırasında özellikle ana ekran ve aktif kiralama akışını etkileyen ViewModel testleri güncellendi.
-
-Çalıştırılan temel kontroller:
-
-```powershell
-.\gradlew.bat compileDebugKotlin
-.\gradlew.bat testDebugUnitTest
-.\gradlew.bat installDebug
+```bash
+./gradlew compileDebugKotlin
 ```
 
-Özellikle kontrol edilen test alanları:
+## Son Durum
 
-- Home ekranı ve araç filtreleme state'leri
-- Harita üzerinde seçilen araç davranışı
-- Aktif kiralama ekranındaki rota, süre, ücret ve bitirme akışı
-- Rezervasyon ve teslim öncesi fotoğraf akışı
-- Kiralama bitişinden sonra ödeme ekranına geçiş
-
+RenCar şu anda araç kiralama sürecinin ana adımlarını uçtan uca gösterebilen bir Android istemcisidir. Harita üzerinden araç seçimi, rezervasyon, teslim kontrolü, aktif yolculuk, kiralama özeti, cüzdan/kart ödeme akışı, geçmiş, profil ve tema desteği tek uygulama akışı içinde bir araya getirilmiştir.
