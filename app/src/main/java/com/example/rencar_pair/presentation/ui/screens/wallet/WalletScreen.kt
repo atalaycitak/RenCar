@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -211,7 +212,7 @@ private fun BalanceCard(balance: Double, onTopUpClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(end = (-28).dp, top = (-28).dp)
+                .offset(x = 28.dp, y = (-28).dp)
                 .size(126.dp)
                 .background(Color.White.copy(alpha = 0.12f), CircleShape)
         )

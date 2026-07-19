@@ -100,6 +100,8 @@ class ActiveRentalViewModel(
     private fun startLocationTracking() {
         if (locationTrackingJob?.isActive == true) return
         startDemoLocationFallback()
+        /*
+        // TODO: Sunucudan gelen saçma sapan uzak lokasyonlar simülasyonu bozduğu için tekrar kapatıldı
         locationTrackingJob = launchCoroutine {
             observeActiveVehicleLocationUseCase().collect { point ->
                 hasSocketLocation = true
@@ -107,6 +109,7 @@ class ActiveRentalViewModel(
                 applyVehiclePoint(point)
             }
         }
+        */
     }
 
     private fun startDemoLocationFallback() {
@@ -323,31 +326,36 @@ class ActiveRentalViewModel(
         val DEMO_ROUTE_POINTS = buildDemoRoutePoints()
 
         private fun buildDemoRoutePoints(): List<VehiclePoint> {
-            val anchors = listOf(
-                VehiclePoint(41.03720, 28.98590),
-                VehiclePoint(41.03758, 28.98672),
-                VehiclePoint(41.03708, 28.98762),
-                VehiclePoint(41.03628, 28.98824),
-                VehiclePoint(41.03538, 28.98912),
-                VehiclePoint(41.03442, 28.99006),
-                VehiclePoint(41.03352, 28.99104),
-                VehiclePoint(41.03254, 28.99210),
-                VehiclePoint(41.03154, 28.99314),
-                VehiclePoint(41.03054, 28.99420),
-                VehiclePoint(41.02946, 28.99524)
-            )
-            return anchors.zipWithNext().flatMapIndexed { index, (from, to) ->
-                val steps = 14
-                (0 until steps).map { step ->
-                    val t = step / steps.toDouble()
-                    val curve = sin(t * Math.PI) * if (index % 2 == 0) 0.00018 else -0.00016
-                    val drift = cos((index + t) * Math.PI * 0.5) * 0.00005
-                    VehiclePoint(
-                        latitude = from.latitude + (to.latitude - from.latitude) * t + curve,
-                        longitude = from.longitude + (to.longitude - from.longitude) * t + drift
-                    )
+            val startLat = 41.03720
+            val startLng = 28.98590
+            val points = mutableListOf(VehiclePoint(startLat, startLng))
+            val random = java.util.Random()
+            
+            var currentLat = startLat
+            var currentLng = startLng
+            var currentDirection = 0 // 0: Kuzey, 1: Doğu, 2: Güney, 3: Batı
+
+            for (i in 1..240) {
+                // Her saniye yön değiştir (Aşırı Zikzak)
+                val turn = if (random.nextBoolean()) 1 else -1 // Sağa veya Sola 90 derece dön
+                currentDirection = (currentDirection + turn + 4) % 4
+
+                // Seçili yönde ilerle
+                val stepSize = 0.0002
+                when (currentDirection) {
+                    0 -> currentLat += stepSize
+                    1 -> currentLng += stepSize
+                    2 -> currentLat -= stepSize
+                    3 -> currentLng -= stepSize
                 }
-            } + anchors.last()
+                
+                // Çok hafif bir titreme (gerçekçi GPS hissi için)
+                val noiseLat = (random.nextDouble() - 0.5) * 0.00004
+                val noiseLng = (random.nextDouble() - 0.5) * 0.00004
+                
+                points.add(VehiclePoint(currentLat + noiseLat, currentLng + noiseLng))
+            }
+            return points
         }
     }
 
