@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import com.example.rencar_pair.domain.model.VehicleDistanceInfo
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -138,11 +139,11 @@ fun HomeScreenContent(
 ) {
     val visibleVehicles = state.visibleVehicles
     val highlightedVehicle = state.highlightedVehicle
-    val highlightedDistanceInfo = highlightedVehicle?.let { state.distanceInfoFor(it) }
+    val highlightedDistanceInfo = highlightedVehicle?.let { state.distanceInfoMap[it.id] }
     val selectedVehicle = state.selectedVehicle
     val detailVehicle = selectedVehicle ?: state.activeReservationVehicle
     val focusedStatusVehicle = selectedVehicle ?: state.activeReservationVehicle
-    val focusedStatusDistanceInfo = focusedStatusVehicle?.let { state.distanceInfoFor(it) }
+    val focusedStatusDistanceInfo = focusedStatusVehicle?.let { state.distanceInfoMap[it.id] }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -165,7 +166,7 @@ fun HomeScreenContent(
             val selectedVehicleId = selectedVehicle?.id ?: state.activeReservationVehicle?.id
             val mapMarkers = remember(visibleVehicles, selectedVehicleId, state.userLocation) {
                 visibleVehicles.map { vehicle ->
-                    val distanceInfo = state.distanceInfoFor(vehicle)
+                    val distanceInfo = state.distanceInfoMap[vehicle.id]
                     RenCarMapMarker(
                         id = vehicle.id,
                         latitude = vehicle.latitude,

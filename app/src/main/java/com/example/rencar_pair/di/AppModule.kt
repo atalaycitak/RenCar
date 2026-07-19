@@ -103,6 +103,7 @@ val appModule = module {
     single { ReturnVehicleUseCase(get()) }
     single { com.example.rencar_pair.domain.usecase.rental.RentalPhotoUseCases(get()) }
     single { ObserveActiveVehicleLocationUseCase(get()) }
+    single { com.example.rencar_pair.domain.usecase.vehicle.FilterHomeVehiclesUseCase() }
 
     viewModelOf(::SplashViewModel)
     viewModelOf(::LoginViewModel)

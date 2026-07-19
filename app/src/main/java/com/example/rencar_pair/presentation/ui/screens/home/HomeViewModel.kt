@@ -2,11 +2,15 @@ package com.example.rencar_pair.presentation.ui.screens.home
 
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.location.LocationTracker
+import com.example.rencar_pair.domain.model.Rental
+import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.VehiclePosition
 import com.example.rencar_pair.domain.model.VehicleStatus
 import com.example.rencar_pair.domain.repository.VehicleLocationRepository
 import com.example.rencar_pair.domain.usecase.RentalUseCases
 import com.example.rencar_pair.domain.usecase.VehicleUseCases
+import com.example.rencar_pair.domain.usecase.vehicle.FilterHomeVehiclesUseCase
+import com.example.rencar_pair.domain.usecase.vehicle.HomeVehicleFilterParams
 import com.example.rencar_pair.presentation.mvi.BaseMviViewModel
 import com.example.rencar_pair.presentation.mvi.NoEffect
 import kotlinx.coroutines.Job
@@ -16,7 +20,8 @@ class HomeViewModel(
     private val vehicleUseCases: VehicleUseCases,
     private val rentalUseCases: RentalUseCases,
     private val vehicleLocationRepository: VehicleLocationRepository,
-    private val locationTracker: LocationTracker
+    private val locationTracker: LocationTracker,
+    private val filterHomeVehiclesUseCase: FilterHomeVehiclesUseCase
 ) : BaseMviViewModel<HomeState, HomeIntent, NoEffect>(
     HomeState(vehicleLocationStreamMode = vehicleLocationRepository.streamMode)
 ) {
@@ -38,11 +43,11 @@ class HomeViewModel(
             HomeIntent.LoadActiveReservation -> loadActiveReservation()
             HomeIntent.LoadActiveRental -> loadActiveRental()
             HomeIntent.LoadPendingRental -> loadPendingRental()
-            is HomeIntent.SelectVehicle -> updateState {
+            is HomeIntent.SelectVehicle -> updateComputedState {
                 it.copy(selectedVehicleId = intent.id)
             }
             is HomeIntent.UpdateVehicleTypeFilter -> {
-                updateState {
+                updateComputedState {
                     it.copy(
                         selectedVehicleType = intent.type,
                         selectedVehicleId = null,
@@ -57,7 +62,7 @@ class HomeViewModel(
                 it.copy(minRangeKm = intent.minRangeKm)
             }
             HomeIntent.ClearFilters -> {
-                updateState {
+                updateComputedState {
                     it.copy(
                         selectedVehicleType = null,
                         maxDailyPrice = null,
@@ -68,7 +73,7 @@ class HomeViewModel(
                 }
             }
             is HomeIntent.LocationPermissionChanged -> {
-                updateState {
+                updateComputedState {
                     it.copy(
                         locationPermissionGranted = intent.granted,
                         userLocation = if (intent.granted) it.userLocation else null
@@ -86,7 +91,7 @@ class HomeViewModel(
                 }
             }
             HomeIntent.FocusUserLocation -> {
-                updateState { it.copy(selectedVehicleId = null) }
+                updateComputedState { it.copy(selectedVehicleId = null) }
                 if (currentState().locationPermissionGranted) {
                     fetchUserLocation()
                 }
@@ -96,20 +101,16 @@ class HomeViewModel(
 
     private fun loadVehicles() {
         launchCoroutine {
-            updateState { it.copy(isLoading = true, errorMessage = null) }
+            updateComputedState { it.copy(isLoading = true, errorMessage = null) }
             when (val result = vehicleUseCases.getAvailableVehicles(type = null, includeBusy = true)) {
-                is NetworkResult.Success -> updateState {
+                is NetworkResult.Success -> updateComputedState {
                     val next = it.copy(
                         vehicles = result.data.withReservationState(it.activeReservation),
                         isLoading = false
                     )
-                    if (next.filteredVehicles.any { vehicle -> vehicle.id == next.selectedVehicleId }) {
-                        next
-                    } else {
-                        next.copy(selectedVehicleId = null)
-                    }
+                    next
                 }
-                is NetworkResult.Error -> updateState {
+                is NetworkResult.Error -> updateComputedState {
                     it.copy(isLoading = false, errorMessage = result.message)
                 }
             }
@@ -119,7 +120,7 @@ class HomeViewModel(
     private fun fetchUserLocation() {
         launchCoroutine {
             val location = locationTracker.getCurrentLocation()
-            updateState { it.copy(userLocation = location) }
+            updateComputedState { it.copy(userLocation = location) }
         }
     }
 
@@ -130,7 +131,7 @@ class HomeViewModel(
                     if (currentState().activeRental == null) {
                         vehicleLocationRepository.setActiveVehicleId(result.data?.vehicleId)
                     }
-                    updateState { state ->
+                    updateComputedState { state ->
                         state.copy(
                             activeReservation = result.data,
                             vehicles = state.vehicles.withReservationState(result.data)
@@ -141,7 +142,7 @@ class HomeViewModel(
                     if (currentState().activeRental == null) {
                         vehicleLocationRepository.setActiveVehicleId(null)
                     }
-                    updateState { state ->
+                    updateComputedState { state ->
                         state.copy(activeReservation = null)
                     }
                 }
@@ -156,7 +157,7 @@ class HomeViewModel(
                     vehicleLocationRepository.setActiveVehicleId(
                         result.data?.vehicleId ?: currentState().activeReservation?.vehicleId
                     )
-                    updateState { state ->
+                    updateComputedState { state ->
                         state.copy(activeRental = result.data)
                     }
                 }
@@ -164,7 +165,7 @@ class HomeViewModel(
                     if (currentState().activeReservation == null) {
                         vehicleLocationRepository.setActiveVehicleId(null)
                     }
-                    updateState { state ->
+                    updateComputedState { state ->
                         state.copy(activeRental = null)
                     }
                 }
@@ -175,10 +176,10 @@ class HomeViewModel(
     private fun loadPendingRental() {
         launchCoroutine {
             when (val result = rentalUseCases.getMyRentals()) {
-                is NetworkResult.Success -> updateState { state ->
+                is NetworkResult.Success -> updateComputedState { state ->
                     state.copy(pendingRental = result.data.latestPreparingRental())
                 }
-                is NetworkResult.Error -> updateState { state ->
+                is NetworkResult.Error -> updateComputedState { state ->
                     state.copy(pendingRental = null)
                 }
             }
@@ -191,10 +192,10 @@ class HomeViewModel(
         locationUpdatesJob = launchCoroutine {
             locationTracker.observeLocationUpdates()
                 .catch {
-                    updateState { state -> state.copy(userLocation = null) }
+                    updateComputedState { state -> state.copy(userLocation = null) }
                 }
                 .collect { location ->
-                    updateState { it.copy(userLocation = location) }
+                    updateComputedState { it.copy(userLocation = location) }
                 }
         }
     }
@@ -219,7 +220,7 @@ class HomeViewModel(
     private fun applyVehiclePositions(positions: List<VehiclePosition>) {
         if (positions.isEmpty()) return
         val positionsById = positions.associateBy { it.vehicleId }
-        updateState { state ->
+        updateComputedState { state ->
             state.copy(
                 vehicles = state.vehicles.map { vehicle ->
                     val position = positionsById[vehicle.id] ?: return@map vehicle
@@ -237,18 +238,68 @@ class HomeViewModel(
     }
 
     private fun updateFilterState(transform: (HomeState) -> HomeState) {
-        updateState { current ->
+        updateComputedState { current ->
             val next = transform(current).copy(errorMessage = null)
             val selectedStillVisible = next.filteredVehicles.any { it.id == next.selectedVehicleId }
             if (selectedStillVisible) {
                 next
             } else {
-                next.copy(selectedVehicleId = next.firstVisibleVehicleId())
+                next.copy(selectedVehicleId = next.filteredVehicles.firstOrNull()?.id)
             }
         }
     }
 
-    private fun HomeState.firstVisibleVehicleId(): String? = filteredVehicles.firstOrNull()?.id
+    private fun updateComputedState(transform: (HomeState) -> HomeState) {
+        updateState { current ->
+            var next = transform(current)
+            
+            // Re-apply filter logic dynamically to ensure state lists are always up to date
+            // before we push the state down to the UI
+            val filterParams = HomeVehicleFilterParams(
+                vehicles = next.vehicles,
+                userLocation = next.userLocation,
+                activeReservation = next.activeReservation,
+                activeRental = next.activeRental,
+                pendingRental = next.pendingRental,
+                selectedVehicleType = next.selectedVehicleType,
+                maxDailyPrice = next.maxDailyPrice,
+                minRangeKm = next.minRangeKm,
+                selectedVehicleId = next.selectedVehicleId
+            )
+            
+            val computedData = filterHomeVehiclesUseCase.invoke(filterParams)
+
+            // If selected ID was cleared because it is no longer visible in filtered vehicles
+            // We should adjust it if the updateState block didn't
+            val selectedStillVisible = computedData.filteredVehicles.any { it.id == next.selectedVehicleId }
+            val finalSelectedId = if (selectedStillVisible || next.selectedVehicleId == null) {
+                next.selectedVehicleId
+            } else {
+                null
+            }
+
+            val finalComputedData = if (!selectedStillVisible && next.selectedVehicleId != null) {
+                // re-evaluate highlighted vehicle if selected vehicle is cleared
+                filterHomeVehiclesUseCase.invoke(filterParams.copy(selectedVehicleId = null))
+            } else {
+                computedData
+            }
+
+            next.copy(
+                selectedVehicleId = finalSelectedId,
+                filteredVehicles = finalComputedData.filteredVehicles,
+                visibleVehicles = finalComputedData.visibleVehicles,
+                nearbyVehicles = finalComputedData.nearbyVehicles,
+                actionableNearbyVehicles = finalComputedData.actionableNearbyVehicles,
+                selectedVehicle = finalComputedData.selectedVehicle,
+                activeReservationVehicle = finalComputedData.activeReservationVehicle,
+                activeRentalVehicle = finalComputedData.activeRentalVehicle,
+                pendingRentalVehicle = finalComputedData.pendingRentalVehicle,
+                highlightedVehicle = finalComputedData.highlightedVehicle,
+                distanceInfoMap = finalComputedData.distanceInfoMap
+            )
+        }
+    }
 
     private fun List<com.example.rencar_pair.domain.model.Vehicle>.withReservationState(
         reservation: com.example.rencar_pair.domain.model.Reservation?
@@ -264,5 +315,10 @@ class HomeViewModel(
                 else -> vehicle
             }
         }
+    }
+
+    private fun List<Rental>.latestPreparingRental(): Rental? {
+        return filter { it.status == RentalStatus.Preparing }
+            .maxByOrNull { it.createdAt }
     }
 }
