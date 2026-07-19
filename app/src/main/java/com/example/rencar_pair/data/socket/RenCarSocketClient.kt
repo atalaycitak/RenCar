@@ -15,17 +15,54 @@ import java.net.URI
 class RenCarSocketClient(
     private val tokenHolder: TokenHolder
 ) {
-    fun observeEvent(namespace: String, eventName: String): Flow<JSONObject> {
-        val token = tokenHolder.token ?: return emptyFlow()
+    private val socketCache = java.util.concurrent.ConcurrentHashMap<String, SocketWrapper>()
 
-        return callbackFlow {
+    private inner class SocketWrapper(val namespace: String) {
+        val socket: Socket
+        var subscriberCount = 0
+
+        init {
+            val token = tokenHolder.token ?: ""
             val options = IO.Options.builder()
                 .setAuth(mapOf("token" to token))
                 .setTransports(arrayOf(WebSocket.NAME))
-                .setForceNew(true)
+                // Remove setForceNew(true) to avoid exhausting sockets
                 .build()
-                
-            val socket = IO.socket(URI.create(namespace), options)
+            
+            socket = IO.socket(URI.create(namespace), options)
+        }
+
+        @Synchronized
+        fun subscribe() {
+            if (subscriberCount == 0) {
+                socket.connect()
+            }
+            subscriberCount++
+        }
+
+        @Synchronized
+        fun unsubscribe() {
+            subscriberCount--
+            if (subscriberCount <= 0) {
+                socket.disconnect()
+                socketCache.remove(namespace)
+            }
+        }
+    }
+
+    private fun getWrapper(namespace: String): SocketWrapper {
+        return socketCache.getOrPut(namespace) {
+            SocketWrapper(namespace)
+        }
+    }
+
+    fun observeEvent(namespace: String, eventName: String): Flow<JSONObject> {
+        if (tokenHolder.token.isNullOrBlank()) return emptyFlow()
+
+        return callbackFlow {
+            val wrapper = getWrapper(namespace)
+            wrapper.subscribe()
+            val socket = wrapper.socket
             
             val eventListener = Emitter.Listener { args ->
                 val raw = args.firstOrNull()
@@ -45,12 +82,11 @@ class RenCarSocketClient(
 
             socket.on(eventName, eventListener)
             socket.on(Socket.EVENT_CONNECT_ERROR, connectErrorListener)
-            socket.connect()
 
             awaitClose {
                 socket.off(eventName, eventListener)
                 socket.off(Socket.EVENT_CONNECT_ERROR, connectErrorListener)
-                socket.disconnect()
+                wrapper.unsubscribe()
             }
         }
     }
