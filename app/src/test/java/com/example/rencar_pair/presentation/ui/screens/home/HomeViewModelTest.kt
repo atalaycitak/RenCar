@@ -293,7 +293,8 @@ class HomeViewModelTest {
             vehicleUseCases = VehicleUseCases(vehicleRepository),
             rentalUseCases = RentalUseCases(rentalRepository, reservationRepository),
             vehicleLocationRepository = vehicleLocationRepository,
-            locationTracker = locationTracker
+            locationTracker = locationTracker,
+            filterHomeVehiclesUseCase = com.example.rencar_pair.domain.usecase.vehicle.FilterHomeVehiclesUseCase()
         )
     }
 }
