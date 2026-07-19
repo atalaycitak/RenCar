@@ -40,9 +40,8 @@ fun RenCarBottomNavigation(
     currentRoute: BottomNavRoute,
     onNavigate: (BottomNavRoute) -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
-    val bgColor = if (isDark) Color(0xFF10151B) else Color(0xFFFFFFFF)
-    val borderColor = if (isDark) Color(0xFF1E252E) else Color(0xFFEEF1F5)
+    val bgColor = MaterialTheme.colorScheme.surface
+    val borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     
     Box(
         modifier = Modifier
@@ -93,11 +92,7 @@ private fun BottomNavItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
-    val selectedColor = if (isDark) Color(0xFF4C95F0) else Color(0xFF0B6BCB)
-    val unselectedColor = if (isDark) Color(0xFF6B7480) else Color(0xFF9AA3AE)
-    
-    val color = if (isSelected) selectedColor else unselectedColor
+    val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

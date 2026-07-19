@@ -162,18 +162,19 @@ fun TripHistoryCard(rental: Rental) {
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(13.dp)
     ) {
-        // Map Placeholder Graphic
+        // Map Placeholder Graphic using AsyncImage
         Box(
             modifier = Modifier
                 .size(64.dp)
-                .background(Color(0xFFE6EBF1), RoundedCornerShape(14.dp)),
+                .background(Color(0xFFE6EBF1), RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(14.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Map,
-                contentDescription = null,
-                tint = Color(0xFF0B6BCB).copy(alpha = 0.3f),
-                modifier = Modifier.size(32.dp)
+            coil.compose.AsyncImage(
+                model = "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=200&h=200&fit=crop",
+                contentDescription = "Map Preview",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
             )
         }
 
@@ -220,7 +221,7 @@ fun TripHistoryCard(rental: Rental) {
             ) {
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFFF1F4F8), RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
@@ -234,7 +235,7 @@ fun TripHistoryCard(rental: Rental) {
                 }
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFFF1F4F8), RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(

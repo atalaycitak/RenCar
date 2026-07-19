@@ -52,3 +52,9 @@ data object TripHistoryListRoute
 
 @Serializable
 data object ProfileRoute
+
+@Serializable
+data object SettingsRoute
+
+@Serializable
+data object ReferralRoute

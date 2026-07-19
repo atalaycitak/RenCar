@@ -16,6 +16,8 @@ import com.example.rencar_pair.presentation.navigation.RenCarNavHost
 import com.example.rencar_pair.presentation.navigation.SplashRoute
 import com.example.rencar_pair.ui.theme.RenCarTheme
 import org.koin.compose.koinInject
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +25,15 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            RenCarTheme {
+            val themeMode by com.example.rencar_pair.ui.theme.ThemeManager.themeMode.collectAsStateWithLifecycle()
+            val isDarkTheme = when (themeMode) {
+                com.example.rencar_pair.ui.theme.ThemeMode.LIGHT -> false
+                com.example.rencar_pair.ui.theme.ThemeMode.DARK -> true
+                com.example.rencar_pair.ui.theme.ThemeMode.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()
+                else -> androidx.compose.foundation.isSystemInDarkTheme()
+            }
+
+            RenCarTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 val dataStoreManager: DataStoreManager = koinInject()
 
