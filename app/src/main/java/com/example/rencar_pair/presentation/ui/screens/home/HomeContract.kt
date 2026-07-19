@@ -4,20 +4,13 @@ import androidx.compose.runtime.Stable
 import com.example.rencar_pair.domain.model.ActiveRental
 import com.example.rencar_pair.domain.model.Reservation
 import com.example.rencar_pair.domain.model.Rental
-import com.example.rencar_pair.domain.model.RentalStatus
 import com.example.rencar_pair.domain.model.UserLocation
 import com.example.rencar_pair.domain.model.Vehicle
-import com.example.rencar_pair.domain.model.VehicleStatus
+import com.example.rencar_pair.domain.model.VehicleDistanceInfo
 import com.example.rencar_pair.domain.model.VehicleType
 import com.example.rencar_pair.domain.repository.VehicleLocationStreamMode
 import com.example.rencar_pair.presentation.mvi.MviIntent
 import com.example.rencar_pair.presentation.mvi.MviState
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 @Stable
 data class HomeState(
@@ -34,86 +27,25 @@ data class HomeState(
     val activeRental: ActiveRental? = null,
     val pendingRental: Rental? = null,
     val hasLiveVehicleUpdates: Boolean = false,
-    val vehicleLocationStreamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.Inactive
+    val vehicleLocationStreamMode: VehicleLocationStreamMode = VehicleLocationStreamMode.Inactive,
+    
+    // Computed UI Data (populated by ViewModel via UseCase)
+    val filteredVehicles: List<Vehicle> = emptyList(),
+    val visibleVehicles: List<Vehicle> = emptyList(),
+    val nearbyVehicles: List<Vehicle> = emptyList(),
+    val actionableNearbyVehicles: List<Vehicle> = emptyList(),
+    val selectedVehicle: Vehicle? = null,
+    val activeReservationVehicle: Vehicle? = null,
+    val activeRentalVehicle: Vehicle? = null,
+    val pendingRentalVehicle: Vehicle? = null,
+    val highlightedVehicle: Vehicle? = null,
+    val distanceInfoMap: Map<String, VehicleDistanceInfo> = emptyMap()
 ) : MviState {
-    val filteredVehicles: List<Vehicle>
-        get() = vehicles.filter { vehicle ->
-            val matchesType = selectedVehicleType == null || vehicle.matchesCategory(selectedVehicleType)
-            val matchesPrice = maxDailyPrice == null || vehicle.pricePerDay <= maxDailyPrice.toDouble()
-            val matchesRange = minRangeKm == null || vehicle.rangeKm >= minRangeKm
-            matchesType && matchesPrice && matchesRange
-        }
-
-    val activeReservationVehicle: Vehicle?
-        get() = activeReservation?.let { reservation ->
-            reservation.vehicle ?: vehicles.firstOrNull { it.id == reservation.vehicleId }
-        }
-
     val isReservationLocked: Boolean
         get() = activeReservationVehicle != null && activeRental == null
 
-    val visibleVehicles: List<Vehicle>
-        get() = activeReservationVehicle?.let(::listOf) ?: filteredVehicles
-            .filter { it.isAvailableForMap() }
-            .filter { vehicle ->
-                val location = userLocation?.takeIf { it.isInsideServiceArea() } ?: return@filter true
-                location.walkingMinutesTo(vehicle) <= MAX_WALKING_MINUTES
-            }
-
-    val nearbyVehicles: List<Vehicle>
-        get() = userLocation?.takeIf { it.isInsideServiceArea() }?.let { location ->
-            visibleVehicles.sortedBy { vehicle -> location.distanceKmTo(vehicle) }
-        } ?: visibleVehicles
-
-    val actionableNearbyVehicles: List<Vehicle>
-        get() = nearbyVehicles.filter { it.canReserve || it.canUnlock }
-
-    val selectedVehicle: Vehicle?
-        get() = visibleVehicles.firstOrNull { it.id == selectedVehicleId }
-
-    val activeRentalVehicle: Vehicle?
-        get() = activeRental?.vehicleId?.let { vehicleId ->
-            filteredVehicles.firstOrNull { it.id == vehicleId }
-        }
-
-    val pendingRentalVehicle: Vehicle?
-        get() = pendingRental?.vehicleId?.let { vehicleId ->
-            filteredVehicles.firstOrNull { it.id == vehicleId }
-        }
-
-    val highlightedVehicle: Vehicle?
-        get() = activeReservationVehicle
-            ?: selectedVehicle
-            ?: pendingRentalVehicle
-            ?: actionableNearbyVehicles.firstOrNull()
-            ?: nearbyVehicles.firstOrNull()
-
     val hasActiveFilters: Boolean
         get() = selectedVehicleType != null || maxDailyPrice != null || minRangeKm != null
-
-    fun distanceKmTo(vehicle: Vehicle): Double? {
-        return userLocation?.takeIf { it.isInsideServiceArea() }?.distanceKmTo(vehicle)
-    }
-
-    fun distanceInfoFor(vehicle: Vehicle): VehicleDistanceInfo? {
-        val distanceKm = distanceKmTo(vehicle) ?: return null
-        return VehicleDistanceInfo(
-            distanceKm = distanceKm,
-            walkingMinutes = distanceKm.toWalkingMinutes()
-        )
-    }
-}
-
-data class VehicleDistanceInfo(
-    val distanceKm: Double,
-    val walkingMinutes: Int
-) {
-    val distanceLabel: String
-        get() = if (distanceKm < 1.0) {
-            "${(distanceKm * 1000).roundToInt()} m"
-        } else {
-            "${(distanceKm * 10).roundToInt() / 10.0} km"
-        }
 }
 
 sealed interface HomeIntent : MviIntent {
@@ -131,70 +63,3 @@ sealed interface HomeIntent : MviIntent {
     data object FocusUserLocation : HomeIntent
 }
 
-private fun UserLocation.distanceKmTo(vehicle: Vehicle): Double {
-    val latitudeDelta = Math.toRadians(vehicle.latitude - latitude)
-    val longitudeDelta = Math.toRadians(vehicle.longitude - longitude)
-    val originLatitude = Math.toRadians(latitude)
-    val targetLatitude = Math.toRadians(vehicle.latitude)
-
-    val haversine = sin(latitudeDelta / 2).pow(2.0) +
-        cos(originLatitude) * cos(targetLatitude) * sin(longitudeDelta / 2).pow(2.0)
-    val centralAngle = 2 * atan2(sqrt(haversine), sqrt(1 - haversine))
-    return EARTH_RADIUS_KM * centralAngle
-}
-
-private fun UserLocation.walkingMinutesTo(vehicle: Vehicle): Int {
-    return distanceKmTo(vehicle).toWalkingMinutes()
-}
-
-private fun Double.toWalkingMinutes(): Int {
-    return ((this / WALKING_SPEED_KM_PER_HOUR) * MINUTES_PER_HOUR)
-        .roundToInt()
-        .coerceAtLeast(1)
-}
-
-private fun Vehicle.isAvailableForMap(): Boolean {
-    return status == VehicleStatus.Available || canReserve || canUnlock
-}
-
-private fun Vehicle.matchesCategory(category: VehicleType): Boolean {
-    val normalizedSegment = segment?.trim()?.uppercase()
-    return when (category) {
-        VehicleType.Hatchback -> type == VehicleType.Hatchback ||
-            normalizedSegment in setOf("ECONOMY", "ECONOMIC", "EKONOMIK", "EKONOMİK")
-        VehicleType.Sedan -> type == VehicleType.Sedan ||
-            normalizedSegment in setOf("COMFORT", "KONFOR")
-        VehicleType.Suv -> type == VehicleType.Suv || normalizedSegment == "SUV"
-        VehicleType.Station -> type == VehicleType.Station
-        VehicleType.Minivan -> type == VehicleType.Minivan
-        VehicleType.Unknown -> type == VehicleType.Unknown
-    }
-}
-
-private fun UserLocation.isInsideServiceArea(): Boolean {
-    val serviceCenter = Vehicle(
-        id = "service-area-center",
-        plate = "",
-        brand = "",
-        model = "",
-        type = VehicleType.Unknown,
-        pricePerDay = 0.0,
-        status = VehicleStatus.Available,
-        latitude = SERVICE_CENTER_LATITUDE,
-        longitude = SERVICE_CENTER_LONGITUDE
-    )
-    return distanceKmTo(serviceCenter) <= SERVICE_AREA_RADIUS_KM
-}
-
-private const val EARTH_RADIUS_KM = 6371.0
-private const val WALKING_SPEED_KM_PER_HOUR = 4.8
-private const val MINUTES_PER_HOUR = 60
-private const val MAX_WALKING_MINUTES = 15
-private const val SERVICE_CENTER_LATITUDE = 41.0082
-private const val SERVICE_CENTER_LONGITUDE = 28.9784
-private const val SERVICE_AREA_RADIUS_KM = 120.0
-
-internal fun List<Rental>.latestPreparingRental(): Rental? {
-    return filter { it.status == RentalStatus.Preparing }
-        .maxByOrNull { it.createdAt }
-}
