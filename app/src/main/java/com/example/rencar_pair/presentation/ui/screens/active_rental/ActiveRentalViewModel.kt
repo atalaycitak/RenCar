@@ -333,25 +333,24 @@ class ActiveRentalViewModel(
             
             var currentLat = startLat
             var currentLng = startLng
-            var currentDirection = 0 // 0: Kuzey, 1: Doğu, 2: Güney, 3: Batı
+            
+            // Başlangıç yönü: Güney-Doğu (Radyan cinsinden)
+            var currentHeading = Math.PI * 1.75
 
             for (i in 1..240) {
-                // Her saniye yön değiştir (Aşırı Zikzak)
-                val turn = if (random.nextBoolean()) 1 else -1 // Sağa veya Sola 90 derece dön
-                currentDirection = (currentDirection + turn + 4) % 4
-
+                // Her adımda yönü biraz saptır (maksimum +- 60 derece)
+                // Bu sayede araç kendi etrafında kareler çizmez, zikzak çizerek sürekli ilerler
+                val turnAngle = (random.nextDouble() - 0.5) * (Math.PI / 1.5)
+                currentHeading += turnAngle
+                
                 // Seçili yönde ilerle
-                val stepSize = 0.0002
-                when (currentDirection) {
-                    0 -> currentLat += stepSize
-                    1 -> currentLng += stepSize
-                    2 -> currentLat -= stepSize
-                    3 -> currentLng -= stepSize
-                }
+                val stepSize = 0.00018
+                currentLat += cos(currentHeading) * stepSize
+                currentLng += sin(currentHeading) * stepSize
                 
                 // Çok hafif bir titreme (gerçekçi GPS hissi için)
-                val noiseLat = (random.nextDouble() - 0.5) * 0.00004
-                val noiseLng = (random.nextDouble() - 0.5) * 0.00004
+                val noiseLat = (random.nextDouble() - 0.5) * 0.00003
+                val noiseLng = (random.nextDouble() - 0.5) * 0.00003
                 
                 points.add(VehiclePoint(currentLat + noiseLat, currentLng + noiseLng))
             }

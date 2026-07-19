@@ -13,7 +13,7 @@ const val OSM_STYLE_JSON: String = """
         "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
       ],
       "tileSize": 256,
-      "attribution": "© OpenStreetMap contributors © CARTO"
+      "attribution": "© OpenStreetMap contributors, © CARTO"
     }
   },
   "layers": [
