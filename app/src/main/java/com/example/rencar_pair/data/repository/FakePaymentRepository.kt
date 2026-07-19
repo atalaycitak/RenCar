@@ -7,6 +7,8 @@ import com.example.rencar_pair.domain.model.PaymentResult
 import com.example.rencar_pair.domain.model.PaymentStatus
 import com.example.rencar_pair.domain.model.SavedCard
 import com.example.rencar_pair.domain.repository.PaymentRepository
+import com.example.rencar_pair.data.remote.dto.CheckoutFormInitializeResponse
+import com.example.rencar_pair.data.remote.dto.IyzicoPaymentResponse
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -32,6 +34,32 @@ class FakePaymentRepository : PaymentRepository {
             expYear = 2026
         )
     )
+
+    override suspend fun initializeCheckoutForm(
+        price: Double,
+        description: String?,
+        basketId: String?
+    ): NetworkResult<CheckoutFormInitializeResponse> {
+        delay(800)
+        return NetworkResult.Success(
+            CheckoutFormInitializeResponse(
+                status = "success",
+                token = "fake_checkout_token",
+                checkoutFormContent = "<html><body>Fake Iyzico Checkout Form</body></html>"
+            )
+        )
+    }
+
+    override suspend fun getCheckoutFormResult(token: String): NetworkResult<IyzicoPaymentResponse> {
+        delay(800)
+        return NetworkResult.Success(
+            IyzicoPaymentResponse(
+                status = "success",
+                paymentStatus = "SUCCESS",
+                paymentId = "fake_payment_id"
+            )
+        )
+    }
 
     override suspend fun payRental(
         rentalId: String,

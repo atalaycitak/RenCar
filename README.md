@@ -17,9 +17,9 @@ RenCar, yakındaki uygun aracı harita üzerinden bulup kısa sürede kiralama a
 | :---: | :---: | :---: |
 | <img src="docs/assets/active-ride.jpeg" width="250" alt="Aktif Kiralama" /> | <img src="docs/assets/wallet.jpeg" width="250" alt="Cüzdan" /> | <img src="docs/assets/profile.jpeg" width="250" alt="Profil" /> |
 
-| Geçmiş (History) | | |
+| Geçmiş (History) | Iyzico 3D Ödeme | |
 | :---: | :---: | :---: |
-| <img src="docs/assets/history.jpeg" width="250" alt="Kiralama Geçmişi" /> | | |
+| <img src="docs/assets/history.jpeg" width="250" alt="Kiralama Geçmişi" /> | <img src="docs/assets/iyzico.jpeg" width="250" alt="Iyzico 3D Ödeme" /> | |
 
 ## Projenin Amacı
 

@@ -5,7 +5,19 @@ import com.example.rencar_pair.domain.model.PaymentMethod
 import com.example.rencar_pair.domain.model.PaymentResult
 import com.example.rencar_pair.domain.model.SavedCard
 
+import com.example.rencar_pair.data.remote.dto.CheckoutFormInitializeResponse
+import com.example.rencar_pair.data.remote.dto.IyzicoPaymentResponse
+
 interface PaymentRepository {
+    suspend fun initializeCheckoutForm(
+        price: Double,
+        description: String? = null,
+        basketId: String? = null
+    ): NetworkResult<CheckoutFormInitializeResponse>
+
+    suspend fun getCheckoutFormResult(
+        token: String
+    ): NetworkResult<IyzicoPaymentResponse>
     suspend fun payRental(
         rentalId: String,
         method: PaymentMethod,

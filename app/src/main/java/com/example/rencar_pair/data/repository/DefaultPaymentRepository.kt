@@ -7,6 +7,9 @@ import com.example.rencar_pair.data.remote.dto.CardResponse
 import com.example.rencar_pair.data.remote.dto.PaidCardSummaryResponse
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentRequest
 import com.example.rencar_pair.data.remote.dto.ProcessPaymentResponse
+import com.example.rencar_pair.data.remote.dto.InitializeCheckoutFormRequest
+import com.example.rencar_pair.data.remote.dto.CheckoutFormInitializeResponse
+import com.example.rencar_pair.data.remote.dto.IyzicoPaymentResponse
 import com.example.rencar_pair.data.remote.safeApiCall
 import com.example.rencar_pair.domain.NetworkResult
 import com.example.rencar_pair.domain.model.PaidCardSummary
@@ -20,6 +23,38 @@ class DefaultPaymentRepository(
     private val api: RenCarApi
 ) : PaymentRepository {
     private val endpointFallback = FakePaymentRepository()
+
+    override suspend fun initializeCheckoutForm(
+        price: Double,
+        description: String?,
+        basketId: String?
+    ): NetworkResult<CheckoutFormInitializeResponse> {
+        val result = safeApiCall(
+            call = {
+                api.initializeCheckoutForm(
+                    InitializeCheckoutFormRequest(
+                        price = price,
+                        description = description,
+                        basketId = basketId
+                    )
+                )
+            },
+            transform = { it }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.initializeCheckoutForm(price, description, basketId)
+        }
+    }
+
+    override suspend fun getCheckoutFormResult(token: String): NetworkResult<IyzicoPaymentResponse> {
+        val result = safeApiCall(
+            call = { api.getCheckoutFormResult(token) },
+            transform = { it }
+        )
+        return result.withEndpointFallback {
+            endpointFallback.getCheckoutFormResult(token)
+        }
+    }
 
     override suspend fun payRental(
         rentalId: String,
