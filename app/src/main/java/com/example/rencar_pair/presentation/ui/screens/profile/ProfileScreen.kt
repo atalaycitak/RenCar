@@ -60,6 +60,8 @@ fun ProfileScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToWallet: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToReferral: () -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: ProfileViewModel = koinViewModel()
 ) {
@@ -84,7 +86,9 @@ fun ProfileScreen(
         onIntent = viewModel::onIntent,
         onNavigateToHome = onNavigateToHome,
         onNavigateToHistory = onNavigateToHistory,
-        onNavigateToWallet = onNavigateToWallet
+        onNavigateToWallet = onNavigateToWallet,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToReferral = onNavigateToReferral
     )
 }
 
@@ -95,7 +99,9 @@ fun ProfileScreenContent(
     onIntent: (ProfileIntent) -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToHistory: () -> Unit,
-    onNavigateToWallet: () -> Unit
+    onNavigateToWallet: () -> Unit,
+    onNavigateToSettings: () -> Unit,
+    onNavigateToReferral: () -> Unit
 ) {
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -225,7 +231,7 @@ fun ProfileScreenContent(
                             Box(
                                 modifier = Modifier
                                     .size(44.dp)
-                                    .background(Color(0xFFE7F4EC), RoundedCornerShape(13.dp)),
+                                    .background(Color(0xFF1A9E63).copy(alpha = 0.15f), RoundedCornerShape(13.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -262,7 +268,7 @@ fun ProfileScreenContent(
                                     color = Color(0xFF1A9E63)
                                 ),
                                 modifier = Modifier
-                                    .background(Color(0xFFE7F4EC), RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF1A9E63).copy(alpha = 0.15f), RoundedCornerShape(8.dp))
                                     .padding(horizontal = 9.dp, vertical = 4.dp)
                             )
                         }
@@ -287,8 +293,7 @@ fun ProfileScreenContent(
                             ProfileMenuItem(
                                 icon = Icons.Default.Settings,
                                 title = "Ayarlar",
-                                enabled = false,
-                                onClick = {}
+                                onClick = onNavigateToSettings
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                             ProfileMenuItem(
@@ -301,8 +306,7 @@ fun ProfileScreenContent(
                             ProfileMenuItem(
                                 icon = Icons.Default.Share,
                                 title = "Davet et · ₺50 kazan",
-                                enabled = false,
-                                onClick = {}
+                                onClick = onNavigateToReferral
                             )
                         }
                         Spacer(modifier = Modifier.height(14.dp))
@@ -430,7 +434,9 @@ private fun ProfileScreenPreview() {
             onIntent = {},
             onNavigateToHome = {},
             onNavigateToHistory = {},
-            onNavigateToWallet = {}
+            onNavigateToWallet = {},
+            onNavigateToSettings = {},
+            onNavigateToReferral = {}
         )
     }
 }

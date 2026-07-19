@@ -44,6 +44,8 @@ import com.example.rencar_pair.presentation.ui.screens.profile.ProfileViewModel
 import com.example.rencar_pair.presentation.ui.screens.history.TripHistoryViewModel
 import com.example.rencar_pair.presentation.ui.screens.return_vehicle.ReturnVehicleViewModel
 import com.example.rencar_pair.presentation.ui.components.iyzico.IyzicoPaymentWebViewViewModel
+import com.example.rencar_pair.presentation.ui.screens.settings.SettingsViewModel
+import com.example.rencar_pair.presentation.ui.screens.referral.ReferralViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import org.koin.android.ext.koin.androidContext
@@ -124,4 +126,6 @@ val appModule = module {
     viewModelOf(::TripHistoryViewModel)
     viewModelOf(::ReturnVehicleViewModel)
     viewModelOf(::IyzicoPaymentWebViewViewModel)
+    viewModelOf(::SettingsViewModel)
+    viewModelOf(::ReferralViewModel)
 }

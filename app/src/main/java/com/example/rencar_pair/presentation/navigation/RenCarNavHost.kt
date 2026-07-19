@@ -303,11 +303,29 @@ fun RenCarNavHost(
                         launchSingleTop = true
                     }
                 },
+                onNavigateToSettings = {
+                    navController.navigate(SettingsRoute)
+                },
+                onNavigateToReferral = {
+                    navController.navigate(ReferralRoute)
+                },
                 onNavigateToLogin = {
                     navController.navigate(LoginRoute()) {
                         popUpTo<SplashRoute> { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable<SettingsRoute> {
+            com.example.rencar_pair.presentation.ui.screens.settings.SettingsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ReferralRoute> {
+            com.example.rencar_pair.presentation.ui.screens.referral.ReferralScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
