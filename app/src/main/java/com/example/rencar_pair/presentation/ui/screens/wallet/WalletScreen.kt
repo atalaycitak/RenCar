@@ -37,6 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -99,11 +101,39 @@ fun WalletScreen(
             )
         }
     ) { padding ->
-        WalletScreenContent(
-            state = state,
-            onIntent = viewModel::onIntent,
-            modifier = Modifier.padding(padding)
-        )
+        var showIyzicoTest by remember { mutableStateOf(false) }
+
+        if (showIyzicoTest) {
+            com.example.rencar_pair.presentation.ui.components.iyzico.IyzicoPaymentWebViewRoute(
+                price = 100.0,
+                description = "Test Iyzico Ödemesi",
+                basketId = "test-123",
+                onPaymentSucceeded = {
+                    showIyzicoTest = false
+                },
+                onPaymentFailed = {
+                    showIyzicoTest = false
+                },
+                onPaymentCancelled = {
+                    showIyzicoTest = false
+                }
+            )
+        }
+
+        Column(modifier = Modifier.padding(padding)) {
+            androidx.compose.material3.Button(
+                onClick = { showIyzicoTest = true },
+                modifier = Modifier.padding(16.dp).fillMaxWidth()
+            ) {
+                Text("TEST: Iyzico ile Öde")
+            }
+
+            WalletScreenContent(
+                state = state,
+                onIntent = viewModel::onIntent,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
