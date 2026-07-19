@@ -82,7 +82,9 @@ val appModule = module {
     single<WalletRepository> {
         if (BuildConfig.USE_FAKE_REPOSITORIES) FakeWalletRepository() else DefaultWalletRepository(get())
     }
-    single<RideLocationRepository> { DefaultRideLocationRepository(get()) }
+    single<RideLocationRepository> {
+        if (BuildConfig.USE_FAKE_REPOSITORIES) com.example.rencar_pair.data.repository.location.FakeRideLocationRepository() else DefaultRideLocationRepository(get())
+    }
 
     single { LocationServices.getFusedLocationProviderClient(androidContext()) }
 
