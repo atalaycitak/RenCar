@@ -76,6 +76,16 @@ fun RenCarCameraPreview(
         val imageCapture = remember { ImageCapture.Builder().build() }
         var isCapturing by remember { mutableStateOf(false) }
 
+        DisposableEffect(lifecycleOwner) {
+            onDispose {
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    cameraProvider.unbindAll()
+                }, ContextCompat.getMainExecutor(context))
+            }
+        }
+
         Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             AndroidView(
                 factory = { ctx ->
