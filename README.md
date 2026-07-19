@@ -9,9 +9,17 @@ RenCar, yakındaki uygun aracı harita üzerinden bulup kısa sürede kiralama a
 
 ## Ekran Görüntüleri
 
-| Onboarding | Aktif Kiralama |
-| --- | --- |
-| <img src="docs/assets/rencar-onboarding.png" width="280" alt="RenCar onboarding ekranı" /> | <img src="docs/assets/rencar-active-rental.png" width="280" alt="RenCar aktif kiralama ekranı" /> |
+| Ana Harita (Home) | Araç Detayı | Rezervasyon |
+| :---: | :---: | :---: |
+| <img src="docs/assets/home.jpeg" width="250" alt="Ana Harita" /> | <img src="docs/assets/cardetail.jpeg" width="250" alt="Araç Detayı" /> | <img src="docs/assets/reservation.jpeg" width="250" alt="Rezervasyon" /> |
+
+| Aktif Kiralama (Simülasyon) | Cüzdan | Profil |
+| :---: | :---: | :---: |
+| <img src="docs/assets/active-ride.jpeg" width="250" alt="Aktif Kiralama" /> | <img src="docs/assets/wallet.jpeg" width="250" alt="Cüzdan" /> | <img src="docs/assets/profile.jpeg" width="250" alt="Profil" /> |
+
+| Geçmiş (History) | | |
+| :---: | :---: | :---: |
+| <img src="docs/assets/history.jpeg" width="250" alt="Kiralama Geçmişi" /> | | |
 
 ## Projenin Amacı
 
